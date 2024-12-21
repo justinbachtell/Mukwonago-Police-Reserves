@@ -1,0 +1,1 @@
+ALTER TABLE "emergency_contact" ENABLE ROW LEVEL SECURITY;
