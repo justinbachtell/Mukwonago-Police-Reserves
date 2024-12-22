@@ -1,4 +1,8 @@
-# The Landing App of the Village of Mukwonago Police Reserves
+# The Village of Mukwonago Police Department Reserves Program
+
+The Village of Mukwonago Police Reserves program is a community-based organization that provides law enforcement support services to the Village of Mukwonago.
+
+[![CI](https://github.com/justinbachtell/Mukwonago-Police-Reserves/actions/workflows/CI.yml/badge.svg)](https://github.com/justinbachtell/Mukwonago-Police-Reserves/actions/workflows/CI.yml)
 
 ### Live Site
 
