@@ -1,22 +1,13 @@
-import { getCurrentUniformSizes } from '@/actions/uniformSizes';
-import { getUserById } from '@/actions/user';
-import { UniformSizesForm } from '@/components/forms/uniformSizesForm';
+import { getCurrentUser } from '@/actions/user';
 import { notFound } from 'next/navigation';
 
-type UserEquipmentPageProps = {
-  params: {
-    id: string;
-  };
-};
-
-export default async function UserEquipmentPage({ params }: UserEquipmentPageProps) {
-  const user = await getUserById(Number(params.id));
-
+export default async function UserEquipmentPage() {
+  const user = await getCurrentUser();
   if (!user) {
     notFound();
   }
 
-  const currentSizes = await getCurrentUniformSizes(user.id);
+  // const currentSizes = await getCurrentUniformSizes(user.id);
   // const currentAssignedEquipment = await getAssignedEquipment(user.id) || null;
 
   return (
@@ -35,7 +26,6 @@ export default async function UserEquipmentPage({ params }: UserEquipmentPagePro
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
-        <UniformSizesForm user={user} currentSizes={currentSizes} />
         {/* <EquipmentForm user={user} assignedEquipment={currentAssignedEquipment} /> */}
       </div>
     </div>

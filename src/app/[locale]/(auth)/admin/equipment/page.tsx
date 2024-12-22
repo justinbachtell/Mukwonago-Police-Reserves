@@ -1,20 +1,15 @@
-import { getAssignedEquipment } from '@/actions/assignedEquipment';
-import { getAllEquipment } from '@/actions/equipment';
 import { getCurrentUser } from '@/actions/user';
-import { DataTable } from '@/components/ui/data-table';
 import { redirect } from 'next/navigation';
-import { EquipmentForm } from '../../../../../components/admin/forms/equipmentForm';
-import { columns } from './columns';
 
 export default async function EquipmentManagementPage() {
-  const equipment = await getAllEquipment();
+  // const equipment = await getAllEquipment();
   const user = await getCurrentUser();
 
   if (!user) {
     redirect('/sign-in');
   }
 
-  const assignedEquipment = await getAssignedEquipment(user.id);
+  // const assignedEquipment = await getAssignedEquipment(user.id);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -28,7 +23,7 @@ export default async function EquipmentManagementPage() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
-        {assignedEquipment.length > 0
+        {/* {assignedEquipment.length > 0
           ? (
               <EquipmentForm />
             )
@@ -39,7 +34,7 @@ export default async function EquipmentManagementPage() {
                 </h2>
                 <DataTable columns={columns} data={equipment} />
               </div>
-            )}
+            )} */}
       </div>
     </div>
   );

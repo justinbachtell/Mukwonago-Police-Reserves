@@ -1,17 +1,26 @@
 'use client';
 
+import type { EmergencyContact } from '@/types/emergencyContact';
+import type { SaveResult } from '@/types/forms';
+import type { UniformSizes } from '@/types/uniformSizes';
 import type { DBUser } from '@/types/user';
 import { updateUser } from '@/actions/user';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import { STATES } from '@/libs/States';
 import { useUser } from '@clerk/nextjs';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { EmergencyContactForm } from './emergencyContactForm';
+import { UniformSizesForm } from './uniformSizesForm';
 
 type ProfileFormProps = {
   user: DBUser;
+  currentSizes: UniformSizes;
+  currentEmergencyContact: EmergencyContact;
 };
 
 function formatPhoneNumber(value: string): string {
@@ -49,31 +58,45 @@ function isValidZipCode(zipCode: string): boolean {
   return /^\d{5}$/.test(zipCode);
 }
 
-export function ProfileForm({ user: dbUser }: ProfileFormProps) {
+export function ProfileForm({
+  user: initialUser,
+  currentSizes: initialSizes,
+  currentEmergencyContact: initialEmergencyContact,
+}: ProfileFormProps) {
   const { user: clerkUser, isLoaded } = useUser();
+  const [isSaving, setIsSaving] = useState(false);
+  const [user, setUser] = useState(initialUser);
+  const [currentSizes, setCurrentSizes] = useState(initialSizes);
+
+  // Create refs for child form save functions
+  const uniformSizesSaveRef = useRef<(() => Promise<SaveResult>) | null>(null);
+  const emergencyContactSaveRef = useRef<(() => Promise<SaveResult>) | null>(null);
+
   const [formData, setFormData] = useState({
-    first_name: dbUser.first_name || '',
-    last_name: dbUser.last_name || '',
-    phone: dbUser.phone || '',
-    street_address: dbUser.street_address || '',
-    city: dbUser.city || '',
-    state: dbUser.state || '',
-    zip_code: dbUser.zip_code || '',
-    driver_license: dbUser.driver_license || '',
+    first_name: user.first_name || '',
+    last_name: user.last_name || '',
+    phone: user.phone || '',
+    street_address: user.street_address || '',
+    city: user.city || '',
+    state: user.state || '',
+    zip_code: user.zip_code || '',
+    driver_license: user.driver_license || '',
+    driver_license_state: user.driver_license_state || '',
   });
 
-  const hasFormChanged = (): boolean => {
+  const hasFormChanged = useCallback((): boolean => {
     return (
-      formData.first_name !== (dbUser.first_name || '')
-      || formData.last_name !== (dbUser.last_name || '')
-      || formData.phone !== (dbUser.phone || '')
-      || formData.street_address !== (dbUser.street_address || '')
-      || formData.city !== (dbUser.city || '')
-      || formData.state !== (dbUser.state || '')
-      || formData.zip_code !== (dbUser.zip_code || '')
-      || formData.driver_license !== (dbUser.driver_license || '')
+      formData.first_name !== (user.first_name || '')
+      || formData.last_name !== (user.last_name || '')
+      || formData.phone !== (user.phone || '')
+      || formData.street_address !== (user.street_address || '')
+      || formData.city !== (user.city || '')
+      || formData.state !== (user.state || '')
+      || formData.zip_code !== (user.zip_code || '')
+      || formData.driver_license !== (user.driver_license || '')
+      || formData.driver_license_state !== (user.driver_license_state || '')
     );
-  };
+  }, [formData, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -97,79 +120,119 @@ export function ProfileForm({ user: dbUser }: ProfileFormProps) {
           [name]: formatZipCode(value),
         }));
         break;
+      case 'driver_license_state':
+        setFormData(prev => ({
+          ...prev,
+          [name]: formatState(value),
+        }));
+        break;
       default:
         setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleSaveChanges = async () => {
+  const handleMainFormSave = async () => {
     try {
       if (!isLoaded || !clerkUser) {
-        return;
+        return { success: false, message: 'Not authenticated' };
       }
 
       if (!hasFormChanged()) {
-        toast({
-          title: 'No changes detected',
-          description: 'Please make some changes before saving.',
-          variant: 'default',
-        });
-        return;
+        return { success: true, message: 'No changes detected' };
       }
 
       if (formData.phone && !isValidPhoneNumber(formData.phone)) {
-        toast({
-          title: 'Invalid phone number',
-          description: 'Please enter a complete phone number.',
-          variant: 'destructive',
-        });
-        return;
+        return { success: false, message: 'Please enter a complete phone number' };
       }
 
       if (formData.zip_code && !isValidZipCode(formData.zip_code)) {
-        toast({
-          title: 'Invalid ZIP code',
-          description: 'Please enter a valid 5-digit ZIP code.',
-          variant: 'destructive',
-        });
-        return;
+        return { success: false, message: 'Please enter a valid 5-digit ZIP code' };
       }
 
-      // Update both DB and Clerk
-      await Promise.all([
-        // Update your database
-        updateUser(dbUser.id, formData),
-        // Update Clerk user
+      const [updatedUser] = await Promise.all([
+        updateUser(user.id, formData),
         clerkUser.update({
           firstName: formData.first_name,
           lastName: formData.last_name,
         }),
       ]);
 
+      return { success: true, data: updatedUser };
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return { success: false, message: 'Failed to update profile' };
+    }
+  };
+
+  const handleSaveAll = async () => {
+    try {
+      setIsSaving(true);
+
+      // Execute all save functions concurrently
+      const [mainResult, uniformResult, emergencyResult] = await Promise.all([
+        handleMainFormSave(),
+        uniformSizesSaveRef.current?.() || Promise.resolve({ success: true, message: 'No changes' }),
+        emergencyContactSaveRef.current?.() || Promise.resolve({ success: true, message: 'No changes' }),
+      ]);
+
+      // Check if any save operation failed
+      if (!mainResult.success || !uniformResult.success || !emergencyResult.success) {
+        toast({
+          title: 'Failed to save changes',
+          description: mainResult.message || uniformResult.message || emergencyResult.message || 'An error occurred while saving.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // If all succeeded but no changes were made
+      if (
+        mainResult.message?.includes('No changes')
+        && uniformResult.message?.includes('No changes')
+        && emergencyResult.message?.includes('No changes')
+      ) {
+        toast({
+          title: 'No changes detected',
+          description: 'Please make some changes before saving.',
+        });
+        return;
+      }
+
+      // Update local state with new data
+      if ('data' in mainResult && mainResult.data) {
+        setUser(mainResult.data);
+      }
+      if ('data' in uniformResult && uniformResult.data) {
+        setCurrentSizes(uniformResult.data);
+      }
+
+      // Success toast if at least one form had changes
       toast({
-        title: 'Profile updated successfully',
+        title: 'Changes saved successfully',
         description: 'Your profile has been updated.',
       });
-    } catch (error) {
+    } catch (err) {
+      console.error('Error saving changes:', err);
       toast({
-        title: 'Failed to update profile',
-        description: 'There was an error updating your profile.',
+        title: 'Error',
+        description: 'An unexpected error occurred.',
         variant: 'destructive',
       });
-      console.error('Error updating profile:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
-    <div className="grid gap-8 md:grid-cols-2">
+    <div className="flex flex-col gap-8 md:grid md:grid-cols-12">
       {/* Personal Information */}
-      <Card className="p-6">
+      <Card className="flex flex-col p-6 shadow-md md:col-span-8">
         <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
           Personal Information
         </h2>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-4 md:grid md:grid-cols-12">
+            <div className="flex flex-col space-y-2 md:col-span-6">
               <Label htmlFor="first_name">First Name</Label>
               <Input
                 id="first_name"
@@ -179,7 +242,7 @@ export function ProfileForm({ user: dbUser }: ProfileFormProps) {
                 className="w-full"
               />
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col space-y-2 md:col-span-6">
               <Label htmlFor="last_name">Last Name</Label>
               <Input
                 id="last_name"
@@ -191,44 +254,74 @@ export function ProfileForm({ user: dbUser }: ProfileFormProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={dbUser.email}
-              className="w-full"
-              disabled
-            />
-            <p className="text-sm text-gray-500">
-              Email can only be changed through your account settings.
-            </p>
+          <div className="flex flex-col gap-4 md:grid md:grid-cols-12">
+            <div className="flex flex-col space-y-2 md:col-span-6">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={user.email}
+                className="w-full"
+                disabled
+              />
+            </div>
+
+            <div className="flex flex-col space-y-2 md:col-span-6">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full"
+                placeholder="(123) 456-7890"
+                maxLength={14}
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full"
-              placeholder="(123) 456-7890"
-              maxLength={14}
-            />
+          <div className="flex flex-col gap-4 md:grid md:grid-cols-12">
+            <div className="flex flex-col space-y-2 md:col-span-8">
+              <Label htmlFor="driver_license">Driver's License Number</Label>
+              <Input
+                id="driver_license"
+                name="driver_license"
+                value={formData.driver_license}
+                onChange={handleChange}
+                className="w-full"
+              />
+            </div>
+            <div className="flex flex-col space-y-2 md:col-span-4">
+              <Label htmlFor="driver_license_state">Driver's License State</Label>
+              <Select
+                value={formData.driver_license_state}
+                onValueChange={value => setFormData(prev => ({ ...prev, driver_license_state: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATES.map(state => (
+                    <SelectItem key={state.abbreviation} value={state.abbreviation}>
+                      {state.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </Card>
 
       {/* Address Information */}
-      <Card className="p-6">
+      <Card className="flex flex-col p-6 shadow-md md:col-span-4">
         <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
           Address Information
         </h2>
         <div className="space-y-4">
-          <div className="space-y-2">
+          <div className="flex flex-col space-y-2 md:col-span-12">
             <Label htmlFor="street_address">Street Address</Label>
             <Input
               id="street_address"
@@ -239,8 +332,8 @@ export function ProfileForm({ user: dbUser }: ProfileFormProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="flex flex-col gap-4 md:grid md:grid-cols-12">
+            <div className="flex flex-col space-y-2 md:col-span-12">
               <Label htmlFor="city">City</Label>
               <Input
                 id="city"
@@ -250,62 +343,66 @@ export function ProfileForm({ user: dbUser }: ProfileFormProps) {
                 className="w-full"
               />
             </div>
-            <div className="space-y-2">
+          </div>
+
+          <div className="flex flex-col gap-4 md:grid md:grid-cols-12">
+            <div className="flex flex-col space-y-2 md:col-span-6">
               <Label htmlFor="state">State</Label>
-              <Input
-                id="state"
-                name="state"
+              <Select
                 value={formData.state}
+                onValueChange={value => setFormData(prev => ({ ...prev, state: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATES.map(state => (
+                    <SelectItem key={state.abbreviation} value={state.abbreviation}>
+                      {state.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col space-y-2 md:col-span-6">
+              <Label htmlFor="zip_code">ZIP Code</Label>
+              <Input
+                id="zip_code"
+                name="zip_code"
+                value={formData.zip_code}
                 onChange={handleChange}
                 className="w-full"
-                maxLength={2}
-                placeholder="CA"
+                maxLength={5}
+                placeholder="12345"
               />
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="zip_code">ZIP Code</Label>
-            <Input
-              id="zip_code"
-              name="zip_code"
-              value={formData.zip_code}
-              onChange={handleChange}
-              className="w-full"
-              maxLength={5}
-              placeholder="12345"
-            />
-          </div>
         </div>
       </Card>
 
-      {/* Driver's License */}
-      <Card className="p-6">
-        <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
-          Driver's License Information
-        </h2>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="driver_license">Driver's License Number</Label>
-            <Input
-              id="driver_license"
-              name="driver_license"
-              value={formData.driver_license}
-              onChange={handleChange}
-              className="w-full"
-            />
-          </div>
-        </div>
-      </Card>
+      {/* Uniform Sizes */}
+      <UniformSizesForm
+        user={user}
+        currentSizes={currentSizes}
+        saveRef={uniformSizesSaveRef}
+      />
 
-      {/* Save Changes */}
-      <div className="flex justify-end md:col-span-2">
+      {/* Emergency Contact */}
+      <EmergencyContactForm
+        user={user}
+        currentContact={initialEmergencyContact}
+        saveRef={emergencyContactSaveRef}
+      />
+
+      {/* Save Button */}
+      <div className="flex flex-col items-end justify-center md:col-span-12">
         <Button
           type="button"
-          className="rounded-lg bg-blue-700 px-8 py-2 text-white hover:bg-blue-800"
-          onClick={handleSaveChanges}
+          className="rounded-lg bg-blue-700 px-8 py-2 text-white shadow-md hover:bg-blue-800 md:max-w-fit"
+          onClick={handleSaveAll}
+          disabled={isSaving}
         >
-          Save Changes
+          {isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
     </div>

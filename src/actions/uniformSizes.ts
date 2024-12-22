@@ -28,7 +28,6 @@ export async function updateUniformSizes(user_id: number, data: UniformSizes) {
         shirt_size: data.shirt_size || '', // Ensure non-null values
         pant_size: data.pant_size || '',
         shoe_size: data.shoe_size || '',
-        hat_size: data.hat_size || '',
         notes: data.notes || '',
         is_current: true,
         created_at: new Date().toISOString(),
@@ -43,13 +42,13 @@ export async function updateUniformSizes(user_id: number, data: UniformSizes) {
   }
 }
 
-export async function getCurrentUniformSizes(userId: number): Promise<UniformSizes | null> {
+export async function getCurrentUniformSizes(userId: number): Promise<UniformSizes> {
   try {
     // Get the user data
     const user = await getCurrentUser();
 
     if (!user) {
-      return null;
+      throw new Error('User not found');
     }
 
     // Then get the current uniform sizes
@@ -72,7 +71,6 @@ export async function getCurrentUniformSizes(userId: number): Promise<UniformSiz
       shirt_size: currentSizes.shirt_size,
       pant_size: currentSizes.pant_size,
       shoe_size: currentSizes.shoe_size,
-      hat_size: currentSizes.hat_size || '',
       notes: currentSizes.notes || '',
       is_current: currentSizes.is_current,
       created_at: currentSizes.created_at,
@@ -83,7 +81,7 @@ export async function getCurrentUniformSizes(userId: number): Promise<UniformSiz
     return result;
   } catch (error) {
     console.error('Error fetching current uniform sizes:', error);
-    return null;
+    throw new Error('Failed to fetch current uniform sizes');
   }
 }
 
@@ -94,7 +92,6 @@ async function createDefaultUniformSizes(dbUser: DBUser): Promise<UniformSizes> 
       shirt_size: '',
       pant_size: '',
       shoe_size: '',
-      hat_size: '',
       notes: '',
       is_current: true,
       created_at: new Date().toISOString(),
@@ -116,7 +113,6 @@ async function createDefaultUniformSizes(dbUser: DBUser): Promise<UniformSizes> 
       shirt_size: newSizes.shirt_size,
       pant_size: newSizes.pant_size,
       shoe_size: newSizes.shoe_size,
-      hat_size: newSizes.hat_size || '',
       notes: newSizes.notes || '',
       is_current: newSizes.is_current,
       created_at: newSizes.created_at,

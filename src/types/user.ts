@@ -10,6 +10,7 @@ export type DBUser = {
   last_name: string;
   phone: string | null;
   driver_license: string | null;
+  driver_license_state: string | null;
   street_address: string | null;
   city: string | null;
   state: string | null;
@@ -20,6 +21,6 @@ export type DBUser = {
   role: typeof user.$inferSelect.role;
   position: typeof user.$inferSelect.position;
   applications?: Application | null;
-  currentUniformSizes?: UniformSizes | null;
+  currentUniformSizes?: UniformSizes;
   assignedEquipment?: EquipmentAssignment | null;
 };

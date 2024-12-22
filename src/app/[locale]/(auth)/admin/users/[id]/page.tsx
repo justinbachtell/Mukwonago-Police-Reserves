@@ -1,18 +1,10 @@
-import { getUserById } from '@/actions/user';
-import { UserEditForm } from '@/components/admin/forms/userEditForm';
-import { notFound } from 'next/navigation';
+import { getCurrentUser } from '@/actions/user';
+import { redirect } from 'next/navigation';
 
-type UserEditPageProps = {
-  params: {
-    id: string;
-  };
-};
-
-export default async function UserEditPage({ params }: UserEditPageProps) {
-  const user = await getUserById(Number(params.id));
-
+export default async function UserEditPage() {
+  const user = await getCurrentUser();
   if (!user) {
-    notFound();
+    redirect('/sign-in');
   }
 
   return (
@@ -31,7 +23,7 @@ export default async function UserEditPage({ params }: UserEditPageProps) {
       </div>
 
       <div className="space-y-8">
-        <UserEditForm user={user} />
+        {/* <UserEditForm user={user} /> */}
       </div>
     </div>
   );

@@ -6,7 +6,6 @@ export type UniformSizes = {
   shirt_size: string;
   pant_size: string;
   shoe_size: string;
-  hat_size: string | null;
   notes: string | null;
   is_current: boolean;
   created_at: string;

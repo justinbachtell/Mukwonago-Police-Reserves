@@ -1,7 +1,7 @@
+import { getCurrentEmergencyContact } from '@/actions/emergencyContact';
 import { getCurrentUniformSizes } from '@/actions/uniformSizes';
 import { getCurrentUser } from '@/actions/user';
 import { ProfileForm } from '@/components/forms/profileForm';
-import { UniformSizesForm } from '@/components/forms/uniformSizesForm';
 import { redirect } from 'next/navigation';
 
 export default async function ProfilePage() {
@@ -11,12 +11,10 @@ export default async function ProfilePage() {
     redirect('/sign-in');
   }
 
-  /* if (user.position !== 'reserve') {
-    redirect('/user/dashboard');
-  } */
-
-  const currentSizes = await getCurrentUniformSizes(user.id);
-  // const currentAssignedEquipment = await getAssignedEquipment(user.id);
+  const [currentSizes, currentEmergencyContact] = await Promise.all([
+    getCurrentUniformSizes(user.id),
+    getCurrentEmergencyContact(user.id),
+  ]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -28,8 +26,11 @@ export default async function ProfilePage() {
           Update your personal information and preferences.
         </p>
       </div>
-      <ProfileForm user={user} />
-      <UniformSizesForm user={user} currentSizes={currentSizes} />
+      <ProfileForm
+        user={user}
+        currentSizes={currentSizes}
+        currentEmergencyContact={currentEmergencyContact}
+      />
     </div>
   );
 }
