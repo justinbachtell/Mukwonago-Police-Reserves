@@ -4,6 +4,8 @@ import { Briefcase, FileText, LayoutDashboard, LogOut, Settings, Shield, User } 
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export default async function UserLayout(props: {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
