@@ -15,7 +15,7 @@
     "check-types": "tsc --noEmit --pretty",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "commit": "cz",
+    "commit": "git-cz",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "dotenv -c production -- drizzle-kit migrate",
     "db:pull": "dotenv -c production -- drizzle-kit pull",
@@ -105,7 +105,11 @@
     "@percy/playwright": "^1.0.7",
     "@playwright/test": "^1.49.1",
     "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.0",
     "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.1",
+    "@semantic-release/npm": "^12.0.1",
+    "@semantic-release/release-notes-generator": "^14.0.2",
     "@storybook/addon-essentials": "^8.4.7",
     "@storybook/addon-interactions": "^8.4.7",
     "@storybook/addon-links": "^8.4.7",
@@ -167,12 +171,7 @@
       "main"
     ],
     "plugins": [
-      [
-        "@semantic-release/commit-analyzer",
-        {
-          "preset": "conventionalcommits"
-        }
-      ],
+      "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
       [
@@ -181,8 +180,17 @@
           "npmPublish": false
         }
       ],
-      "@semantic-release/git",
-      "@semantic-release/github"
+      "@semantic-release/github",
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "package.json",
+            "CHANGELOG.md"
+          ],
+          "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        }
+      ]
     ]
   }
 }
