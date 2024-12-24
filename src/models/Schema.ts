@@ -7,7 +7,7 @@ export const positionsEnum = pgEnum('position', ['officer', 'reserve', 'admin', 
 
 export const applicationStatusEnum = pgEnum('status', ['pending', 'approved', 'rejected']);
 
-export const equipmentConditionEnum = pgEnum('condition', ['new', 'excellent', 'good', 'fair', 'poor', 'unusable']);
+export const equipmentConditionEnum = pgEnum('condition', ['new', 'good', 'fair', 'poor', 'damaged/broken']);
 
 export const priorExperienceEnum = pgEnum('prior_experience', ['none', 'less_than_1_year', '1_to_3_years', 'more_than_3_years']);
 
@@ -122,10 +122,10 @@ export const userRelations = relations(user, ({ many, one }) => ({
     references: [uniformSizes.user_id],
     relationName: 'currentUniformSizes',
   }),
-  currentEquipmentAssignment: one(assignedEquipment, {
+  currentAssignedEquipment: one(assignedEquipment, {
     fields: [user.id],
     references: [assignedEquipment.user_id],
-    relationName: 'currentEquipmentAssignment',
+    relationName: 'currentAssignedEquipment',
   }),
 }));
 

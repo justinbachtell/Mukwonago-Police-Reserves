@@ -1,8 +1,10 @@
+import { getCurrentUser } from '@/actions/user';
 import { BaseTemplate } from '@/templates/BaseTemplate';
 import { SignOutButton } from '@clerk/nextjs';
-import { Briefcase, FileText, LayoutDashboard, LogOut, Settings, Shield, User } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Shield, User } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +19,15 @@ export default async function UserLayout(props: {
     namespace: 'UserLayout',
   });
 
+  // Get user roles
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return redirect('/sign-in');
+  }
+
+  const userRoles = user.role;
+
   return (
     <BaseTemplate
       leftNav={(
@@ -30,37 +41,21 @@ export default async function UserLayout(props: {
               <span>{t('dashboard_link')}</span>
             </Link>
           </li>
-          <li>
-            <Link
-              href="/user/applications"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-            >
-              <FileText className="size-4" />
-              <span>{t('applications_link')}</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/admin/users"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-            >
-              <Shield className="size-4" />
-              <span>{t('admin_link')}</span>
-            </Link>
-          </li>
+          {userRoles.includes('admin') && (
+            <li>
+              <Link
+                href="/admin/users"
+                className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                <Shield className="size-4" />
+                <span>{t('admin_link')}</span>
+              </Link>
+            </li>
+          )}
         </>
       )}
       rightNav={(
         <>
-          <li>
-            <Link
-              href="/user/equipment"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-            >
-              <Briefcase className="size-4" />
-              <span>{t('equipment_link')}</span>
-            </Link>
-          </li>
           <li>
             <Link
               href="/user/profile"

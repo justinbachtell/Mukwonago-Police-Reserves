@@ -1,5 +1,6 @@
 'use client';
 
+import type { AssignedEquipment } from '@/types/assignedEquipment';
 import type { EmergencyContact } from '@/types/emergencyContact';
 import type { SaveResult } from '@/types/forms';
 import type { UniformSizes } from '@/types/uniformSizes';
@@ -14,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { STATES } from '@/libs/States';
 import { useUser } from '@clerk/nextjs';
 import { useCallback, useRef, useState } from 'react';
+import { AssignedEquipmentForm } from './assignedEquipmentForm';
 import { EmergencyContactForm } from './emergencyContactForm';
 import { UniformSizesForm } from './uniformSizesForm';
 
@@ -21,6 +23,7 @@ type ProfileFormProps = {
   user: DBUser;
   currentSizes: UniformSizes;
   currentEmergencyContact: EmergencyContact;
+  currentEquipment: AssignedEquipment | null;
 };
 
 function formatPhoneNumber(value: string): string {
@@ -61,16 +64,19 @@ function isValidZipCode(zipCode: string): boolean {
 export function ProfileForm({
   user: initialUser,
   currentSizes: initialSizes,
-  currentEmergencyContact: initialEmergencyContact,
+  currentEmergencyContact,
+  currentEquipment,
 }: ProfileFormProps) {
   const { user: clerkUser, isLoaded } = useUser();
   const [isSaving, setIsSaving] = useState(false);
   const [user, setUser] = useState(initialUser);
   const [currentSizes, setCurrentSizes] = useState(initialSizes);
+  const [assignedEquipment, setAssignedEquipment] = useState(currentEquipment);
 
   // Create refs for child form save functions
   const uniformSizesSaveRef = useRef<(() => Promise<SaveResult>) | null>(null);
   const emergencyContactSaveRef = useRef<(() => Promise<SaveResult>) | null>(null);
+  const assignedEquipmentSaveRef = useRef<(() => Promise<SaveResult>) | null>(null);
 
   const [formData, setFormData] = useState({
     first_name: user.first_name || '',
@@ -168,32 +174,20 @@ export function ProfileForm({
     try {
       setIsSaving(true);
 
-      // Execute all save functions concurrently
-      const [mainResult, uniformResult, emergencyResult] = await Promise.all([
+      const results = await Promise.all([
         handleMainFormSave(),
-        uniformSizesSaveRef.current?.() || Promise.resolve({ success: true, message: 'No changes' }),
-        emergencyContactSaveRef.current?.() || Promise.resolve({ success: true, message: 'No changes' }),
+        uniformSizesSaveRef.current?.() ?? Promise.resolve({ success: true, message: 'No changes' }),
+        emergencyContactSaveRef.current?.() ?? Promise.resolve({ success: true, message: 'No changes' }),
+        assignedEquipmentSaveRef.current?.() ?? Promise.resolve({ success: true, message: 'No changes' }),
       ]);
 
-      // Check if any save operation failed
-      if (!mainResult.success || !uniformResult.success || !emergencyResult.success) {
+      const [mainResult, uniformResult, emergencyResult, equipmentResult] = results as SaveResult[];
+
+      if (!mainResult?.success || !uniformResult?.success || !emergencyResult?.success || !equipmentResult?.success) {
         toast({
           title: 'Failed to save changes',
-          description: mainResult.message || uniformResult.message || emergencyResult.message || 'An error occurred while saving.',
+          description: mainResult?.message || uniformResult?.message || emergencyResult?.message || equipmentResult?.message || 'An error occurred while saving.',
           variant: 'destructive',
-        });
-        return;
-      }
-
-      // If all succeeded but no changes were made
-      if (
-        mainResult.message?.includes('No changes')
-        && uniformResult.message?.includes('No changes')
-        && emergencyResult.message?.includes('No changes')
-      ) {
-        toast({
-          title: 'No changes detected',
-          description: 'Please make some changes before saving.',
         });
         return;
       }
@@ -204,6 +198,9 @@ export function ProfileForm({
       }
       if ('data' in uniformResult && uniformResult.data) {
         setCurrentSizes(uniformResult.data);
+      }
+      if ('data' in equipmentResult && equipmentResult.data) {
+        setAssignedEquipment(equipmentResult.data);
       }
 
       // Success toast if at least one form had changes
@@ -390,9 +387,18 @@ export function ProfileForm({
       {/* Emergency Contact */}
       <EmergencyContactForm
         user={user}
-        currentContact={initialEmergencyContact}
+        currentContact={currentEmergencyContact}
         saveRef={emergencyContactSaveRef}
       />
+
+      {/* Assigned Equipment */}
+      {assignedEquipment && (
+        <AssignedEquipmentForm
+          user={user}
+          currentEquipment={assignedEquipment}
+          saveRef={assignedEquipmentSaveRef}
+        />
+      )}
 
       {/* Save Button */}
       <div className="flex flex-col items-end justify-center md:col-span-12">

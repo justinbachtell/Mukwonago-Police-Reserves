@@ -1,6 +1,6 @@
 import type { user } from '@/models/Schema';
 import type { Application } from './application';
-import type { EquipmentAssignment } from './assignedEquipment';
+import type { AssignedEquipment } from './assignedEquipment';
 import type { UniformSizes } from './uniformSizes';
 
 export type DBUser = {
@@ -22,5 +22,5 @@ export type DBUser = {
   position: typeof user.$inferSelect.position;
   applications?: Application | null;
   currentUniformSizes?: UniformSizes;
-  assignedEquipment?: EquipmentAssignment | null;
+  assignedEquipment?: AssignedEquipment | null;
 };
