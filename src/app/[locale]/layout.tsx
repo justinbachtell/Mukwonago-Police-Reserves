@@ -86,7 +86,7 @@ export default async function RootLayout(props: {
 
   return (
     <html lang={locale}>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className="overflow-x-hidden">
         <NextIntlClientProvider
           locale={locale}
           messages={messages}

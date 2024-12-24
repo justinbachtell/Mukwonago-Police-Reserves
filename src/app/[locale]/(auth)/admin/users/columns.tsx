@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, Boxes, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
 type User = {
@@ -22,10 +22,16 @@ export const columns: ColumnDef<User>[] = [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="flex"
       >
         First Name
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="flex flex-col px-4">
+        <span className="truncate">{row.getValue('first_name')}</span>
+      </div>
     ),
   },
   {
@@ -34,10 +40,16 @@ export const columns: ColumnDef<User>[] = [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="flex"
       >
         Last Name
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="flex flex-col px-4">
+        <span className="truncate">{row.getValue('last_name')}</span>
+      </div>
     ),
   },
   {
@@ -46,10 +58,37 @@ export const columns: ColumnDef<User>[] = [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="flex"
       >
         Email
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="flex flex-col px-4">
+        <span className="truncate">{row.getValue('email')}</span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'position',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="flex"
+      >
+        Position
+        <ArrowUpDown className="ml-2 size-4" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="flex flex-col px-4">
+        <span className="truncate">
+          {(row.getValue('position')?.toString() ?? '').charAt(0).toUpperCase()
+          + (row.getValue('position')?.toString() ?? '').slice(1)}
+        </span>
+      </div>
     ),
   },
   {
@@ -58,48 +97,34 @@ export const columns: ColumnDef<User>[] = [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="flex"
       >
         Role
         <ArrowUpDown className="ml-2 size-4" />
       </Button>
     ),
-    cell: ({ row }) => <span className="capitalize">{row.getValue('role')}</span>,
-  },
-  {
-    accessorKey: 'position',
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      >
-        Position
-        <ArrowUpDown className="ml-2 size-4" />
-      </Button>
+    cell: ({ row }) => (
+      <div className="flex flex-col px-4">
+        <span className="truncate">
+          {(row.getValue('role')?.toString() ?? '').charAt(0).toUpperCase()
+          + (row.getValue('role')?.toString() ?? '').slice(1)}
+        </span>
+      </div>
     ),
-    cell: ({ row }) => <span className="capitalize">{row.getValue('position')}</span>,
-  },
-  {
-    accessorKey: 'created_at',
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      >
-        Created At
-        <ArrowUpDown className="ml-2 size-4" />
-      </Button>
-    ),
-    cell: ({ row }) => new Date(row.getValue('created_at')).toLocaleDateString(),
   },
   {
     id: 'actions',
     cell: ({ row }) => (
-      <div className="flex items-center gap-4">
-        <Button variant="outline" asChild>
-          <Link href={`/admin/users/${row.original.id}`}>Edit</Link>
+      <div className="flex items-center justify-end gap-2">
+        <Button variant="outline" size="icon" asChild className="size-8">
+          <Link href={`/admin/users/${row.original.id}`}>
+            <Pencil className="size-4" />
+          </Link>
         </Button>
-        <Button variant="outline" asChild>
-          <Link href={`/admin/users/${row.original.id}/equipment`}>Equipment</Link>
+        <Button variant="outline" size="icon" asChild className="size-8">
+          <Link href={`/admin/users/${row.original.id}/equipment`}>
+            <Boxes className="size-4" />
+          </Link>
         </Button>
       </div>
     ),
