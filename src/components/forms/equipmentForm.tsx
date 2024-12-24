@@ -1,8 +1,8 @@
 'use client';
 
-import type { EquipmentAssignment } from '@/types/assignedEquipment';
+import type { AssignedEquipment } from '@/types/assignedEquipment';
 import type { DBUser } from '@/types/user';
-import { updateEquipmentAssignment } from '@/actions/assignedEquipment';
+import { updateAssignedEquipment } from '@/actions/assignedEquipment';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 
 type EquipmentFormProps = {
   user: DBUser;
-  assignedEquipment?: EquipmentAssignment[] | null;
+  assignedEquipment?: AssignedEquipment[] | null;
 };
 
 export function EquipmentForm({ user: dbUser, assignedEquipment }: EquipmentFormProps) {
@@ -108,7 +108,7 @@ export function EquipmentForm({ user: dbUser, assignedEquipment }: EquipmentForm
             notes: equipmentData.notes,
           };
 
-      await updateEquipmentAssignment(dbUser.id, updateData);
+      await updateAssignedEquipment(dbUser.id, updateData);
 
       toast({
         title: 'Equipment updated successfully',

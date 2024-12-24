@@ -60,6 +60,7 @@ export async function getCurrentEmergencyContact(userId: number): Promise<Emerge
     const currentContact = await db.query.emergencyContact.findFirst({
       where: and(
         eq(emergencyContact.user_id, userId),
+        eq(emergencyContact.is_current, true),
       ),
     });
 

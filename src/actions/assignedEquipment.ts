@@ -5,7 +5,7 @@ import { db } from '@/libs/DB';
 import { assignedEquipment, equipment } from '@/models/Schema';
 import { and, eq } from 'drizzle-orm';
 
-export type CreateEquipmentAssignmentData = {
+export type CreateAssignedEquipmentData = {
   equipment_id: number;
   user_id: number;
   condition: typeof equipmentConditionEnum.enumValues[number];
@@ -14,7 +14,7 @@ export type CreateEquipmentAssignmentData = {
   expected_return_date?: string;
 };
 
-export async function createEquipmentAssignment(data: CreateEquipmentAssignmentData) {
+export async function createAssignedEquipment(data: CreateAssignedEquipmentData) {
   try {
     // Check if equipment is already assigned to the user
     const existingAssignment = await db
@@ -78,21 +78,44 @@ export async function getAssignedEquipment(userId: number) {
   }
 }
 
-export async function updateEquipmentAssignment(
+export async function updateAssignedEquipment(
   assignmentId: number,
-  data: Partial<Omit<CreateEquipmentAssignmentData, 'equipment_id' | 'user_id'>>,
+  data: Partial<Omit<CreateAssignedEquipmentData, 'equipment_id' | 'user_id'>>,
 ) {
   try {
-    await db
+    const [updated] = await db
       .update(assignedEquipment)
       .set({
-        ...data,
+        condition: data.condition,
+        notes: data.notes,
         updated_at: new Date().toISOString(),
       })
-      .where(eq(assignedEquipment.id, assignmentId));
+      .where(eq(assignedEquipment.id, assignmentId))
+      .returning();
+
+    if (!updated) {
+      throw new Error('Failed to update equipment assignment');
+    }
+
+    // Get equipment details
+    const [equipmentDetails] = await db
+      .select({
+        id: equipment.id,
+        name: equipment.name,
+        description: equipment.description,
+        serial_number: equipment.serial_number,
+        purchase_date: equipment.purchase_date,
+        notes: equipment.notes,
+        created_at: equipment.created_at,
+        updated_at: equipment.updated_at,
+      })
+      .from(equipment)
+      .where(eq(equipment.id, updated.equipment_id));
+
+    return { ...updated, equipment: equipmentDetails || null };
   } catch (error) {
     console.error('Error updating equipment assignment:', error);
-    throw new Error('Failed to update equipment assignment');
+    return null;
   }
 }
 
@@ -117,7 +140,7 @@ export async function returnEquipment(
   }
 }
 
-export async function deleteEquipmentAssignment(assignmentId: number) {
+export async function deleteAssignedEquipment(assignmentId: number) {
   try {
     await db.delete(assignedEquipment).where(eq(assignedEquipment.id, assignmentId));
   } catch (error) {
@@ -126,7 +149,7 @@ export async function deleteEquipmentAssignment(assignmentId: number) {
   }
 }
 
-export async function getCurrentEquipmentAssignment(userId: number) {
+export async function getCurrentAssignedEquipment(userId: number) {
   try {
     const assignments = await db
       .select({
