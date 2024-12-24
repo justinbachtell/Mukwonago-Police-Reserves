@@ -61,6 +61,15 @@
   "Settings": {
     "meta_title": "Settings"
   },
+  "AdminLayout": {
+    "dashboard_link": "Dashboard",
+    "profile_link": "Profile",
+    "equipment_link": "Equipment",
+    "applications_link": "Application",
+    "admin_link": "Admin",
+    "settings_link": "Settings",
+    "sign_out": "Sign out"
+  },
   "UserLayout": {
     "dashboard_link": "Dashboard",
     "profile_link": "Profile",

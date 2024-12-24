@@ -1,14 +1,14 @@
 import { getCurrentAssignedEquipment } from '@/actions/assignedEquipment';
 import { getCurrentEmergencyContact } from '@/actions/emergencyContact';
 import { getCurrentUniformSizes } from '@/actions/uniformSizes';
-import { getCurrentUser } from '@/actions/user';
+import { getCurrentUser, getUserApplications } from '@/actions/user';
 import { CompletedApplicationForm } from '@/components/forms/completedApplicationForm';
 import { ProfileForm } from '@/components/forms/profileForm';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -22,11 +22,14 @@ export default async function ProfilePage() {
     redirect('/sign-in');
   }
 
-  const [currentSizes, currentEmergencyContact, currentEquipment] = await Promise.all([
+  const [currentSizes, currentEmergencyContact, currentEquipment, applications] = await Promise.all([
     getCurrentUniformSizes(user.id),
     getCurrentEmergencyContact(user.id),
     getCurrentAssignedEquipment(user.id),
+    getUserApplications(),
   ]);
+
+  const latestApplication = applications[0];
 
   return (
     <div className="mx-auto px-4 py-8 lg:container">
@@ -40,30 +43,51 @@ export default async function ProfilePage() {
           </p>
         </div>
         <div className="flex flex-col">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="secondary" className="mt-6">
-                View Completed Application
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[800px]">
-              <DialogHeader>
-                <DialogTitle>
-                  Completed Application for
-                  {' '}
-                  {user.first_name}
-                  {' '}
-                  {user.last_name}
-                </DialogTitle>
-                <DialogDescription>
-                  Submitted on
-                  {' '}
-                  {new Date(user.created_at).toLocaleDateString()}
-                </DialogDescription>
-              </DialogHeader>
-              <CompletedApplicationForm user={user} />
-            </DialogContent>
-          </Dialog>
+          {latestApplication && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="secondary" className="mt-6">
+                  View Completed Application
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[800px]">
+                <DialogHeader className="flex flex-col gap-2">
+                  <DialogTitle>
+                    Completed Application for
+                    {' '}
+                    {user.first_name}
+                    {' '}
+                    {user.last_name}
+                  </DialogTitle>
+                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                    <span className="flex flex-col">
+                      Submitted on
+                      {' '}
+                      {latestApplication?.created_at ? new Date(latestApplication.created_at).toLocaleDateString() : 'N/A'}
+                    </span>
+                    <span className="flex flex-row items-center gap-2">
+                      Status:
+                      {' '}
+                      <Badge variant={
+                        latestApplication?.status === 'approved'
+                          ? 'success'
+                          : latestApplication?.status === 'rejected'
+                            ? 'destructive'
+                            : 'secondary'
+                      }
+                      >
+                        {latestApplication?.status.charAt(0).toUpperCase() + latestApplication?.status.slice(1) || 'Not submitted'}
+                      </Badge>
+                    </span>
+                  </div>
+                </DialogHeader>
+                <CompletedApplicationForm
+                  user={user}
+                  application={latestApplication}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
       <ProfileForm

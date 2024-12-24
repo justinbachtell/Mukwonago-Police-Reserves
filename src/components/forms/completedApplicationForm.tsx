@@ -1,5 +1,6 @@
 'use client';
 
+import type { Application } from '@/types/application';
 import type { DBUser } from '@/types/user';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,11 +16,12 @@ import { availabilityEnum, positionsEnum, priorExperienceEnum } from '@/models/S
 
 type Props = {
   user: DBUser;
+  application: Application;
 };
 
-export function CompletedApplicationForm({ user }: Props) {
+export function CompletedApplicationForm({ user, application }: Props) {
   return (
-    <form className="space-y-8">
+    <form className="space-y-6">
       <Card className="p-6">
         <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
           Personal Information
@@ -153,7 +155,7 @@ export function CompletedApplicationForm({ user }: Props) {
         <div className="grid gap-6">
           <div className="space-y-2">
             <Label htmlFor="prior_experience">Prior Law Enforcement Experience</Label>
-            <Select name="prior_experience" disabled>
+            <Select name="prior_experience" value={application.prior_experience} disabled>
               <SelectTrigger id="prior_experience">
                 <SelectValue placeholder="Select experience level" />
               </SelectTrigger>
@@ -169,7 +171,7 @@ export function CompletedApplicationForm({ user }: Props) {
 
           <div className="space-y-2">
             <Label htmlFor="availability">Availability</Label>
-            <Select name="availability" disabled>
+            <Select name="availability" value={application.availability} disabled>
               <SelectTrigger id="availability">
                 <SelectValue placeholder="Select availability" />
               </SelectTrigger>
@@ -185,7 +187,7 @@ export function CompletedApplicationForm({ user }: Props) {
 
           <div className="space-y-2">
             <Label htmlFor="position">Desired Position</Label>
-            <Select name="position" defaultValue="reserve" disabled>
+            <Select name="position" value={application.position} disabled>
               <SelectTrigger id="position">
                 <SelectValue placeholder="Select position" />
               </SelectTrigger>

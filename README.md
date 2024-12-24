@@ -12,14 +12,13 @@ The Village of Mukwonago Police Reserves program is a community-based organizati
 
 Developer experience first, extremely flexible code structure and only keep what you need:
 
-- ⚡ [Next.js](https://nextjs.org) with App Router support
-- 🔥 Type checking [TypeScript](https://www.typescriptlang.org)
-- 💎 Integrate with [Tailwind CSS](https://tailwindcss.com)
+- ⚡ Uses [Next.js](https://nextjs.org) with App Router
+- 🔥 Type checking with [TypeScript](https://www.typescriptlang.org)
+- 💎 Integrated with [Tailwind CSS](https://tailwindcss.com)
 - ✅ Strict Mode for TypeScript and React 19
-- 🔒 Authentication with [Clerk](https://clerk.com): Sign up, Sign in, Sign out, Forgot password, Reset password, and more.
-- 👤 Passwordless Authentication with Magic Links, Multi-Factor Auth (MFA), Social Auth (Google, Facebook, Twitter, GitHub, Apple, and more), Passwordless login with Passkeys, User Impersonation
+- 🔒 Authentication with [Clerk](https://clerk.com).
 - 📦 Type-safe ORM with DrizzleORM, compatible with PostgreSQL, SQLite, and MySQL
-- 💽 Offline and local development database with PGlite
+- 💽 Offline and local development database with Supabase
 - 🌐 Multi-language (i18n) with [next-intl](https://next-intl-docs.vercel.app/) and [Crowdin](https://l.crowdin.com/next-js)
 - ♻️ Type-safe environment variables with T3 Env
 - ⌨️ Form handling with React Hook Form
@@ -47,14 +46,6 @@ Developer experience first, extremely flexible code structure and only keep what
 - 🗺️ Sitemap.xml and robots.txt
 - ⌘ Database exploration with Drizzle Studio and CLI migration tool with Drizzle Kit
 - ⚙️ [Bundler Analyzer](https://www.npmjs.com/package/@next/bundle-analyzer)
-- 🌈 Include a FREE minimalist theme
-- 💯 Maximize lighthouse score
-
-Built-in feature from Next.js:
-
-- ☕ Minify HTML & CSS
-- 💨 Live reload
-- ✅ Cache busting
 
 ### Requirements
 

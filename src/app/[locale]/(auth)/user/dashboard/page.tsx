@@ -1,7 +1,8 @@
 import { getUserApplications } from '@/actions/application';
 import { getCurrentUser } from '@/actions/user';
+import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
@@ -28,160 +29,92 @@ export default async function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-          Welcome,
+      <div className="mb-8 space-y-2">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+          Welcome back,
           {' '}
           {user.first_name}
           !
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">
-          View your application status and details.
+        <p className="text-base text-gray-600 dark:text-gray-300 sm:text-lg">
+          Track your application progress below
         </p>
       </div>
 
       {latestApplication
         ? (
-            <div className="space-y-8">
-              <Card className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900">
-                    {latestApplication.status === 'pending' && (
-                      <Clock className="size-6 text-blue-700 dark:text-blue-400" />
-                    )}
-                    {latestApplication.status === 'approved' && (
-                      <CheckCircle className="size-6 text-green-700 dark:text-green-400" />
-                    )}
-                    {latestApplication.status === 'rejected' && (
-                      <XCircle className="size-6 text-red-700 dark:text-red-400" />
-                    )}
-                  </div>
-                  <div>
-                    <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-                      Application Status
+            <Card className="overflow-hidden">
+              <div className="flex flex-col gap-6 p-4 sm:p-6">
+                <div className="space-y-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+                      Reserve Officer Application Status
                     </h2>
-                    <p className="capitalize text-gray-600 dark:text-gray-300">
-                      {latestApplication.status}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      Submitted on
-                      {' '}
-                      {new Date(latestApplication.created_at).toLocaleDateString()}
-                    </p>
+                    <Badge
+                      className="w-fit text-sm font-medium"
+                      variant={
+                        latestApplication.status === 'approved'
+                          ? 'success'
+                          : latestApplication.status === 'rejected'
+                            ? 'destructive'
+                            : 'secondary'
+                      }
+                    >
+                      {latestApplication.status.charAt(0).toUpperCase()
+                      + latestApplication.status.slice(1)}
+                    </Badge>
                   </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Submitted on
+                    {' '}
+                    <span className="font-medium">
+                      {new Date(latestApplication.created_at).toLocaleDateString(
+                        undefined,
+                        {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        },
+                      )}
+                    </span>
+                  </p>
                 </div>
-              </Card>
-
-              <Card className="p-6">
-                <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-                  Application Details
-                </h2>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div>
-                    <h3 className="mb-2 font-semibold text-gray-900 dark:text-white">
-                      Personal Information
-                    </h3>
-                    <dl className="space-y-2">
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">Name</dt>
-                        <dd className="text-gray-900 dark:text-white">
-                          {latestApplication.first_name}
-                          {' '}
-                          {latestApplication.last_name}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">Email</dt>
-                        <dd className="text-gray-900 dark:text-white">{latestApplication.email}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">Phone</dt>
-                        <dd className="text-gray-900 dark:text-white">{latestApplication.phone}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">Driver's License</dt>
-                        <dd className="text-gray-900 dark:text-white">{latestApplication.driver_license}</dd>
-                      </div>
-                    </dl>
-                  </div>
-
-                  <div>
-                    <h3 className="mb-2 font-semibold text-gray-900 dark:text-white">
-                      Address Information
-                    </h3>
-                    <dl className="space-y-2">
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">Street Address</dt>
-                        <dd className="text-gray-900 dark:text-white">{latestApplication.street_address}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">City</dt>
-                        <dd className="text-gray-900 dark:text-white">{latestApplication.city}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">State</dt>
-                        <dd className="text-gray-900 dark:text-white">{latestApplication.state}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">ZIP Code</dt>
-                        <dd className="text-gray-900 dark:text-white">{latestApplication.zip_code}</dd>
-                      </div>
-                    </dl>
-                  </div>
-
-                  <div>
-                    <h3 className="mb-2 font-semibold text-gray-900 dark:text-white">
-                      Additional Information
-                    </h3>
-                    <dl className="space-y-2">
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">Prior Experience</dt>
-                        <dd className="capitalize text-gray-900 dark:text-white">
-                          {latestApplication.prior_experience.replace(/_/g, ' ')}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">Availability</dt>
-                        <dd className="capitalize text-gray-900 dark:text-white">
-                          {latestApplication.availability}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm text-gray-500 dark:text-gray-400">Desired Position</dt>
-                        <dd className="capitalize text-gray-900 dark:text-white">
-                          {latestApplication.position}
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-                </div>
-              </Card>
-            </div>
+              </div>
+            </Card>
           )
         : (
-            <div className="space-y-8">
-              <Card className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="rounded-full bg-yellow-100 p-3 dark:bg-yellow-900">
-                    <Clock className="size-6 text-yellow-700 dark:text-yellow-400" />
-                  </div>
-                  <div>
-                    <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-                      No Application Found
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      You haven't submitted an application yet.
-                    </p>
-                    <Link
-                      href="/user/application"
-                      className="mt-4 inline-block rounded-lg bg-blue-700 px-4 py-2 text-white hover:bg-blue-800"
-                    >
-                      Apply Now
-                    </Link>
-                  </div>
+            <Card className="overflow-hidden border-2 border-gray-100 p-6 shadow-lg dark:border-gray-800 sm:p-8">
+              <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
+                <div className="rounded-full bg-yellow-50 p-3 ring-4 ring-yellow-50/30 dark:bg-yellow-900/30 dark:ring-yellow-900/20 sm:p-4">
+                  <Clock className="size-6 text-yellow-600 dark:text-yellow-400 sm:size-8" />
                 </div>
-              </Card>
-            </div>
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
+                    Start Your Journey
+                  </h2>
+                  <p className="text-base text-gray-600 dark:text-gray-300 sm:text-lg">
+                    You haven't submitted an application yet.
+                  </p>
+                  <Link
+                    href="/user/application"
+                    className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:hover:bg-blue-600 sm:px-6 sm:py-3 sm:text-base"
+                  >
+                    Apply Now
+                    <svg
+                      className="ml-2 size-4 sm:size-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </Card>
           )}
     </div>
   );
