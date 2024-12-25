@@ -3,10 +3,12 @@ import { Boxes, Users } from 'lucide-react';
 
 export default async function AdminDashboardPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground">
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
+          Admin Dashboard
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300">
           Overview of your organization's statistics and management tools.
         </p>
       </div>

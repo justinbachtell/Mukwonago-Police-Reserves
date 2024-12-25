@@ -36,4 +36,32 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        run: npx semantic-release
+        run: |
+          # Check if release branch exists and delete it if it does
+          git fetch origin
+          if git show-ref --verify --quiet refs/remotes/origin/release; then
+            git branch -D release || true
+            git push origin --delete release || true
+          fi
+
+          # Create a new branch for the release
+          git checkout -b release
+
+          # Run semantic release
+          npx semantic-release
+
+          # Create PR using GitHub CLI
+          gh pr create \
+            --title "Release $(date +%Y-%m-%d)" \
+            --body "Automated release PR" \
+            --base main \
+            --label "release"
+
+      - name: Install GitHub CLI
+        run: |
+          type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+          && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+          && sudo apt update \
+          && sudo apt install gh -y
