@@ -13,6 +13,7 @@ type User = {
   role: string;
   position: string;
   created_at: string;
+  application_status: string | null;
 };
 
 export const columns: ColumnDef<User>[] = [
@@ -71,6 +72,24 @@ export const columns: ColumnDef<User>[] = [
     ),
   },
   {
+    accessorKey: 'phone',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="flex"
+      >
+        Phone
+        <ArrowUpDown className="ml-2 size-4" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="flex flex-col px-4">
+        <span className="truncate">{row.getValue('phone')}</span>
+      </div>
+    ),
+  },
+  {
     accessorKey: 'position',
     header: ({ column }) => (
       <Button
@@ -108,6 +127,46 @@ export const columns: ColumnDef<User>[] = [
         <span className="truncate">
           {(row.getValue('role')?.toString() ?? '').charAt(0).toUpperCase()
           + (row.getValue('role')?.toString() ?? '').slice(1)}
+        </span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'application_status',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="flex"
+      >
+        Application Status
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="flex flex-col px-4">
+        <span className="truncate">
+          {(row.getValue('application_status')?.toString() ?? '').charAt(0).toUpperCase()
+          + (row.getValue('application_status')?.toString() ?? '').slice(1)}
+        </span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'created_at',
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        className="flex"
+      >
+        Created On
+        <ArrowUpDown className="ml-2 size-4" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="flex flex-col px-4">
+        <span className="truncate">
+          {new Date(row.getValue('created_at')).toLocaleDateString()}
         </span>
       </div>
     ),

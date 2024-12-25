@@ -65,6 +65,8 @@ export async function getAssignedEquipment(userId: number) {
           serial_number: equipment.serial_number,
           purchase_date: equipment.purchase_date,
           notes: equipment.notes,
+          created_at: equipment.created_at,
+          updated_at: equipment.updated_at,
         },
       })
       .from(assignedEquipment)

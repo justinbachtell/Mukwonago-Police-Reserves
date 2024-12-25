@@ -33,6 +33,16 @@ export async function createApplication(data: CreateApplicationData) {
   }
 }
 
+export async function getAllApplications() {
+  try {
+    const applications = await db.select().from(application);
+    return applications;
+  } catch (error) {
+    console.error('Error getting all applications:', error);
+    throw new Error('Failed to get all applications');
+  }
+}
+
 export async function getUserApplications(userId: number) {
   try {
     const userApplications = await db

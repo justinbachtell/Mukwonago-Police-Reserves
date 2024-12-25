@@ -1,8 +1,8 @@
 'use server';
 
 import { db } from '@/libs/DB';
-import { equipment } from '@/models/Schema';
-import { eq } from 'drizzle-orm';
+import { assignedEquipment, equipment } from '@/models/Schema';
+import { eq, isNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 export async function getAllEquipment() {
@@ -12,6 +12,34 @@ export async function getAllEquipment() {
   } catch (error) {
     console.error('Error fetching equipment:', error);
     throw new Error('Failed to fetch equipment');
+  }
+}
+
+export async function getAvailableEquipment() {
+  try {
+    // Get all equipment that is not currently assigned
+    const availableEquipment = await db
+      .select({
+        id: equipment.id,
+        name: equipment.name,
+        description: equipment.description,
+        serial_number: equipment.serial_number,
+        purchase_date: equipment.purchase_date,
+        notes: equipment.notes,
+        created_at: equipment.created_at,
+        updated_at: equipment.updated_at,
+      })
+      .from(equipment)
+      .leftJoin(
+        assignedEquipment,
+        eq(equipment.id, assignedEquipment.equipment_id),
+      )
+      .where(isNull(assignedEquipment.id));
+
+    return availableEquipment;
+  } catch (error) {
+    console.error('Error fetching available equipment:', error);
+    throw new Error('Failed to fetch available equipment');
   }
 }
 

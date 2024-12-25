@@ -157,7 +157,7 @@ export function UserEditForm({ user }: UserEditFormProps) {
               <SelectContent>
                 {rolesEnum.enumValues.map(role => (
                   <SelectItem key={role} value={role}>
-                    {role}
+                    {role.charAt(0).toUpperCase() + role.slice(1)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -176,7 +176,7 @@ export function UserEditForm({ user }: UserEditFormProps) {
               <SelectContent>
                 {positionsEnum.enumValues.map(position => (
                   <SelectItem key={position} value={position}>
-                    {position}
+                    {position.charAt(0).toUpperCase() + position.slice(1)}
                   </SelectItem>
                 ))}
               </SelectContent>
