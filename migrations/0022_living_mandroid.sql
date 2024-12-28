@@ -1,0 +1,1 @@
+ALTER TABLE "equipment" ADD COLUMN "is_obsolete" boolean DEFAULT false NOT NULL;

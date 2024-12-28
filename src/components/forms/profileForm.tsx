@@ -395,7 +395,6 @@ export function ProfileForm({
       {assignedEquipment && (
         <AssignedEquipmentForm
           user={user}
-          currentEquipment={assignedEquipment}
           saveRef={assignedEquipmentSaveRef}
         />
       )}

@@ -68,8 +68,8 @@ export function EmergencyContactForm({
     city: currentContact?.city || null,
     state: currentContact?.state || null,
     zip_code: currentContact?.zip_code || null,
-    created_at: currentContact?.created_at || new Date().toISOString(),
-    updated_at: currentContact?.updated_at || new Date().toISOString(),
+    created_at: currentContact?.created_at || new Date(),
+    updated_at: currentContact?.updated_at || new Date(),
     user: dbUser,
   });
 

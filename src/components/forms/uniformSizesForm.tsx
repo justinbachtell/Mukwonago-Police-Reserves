@@ -75,8 +75,8 @@ export function UniformSizesForm({ user: dbUser, currentSizes, saveRef }: Unifor
     shoe_size: currentSizes?.shoe_size || '',
     notes: currentSizes?.notes || '',
     is_current: true,
-    created_at: currentSizes?.created_at || new Date().toISOString(),
-    updated_at: currentSizes?.updated_at || new Date().toISOString(),
+    created_at: currentSizes?.created_at || new Date(),
+    updated_at: currentSizes?.updated_at || new Date(),
     user: dbUser,
   });
 
@@ -91,8 +91,8 @@ export function UniformSizesForm({ user: dbUser, currentSizes, saveRef }: Unifor
         shoe_size: currentSizes.shoe_size,
         notes: currentSizes.notes || '',
         is_current: true,
-        created_at: currentSizes.created_at || new Date().toISOString(),
-        updated_at: currentSizes.updated_at || new Date().toISOString(),
+        created_at: currentSizes.created_at || new Date(),
+        updated_at: currentSizes.updated_at || new Date(),
         user: dbUser,
       });
     }

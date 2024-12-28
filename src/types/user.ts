@@ -15,8 +15,8 @@ export type DBUser = {
   city: string | null;
   state: string | null;
   zip_code: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at: Date;
+  updated_at: Date;
   clerk_id: string;
   role: typeof user.$inferSelect.role;
   position: typeof user.$inferSelect.position;

@@ -1,15 +1,36 @@
-import type { Equipment } from './equipment';
+import type { equipmentConditionEnum } from '@/models/Schema';
+
+export type CreateAssignedEquipmentData = {
+  equipment_id: number;
+  user_id: number;
+  condition: typeof equipmentConditionEnum.enumValues[number];
+  notes?: string;
+  checked_out_at?: string;
+  expected_return_date?: string;
+};
 
 export type AssignedEquipment = {
   id: number;
-  equipment_id: number;
   user_id: number;
-  condition: 'new' | 'good' | 'fair' | 'poor' | 'damaged/broken';
+  equipment_id: number;
+  condition: typeof equipmentConditionEnum.enumValues[number];
+  checked_out_at: Date;
+  checked_in_at: Date | null;
+  expected_return_date: Date | null;
   notes: string | null;
-  checked_out_at: string;
-  checked_in_at: string | null;
-  expected_return_date: string | null;
-  created_at: string;
-  updated_at: string;
-  equipment: Equipment | null;
+  created_at: Date;
+  updated_at: Date;
+  equipment?: {
+    id: number;
+    name: string;
+    description: string | null;
+    serial_number: string | null;
+    purchase_date: Date | null;
+    notes: string | null;
+    is_assigned: boolean;
+    assigned_to: number | null;
+    created_at: Date;
+    updated_at: Date;
+    is_obsolete: boolean;
+  } | null;
 };

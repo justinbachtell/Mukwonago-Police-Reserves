@@ -8,7 +8,7 @@ export type UniformSizes = {
   shoe_size: string;
   notes: string | null;
   is_current: boolean;
-  created_at: string;
-  updated_at: string;
+  created_at: Date;
+  updated_at: Date;
   user?: DBUser;
 };

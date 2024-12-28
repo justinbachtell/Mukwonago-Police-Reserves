@@ -1,6 +1,7 @@
 'use server';
 
 import type { availabilityEnum, positionsEnum, priorExperienceEnum } from '@/models/Schema';
+import { toISOString } from '@/lib/utils';
 import { db } from '@/libs/DB';
 import { application } from '@/models/Schema';
 import { eq } from 'drizzle-orm';
@@ -23,9 +24,12 @@ export type CreateApplicationData = {
 
 export async function createApplication(data: CreateApplicationData) {
   try {
+    const now = toISOString(new Date());
     await db.insert(application).values({
       ...data,
       status: 'pending',
+      created_at: now,
+      updated_at: now,
     });
   } catch (error) {
     console.error('Error creating application:', error);

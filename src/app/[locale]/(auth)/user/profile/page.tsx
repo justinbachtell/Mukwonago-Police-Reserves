@@ -22,12 +22,31 @@ export default async function ProfilePage() {
     redirect('/sign-in');
   }
 
-  const [currentSizes, currentEmergencyContact, currentEquipment, applications] = await Promise.all([
+  const [currentSizes, currentEmergencyContact, currentEquipmentData, applications] = await Promise.all([
     getCurrentUniformSizes(user.id),
     getCurrentEmergencyContact(user.id),
     getCurrentAssignedEquipment(user.id),
     getUserApplications(),
   ]);
+
+  const currentEquipment = currentEquipmentData
+    ? {
+        ...currentEquipmentData,
+        checked_out_at: new Date(currentEquipmentData.checked_out_at),
+        checked_in_at: currentEquipmentData.checked_in_at ? new Date(currentEquipmentData.checked_in_at) : null,
+        expected_return_date: currentEquipmentData.expected_return_date ? new Date(currentEquipmentData.expected_return_date) : null,
+        created_at: new Date(currentEquipmentData.created_at),
+        updated_at: new Date(currentEquipmentData.updated_at),
+        equipment: currentEquipmentData.equipment
+          ? {
+              ...currentEquipmentData.equipment,
+              purchase_date: currentEquipmentData.equipment.purchase_date ? new Date(currentEquipmentData.equipment.purchase_date) : null,
+              created_at: new Date(currentEquipmentData.equipment.created_at),
+              updated_at: new Date(currentEquipmentData.equipment.updated_at),
+            }
+          : null,
+      }
+    : null;
 
   const latestApplication = applications[0];
 

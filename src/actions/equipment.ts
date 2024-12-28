@@ -1,14 +1,20 @@
 'use server';
 
+import { toISOString } from '@/lib/utils';
 import { db } from '@/libs/DB';
 import { assignedEquipment, equipment } from '@/models/Schema';
-import { eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, not, or } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 export async function getAllEquipment() {
   try {
     const equipmentList = await db.select().from(equipment);
-    return equipmentList;
+    return equipmentList.map(item => ({
+      ...item,
+      purchase_date: item.purchase_date ? item.purchase_date : null,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    }));
   } catch (error) {
     console.error('Error fetching equipment:', error);
     throw new Error('Failed to fetch equipment');
@@ -17,7 +23,6 @@ export async function getAllEquipment() {
 
 export async function getAvailableEquipment() {
   try {
-    // Get all equipment that is not currently assigned
     const availableEquipment = await db
       .select({
         id: equipment.id,
@@ -26,6 +31,9 @@ export async function getAvailableEquipment() {
         serial_number: equipment.serial_number,
         purchase_date: equipment.purchase_date,
         notes: equipment.notes,
+        is_assigned: equipment.is_assigned,
+        assigned_to: equipment.assigned_to,
+        is_obsolete: equipment.is_obsolete,
         created_at: equipment.created_at,
         updated_at: equipment.updated_at,
       })
@@ -34,9 +42,22 @@ export async function getAvailableEquipment() {
         assignedEquipment,
         eq(equipment.id, assignedEquipment.equipment_id),
       )
-      .where(isNull(assignedEquipment.id));
+      .where(
+        and(
+          eq(equipment.is_obsolete, false),
+          or(
+            isNull(assignedEquipment.id),
+            not(isNull(assignedEquipment.checked_in_at)),
+          ),
+        ),
+      );
 
-    return availableEquipment;
+    return availableEquipment.map(item => ({
+      ...item,
+      purchase_date: item.purchase_date ? item.purchase_date : null,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    }));
   } catch (error) {
     console.error('Error fetching available equipment:', error);
     throw new Error('Failed to fetch available equipment');
@@ -45,30 +66,53 @@ export async function getAvailableEquipment() {
 
 export async function createEquipment(data: {
   name: string;
-  description: string;
-  serial_number: string;
-  purchase_date: string;
-  notes: string;
+  description?: string;
+  serial_number?: string;
+  purchase_date?: string;
+  notes?: string;
 }) {
   try {
+    const now = toISOString(new Date());
+
     const [newEquipment] = await db
       .insert(equipment)
       .values({
         name: data.name,
         description: data.description || null,
         serial_number: data.serial_number || null,
-        purchase_date: data.purchase_date ? new Date(data.purchase_date).toISOString() : null,
+        purchase_date: data.purchase_date || null,
         notes: data.notes || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
+        is_assigned: false,
+        is_obsolete: false,
       })
       .returning();
 
+    if (!newEquipment) {
+      throw new Error('Failed to create equipment');
+    }
+
     revalidatePath('/admin/equipment');
-    return newEquipment;
+    return {
+      ...newEquipment,
+      purchase_date: newEquipment.purchase_date ? newEquipment.purchase_date : null,
+      created_at: newEquipment.created_at,
+      updated_at: newEquipment.updated_at,
+    };
   } catch (error) {
     console.error('Error creating equipment:', error);
     throw new Error('Failed to create equipment');
+  }
+}
+
+export async function markAsObsolete(id: number) {
+  try {
+    await db.update(equipment).set({ is_obsolete: true }).where(eq(equipment.id, id));
+    revalidatePath('/admin/equipment');
+  } catch (error) {
+    console.error('Error marking equipment as obsolete:', error);
+    throw new Error('Failed to mark equipment as obsolete');
   }
 }
 
@@ -85,7 +129,16 @@ export async function deleteEquipment(id: number) {
 export async function getEquipment(id: number) {
   try {
     const [equipmentItem] = await db.select().from(equipment).where(eq(equipment.id, id));
-    return equipmentItem;
+    if (!equipmentItem) {
+      return null;
+    }
+
+    return {
+      ...equipmentItem,
+      purchase_date: equipmentItem.purchase_date ? equipmentItem.purchase_date : null,
+      created_at: equipmentItem.created_at,
+      updated_at: equipmentItem.updated_at,
+    };
   } catch (error) {
     console.error('Error fetching equipment:', error);
     throw new Error('Failed to fetch equipment');

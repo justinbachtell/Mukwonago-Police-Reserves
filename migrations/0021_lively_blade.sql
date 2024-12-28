@@ -1,0 +1,1 @@
+ALTER TABLE "assigned_equipment" DROP COLUMN "returned_at";

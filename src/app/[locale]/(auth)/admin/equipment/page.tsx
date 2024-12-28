@@ -1,15 +1,38 @@
-import { getCurrentUser } from '@/actions/user';
+import type { EquipmentWithUser } from './columns';
+import { getAllEquipment } from '@/actions/equipment';
+import { getAllUsers, getCurrentUser } from '@/actions/user';
+import { EquipmentForm } from '@/components/admin/forms/equipmentForm';
+import { Card } from '@/components/ui/card';
+import { DataTable } from '@/components/ui/data-table';
 import { redirect } from 'next/navigation';
+import { columns } from './columns';
 
 export default async function EquipmentManagementPage() {
-  // const equipment = await getAllEquipment();
-  const user = await getCurrentUser();
+  const [equipmentData, currentUser, users] = await Promise.all([
+    getAllEquipment(),
+    getCurrentUser(),
+    getAllUsers(),
+  ]);
 
-  if (!user) {
+  if (!currentUser) {
     redirect('/sign-in');
   }
 
-  // const assignedEquipment = await getAssignedEquipment(user.id);
+  if (currentUser.role !== 'admin') {
+    redirect('/dashboard');
+  }
+
+  const equipment: EquipmentWithUser[] = equipmentData.map((item) => {
+    const assignedUser = users.find(u => u.id === item.assigned_to);
+    return {
+      ...item,
+      purchase_date: item.purchase_date ? new Date(item.purchase_date) : null,
+      created_at: new Date(item.created_at),
+      updated_at: new Date(item.updated_at),
+      assignedUserName: assignedUser ? `${assignedUser.first_name} ${assignedUser.last_name}` : null,
+      condition: 'good',
+    };
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -22,19 +45,23 @@ export default async function EquipmentManagementPage() {
         </p>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2">
-        {/* {assignedEquipment.length > 0
-          ? (
-              <EquipmentForm />
-            )
-          : (
-              <div>
-                <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
-                  Equipment List
-                </h2>
-                <DataTable columns={columns} data={equipment} />
-              </div>
-            )} */}
+      <div className="grid gap-8 lg:grid-cols-12">
+        <Card className="p-6 lg:col-span-3">
+          <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+            Create New Equipment
+          </h2>
+          <EquipmentForm />
+        </Card>
+
+        <Card className="p-6 lg:col-span-9">
+          <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+            Equipment List
+          </h2>
+          <DataTable
+            columns={columns}
+            data={equipment}
+          />
+        </Card>
       </div>
     </div>
   );

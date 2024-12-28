@@ -4,19 +4,26 @@ import { getAllUsers } from '@/actions/user';
 import { DataTable } from '@/components/ui/data-table';
 import { columns } from './columns';
 
-type UserWithApplication = DBUser & {
+type UserWithApplication = Omit<DBUser, 'created_at' | 'updated_at'> & {
   application_status: 'pending' | 'approved' | 'rejected' | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export default async function UserManagementPage() {
   const users = await getAllUsers();
   const applications = await getAllApplications();
 
-  const usersWithApplications = users.map((user) => {
+  const usersWithApplications: UserWithApplication[] = users.map((user) => {
     const application = applications.find(
       application => application.user_id === user.id,
     );
-    return { ...user, application_status: application?.status };
+    return {
+      ...user,
+      application_status: application?.status ?? null,
+      created_at: user.created_at.toISOString(),
+      updated_at: user.updated_at.toISOString(),
+    };
   });
 
   return (
@@ -31,7 +38,7 @@ export default async function UserManagementPage() {
       </div>
 
       <div className="w-full space-y-4 overflow-x-auto">
-        <DataTable columns={columns} data={usersWithApplications as UserWithApplication[]} />
+        <DataTable columns={columns} data={usersWithApplications} />
       </div>
     </div>
   );

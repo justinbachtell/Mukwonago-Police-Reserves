@@ -2,6 +2,7 @@
 
 import type { UniformSizes } from '@/types/uniformSizes';
 import type { DBUser } from '@/types/user';
+import { toISOString } from '@/lib/utils';
 import { db } from '@/libs/DB';
 import { uniformSizes } from '@/models/Schema';
 import { and, eq } from 'drizzle-orm';
@@ -9,7 +10,11 @@ import { getCurrentUser } from './user';
 
 export async function getUniformSizes(user_id: number) {
   const sizes = await db.select().from(uniformSizes).where(eq(uniformSizes.user_id, user_id));
-  return sizes;
+  return sizes.map(size => ({
+    ...size,
+    created_at: new Date(size.created_at),
+    updated_at: new Date(size.updated_at),
+  }));
 }
 
 export async function updateUniformSizes(user_id: number, data: UniformSizes) {
@@ -20,22 +25,32 @@ export async function updateUniformSizes(user_id: number, data: UniformSizes) {
       .set({ is_current: false })
       .where(eq(uniformSizes.user_id, user_id));
 
+    const now = toISOString(new Date());
+
     // Then insert new current sizes
     const [updatedUniformSizes] = await db
       .insert(uniformSizes)
       .values({
-        user_id: data.user_id,
-        shirt_size: data.shirt_size || '', // Ensure non-null values
+        user_id,
+        shirt_size: data.shirt_size || '',
         pant_size: data.pant_size || '',
         shoe_size: data.shoe_size || '',
         notes: data.notes || '',
         is_current: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
       })
       .returning();
 
-    return updatedUniformSizes;
+    if (!updatedUniformSizes) {
+      throw new Error('Failed to update uniform sizes');
+    }
+
+    return {
+      ...updatedUniformSizes,
+      created_at: new Date(updatedUniformSizes.created_at),
+      updated_at: new Date(updatedUniformSizes.updated_at),
+    };
   } catch (error) {
     console.error('Error updating uniform sizes:', error);
     throw new Error('Failed to update uniform sizes');
@@ -73,8 +88,8 @@ export async function getCurrentUniformSizes(userId: number): Promise<UniformSiz
       shoe_size: currentSizes.shoe_size,
       notes: currentSizes.notes || '',
       is_current: currentSizes.is_current,
-      created_at: currentSizes.created_at,
-      updated_at: currentSizes.updated_at,
+      created_at: new Date(currentSizes.created_at),
+      updated_at: new Date(currentSizes.updated_at),
       user,
     };
 
@@ -87,20 +102,20 @@ export async function getCurrentUniformSizes(userId: number): Promise<UniformSiz
 
 async function createDefaultUniformSizes(dbUser: DBUser): Promise<UniformSizes> {
   try {
-    const defaultSizes = {
-      user_id: dbUser.id,
-      shirt_size: '',
-      pant_size: '',
-      shoe_size: '',
-      notes: '',
-      is_current: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    const now = toISOString(new Date());
 
     const [newSizes] = await db
       .insert(uniformSizes)
-      .values(defaultSizes)
+      .values({
+        user_id: dbUser.id,
+        shirt_size: '',
+        pant_size: '',
+        shoe_size: '',
+        notes: '',
+        is_current: true,
+        created_at: now,
+        updated_at: now,
+      })
       .returning();
 
     if (!newSizes) {
@@ -115,8 +130,8 @@ async function createDefaultUniformSizes(dbUser: DBUser): Promise<UniformSizes> 
       shoe_size: newSizes.shoe_size,
       notes: newSizes.notes || '',
       is_current: newSizes.is_current,
-      created_at: newSizes.created_at,
-      updated_at: newSizes.updated_at,
+      created_at: new Date(newSizes.created_at),
+      updated_at: new Date(newSizes.updated_at),
       user: dbUser,
     };
   } catch (error) {

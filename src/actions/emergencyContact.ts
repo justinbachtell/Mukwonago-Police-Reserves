@@ -2,14 +2,19 @@
 
 import type { EmergencyContact } from '@/types/emergencyContact';
 import type { DBUser } from '@/types/user';
+import { toISOString } from '@/lib/utils';
 import { db } from '@/libs/DB';
 import { emergencyContact } from '@/models/Schema';
 import { and, eq } from 'drizzle-orm';
 import { getCurrentUser } from './user';
 
 export async function getEmergencyContact(user_id: number) {
-  const contact = await db.select().from(emergencyContact).where(eq(emergencyContact.user_id, user_id));
-  return contact;
+  const contacts = await db.select().from(emergencyContact).where(eq(emergencyContact.user_id, user_id));
+  return contacts.map(contact => ({
+    ...contact,
+    created_at: new Date(contact.created_at),
+    updated_at: new Date(contact.updated_at),
+  }));
 }
 
 export async function updateEmergencyContact(user_id: number, data: EmergencyContact) {
@@ -20,6 +25,7 @@ export async function updateEmergencyContact(user_id: number, data: EmergencyCon
       .set({ is_current: false })
       .where(eq(emergencyContact.user_id, user_id));
 
+    const now = toISOString(new Date());
     // Insert new emergency contact
     const [updatedEmergencyContact] = await db
       .insert(emergencyContact)
@@ -35,12 +41,20 @@ export async function updateEmergencyContact(user_id: number, data: EmergencyCon
         city: data.city,
         state: data.state,
         zip_code: data.zip_code,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
       })
       .returning();
 
-    return updatedEmergencyContact;
+    if (!updatedEmergencyContact) {
+      throw new Error('Failed to update emergency contact');
+    }
+
+    return {
+      ...updatedEmergencyContact,
+      created_at: new Date(updatedEmergencyContact.created_at),
+      updated_at: new Date(updatedEmergencyContact.updated_at),
+    };
   } catch (error) {
     console.error('Error updating emergency contact:', error);
     throw new Error('Failed to update emergency contact');
@@ -83,8 +97,8 @@ export async function getCurrentEmergencyContact(userId: number): Promise<Emerge
       city: currentContact.city || '',
       state: currentContact.state || '',
       zip_code: currentContact.zip_code || '',
-      created_at: currentContact.created_at,
-      updated_at: currentContact.updated_at,
+      created_at: new Date(currentContact.created_at),
+      updated_at: new Date(currentContact.updated_at),
       user,
     };
 
@@ -97,6 +111,7 @@ export async function getCurrentEmergencyContact(userId: number): Promise<Emerge
 
 async function createDefaultEmergencyContact(dbUser: DBUser): Promise<EmergencyContact> {
   try {
+    const now = toISOString(new Date());
     const defaultContact = {
       user_id: dbUser.id,
       first_name: '',
@@ -105,8 +120,8 @@ async function createDefaultEmergencyContact(dbUser: DBUser): Promise<EmergencyC
       email: '',
       relationship: '',
       is_current: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
     };
 
     const [newContact] = await db
@@ -131,8 +146,8 @@ async function createDefaultEmergencyContact(dbUser: DBUser): Promise<EmergencyC
       city: newContact.city || '',
       state: newContact.state || '',
       zip_code: newContact.zip_code || '',
-      created_at: newContact.created_at,
-      updated_at: newContact.updated_at,
+      created_at: new Date(newContact.created_at),
+      updated_at: new Date(newContact.updated_at),
       user: dbUser,
     };
   } catch (error) {

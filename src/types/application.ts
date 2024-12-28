@@ -17,6 +17,6 @@ export type Application = {
   resume: string | null;
   position: typeof application.$inferSelect.position;
   status: typeof application.$inferSelect.status;
-  created_at: string;
-  updated_at: string;
+  created_at: Date;
+  updated_at: Date;
 };

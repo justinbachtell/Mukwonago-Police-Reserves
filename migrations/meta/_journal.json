@@ -120,6 +120,48 @@
       "when": 1735007835222,
       "tag": "0016_outgoing_tarot",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1735322064991,
+      "tag": "0017_organic_colossus",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1735322248750,
+      "tag": "0018_clean_tenebrous",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1735322462094,
+      "tag": "0019_lush_black_cat",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1735353296954,
+      "tag": "0020_handy_rockslide",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1735354572435,
+      "tag": "0021_lively_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1735358242531,
+      "tag": "0022_living_mandroid",
+      "breakpoints": true
     }
   ]
 }
