@@ -38,6 +38,7 @@
   "ReservesLayout": {
     "home_link": "Home",
     "dashboard_link": "Dashboard",
+    "contacts_link": "Contacts",
     "application_link": "Application",
     "sign_out_link": "Sign out",
     "settings_link": "Settings"
@@ -67,6 +68,7 @@
     "equipment_link": "Equipment",
     "applications_link": "Application",
     "admin_link": "Admin",
+    "contacts_link": "Contacts",
     "settings_link": "Settings",
     "sign_out": "Sign out"
   },
@@ -76,6 +78,7 @@
     "equipment_link": "Equipment",
     "applications_link": "Application",
     "admin_link": "Admin",
+    "contacts_link": "Contacts",
     "settings_link": "Settings",
     "sign_out": "Sign out"
   },
