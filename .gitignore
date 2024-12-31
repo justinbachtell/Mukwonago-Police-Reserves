@@ -46,6 +46,11 @@ yarn-error.log*
 
 # local folder
 local
+.vscode
+.cursorrules
+
+# database
+/migrations
 
 # vercel
 .vercel

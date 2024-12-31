@@ -1,5 +1,4 @@
-/* eslint-disable jsonc/sort-keys */
-{
+/* eslint-disable jsonc/sort-keys */ {
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "esnext"],
     "module": "esnext",
@@ -11,7 +10,6 @@
     "alwaysStrict": true,
     "strictNullChecks": true,
     "noUncheckedIndexedAccess": true,
-
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -19,33 +17,28 @@
     "noUnusedParameters": true,
     "allowUnreachableCode": false,
     "noFallthroughCasesInSwitch": true,
-
     "target": "es2017",
     "outDir": "out",
     "sourceMap": true,
-
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "checkJs": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-
     "jsx": "preserve",
+    "jsxImportSource": "react",
     "noEmit": true,
     "isolatedModules": true,
     "incremental": true,
-
     // Load types
-    "types": ["vitest/globals"],
-
+    "types": ["react", "react-dom", "vitest/globals"],
     // Path aliases
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@/public/*": ["./public/*"]
     },
-
     // Editor support
     "plugins": [
       {
@@ -53,12 +46,7 @@
       }
     ]
   },
-  "exclude": [
-    "./out/**/*",
-    "./node_modules/**/*",
-    "**/*.spec.ts",
-    "**/*.e2e.ts"
-  ],
+  "exclude": ["./out/**/*", "./node_modules/**/*", "**/*.spec.ts", "**/*.e2e.ts"],
   "include": [
     "next-env.d.ts",
     "**/*.ts",

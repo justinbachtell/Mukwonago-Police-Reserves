@@ -3,8 +3,8 @@ import { render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { BaseTemplate } from './BaseTemplate';
 
-describe('Base template', () => {
-  describe('Render method', () => {
+describe('base template', () => {
+  describe('render method', () => {
     it('should have 3 menu items', () => {
       render(
         <NextIntlClientProvider locale="en" messages={messages}>
@@ -25,7 +25,7 @@ describe('Base template', () => {
       const menuItemList = screen.getAllByRole('listitem');
 
       expect(menuItemList).toHaveLength(3);
-    });
+    })
 
     it('should have a link to support justinbachtell.com', () => {
       render(
@@ -43,10 +43,7 @@ describe('Base template', () => {
        * The link doesn't need to appear on every pages, one link on one page is enough.
        * Thank you for your support it'll mean a lot for us.
        */
-      expect(copyrightLink).toHaveAttribute(
-        'href',
-        'https://justinbachtell.com',
-      );
-    });
+      expect(copyrightLink).toHaveAttribute('href', 'https://justinbachtell.com');
+    })
   });
-});
+})

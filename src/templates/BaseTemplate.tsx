@@ -1,16 +1,16 @@
-import { MobileNavigationMenu } from '@/components/MobileNavigationMenu';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { Toaster } from '@/components/ui/toaster';
-import { AppConfig } from '@/utils/AppConfig';
-import { useTranslations } from 'next-intl';
+import { MobileNavigationMenu } from '@/components/MobileNavigationMenu'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import { Toaster } from '@/components/ui/toaster'
+import { AppConfig } from '@/utils/AppConfig'
+import { useTranslations } from 'next-intl'
 
-export const BaseTemplate = (props: {
-  leftNav: React.ReactNode;
-  rightNav?: React.ReactNode;
-  sidebar?: React.ReactNode;
-  children: React.ReactNode;
-}) => {
-  const t = useTranslations('BaseTemplate');
+export function BaseTemplate(props: {
+  leftNav: React.ReactNode
+  rightNav?: React.ReactNode
+  sidebar?: React.ReactNode
+  children: React.ReactNode
+}) {
+  const t = useTranslations('BaseTemplate')
 
   const content = (
     <div className="w-full text-gray-700 antialiased">
@@ -22,36 +22,29 @@ export const BaseTemplate = (props: {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex md:flex-1">
-              <ul className="flex flex-wrap gap-x-5 text-xl">
-                {props.leftNav}
-              </ul>
+              <ul className="flex flex-wrap gap-x-5 text-xl">{props.leftNav}</ul>
             </nav>
 
             <nav className="hidden md:flex">
-              <ul className="flex flex-wrap gap-x-5 text-xl">
-                {props.rightNav}
-              </ul>
+              <ul className="flex flex-wrap gap-x-5 text-xl">{props.rightNav}</ul>
             </nav>
           </div>
         </header>
 
         <div className="relative flex h-full">
-          {props.sidebar && (
-            <aside className="sticky top-0 h-full border-r">
-              {props.sidebar}
-            </aside>
-          )}
+          {props.sidebar && <aside className="sticky top-0 h-full border-r">{props.sidebar}</aside>}
 
-          <main className="flex-1 overflow-x-hidden">
-            {props.children}
-          </main>
+          <main className="flex-1 overflow-x-hidden">{props.children}</main>
         </div>
 
         <footer className="border-t border-gray-300 px-4 py-8 text-center text-sm">
           {`© Copyright ${new Date().getFullYear()} ${AppConfig.name}. `}
           {t.rich('built_by', {
             author: () => (
-              <a href="https://justinbachtell.com" className="text-blue-700 hover:border-b-2 hover:border-blue-700">
+              <a
+                href="https://justinbachtell.com"
+                className="text-blue-700 hover:border-b-2 hover:border-blue-700"
+              >
                 Justin Bachtell
               </a>
             ),
@@ -60,13 +53,7 @@ export const BaseTemplate = (props: {
       </div>
       <Toaster />
     </div>
-  );
+  )
 
-  return props.sidebar
-    ? (
-        <SidebarProvider defaultOpen>
-          {content}
-        </SidebarProvider>
-      )
-    : content;
-};
+  return props.sidebar ? <SidebarProvider defaultOpen>{content}</SidebarProvider> : content
+}

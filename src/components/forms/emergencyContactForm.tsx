@@ -3,20 +3,26 @@
 import type { EmergencyContact } from '@/types/emergencyContact';
 import type { SaveResult } from '@/types/forms';
 import type { DBUser } from '@/types/user';
-import { updateEmergencyContact } from '@/actions/emergencyContact';
+import { useCallback, useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { updateEmergencyContact } from '@/actions/emergencyContact';
 import { STATES } from '@/libs/States';
-import { useUser } from '@clerk/nextjs';
-import { useCallback, useEffect, useState } from 'react';
 
-type EmergencyContactFormProps = {
-  user: DBUser;
-  currentContact: EmergencyContact;
-  saveRef: React.RefObject<(() => Promise<SaveResult>) | null>;
-};
+interface EmergencyContactFormProps {
+  user: DBUser
+  currentContact: EmergencyContact
+  saveRef: React.MutableRefObject<(() => Promise<SaveResult>) | null>
+}
 
 function formatPhoneNumber(value: string): string {
   // Remove all non-numeric characters
@@ -28,9 +34,11 @@ function formatPhoneNumber(value: string): string {
   // Format the number
   if (trimmed.length > 6) {
     return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3, 6)}-${trimmed.slice(6)}`;
-  } else if (trimmed.length > 3) {
+  }
+ else if (trimmed.length > 3) {
     return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3)}`;
-  } else if (trimmed.length > 0) {
+  }
+ else if (trimmed.length > 0) {
     return `(${trimmed}`;
   }
 
@@ -50,27 +58,27 @@ function formatZipCode(value: string): string {
 }
 
 export function EmergencyContactForm({
-  user: dbUser,
   currentContact,
   saveRef,
+  user: dbUser,
 }: EmergencyContactFormProps) {
-  const { user: clerkUser, isLoaded } = useUser();
+  const { isLoaded, user: clerkUser } = useUser();
   const [formData, setFormData] = useState<EmergencyContact>({
-    id: currentContact?.id || 0,
-    user_id: dbUser.id,
+    city: currentContact?.city || null,
+    created_at: currentContact?.created_at || new Date(),
+    email: currentContact?.email || null,
     first_name: currentContact?.first_name || '',
+    id: currentContact?.id || 0,
+    is_current: true,
     last_name: currentContact?.last_name || '',
     phone: currentContact?.phone || '',
-    email: currentContact?.email || null,
     relationship: currentContact?.relationship || '',
-    is_current: true,
-    street_address: currentContact?.street_address || null,
-    city: currentContact?.city || null,
     state: currentContact?.state || null,
-    zip_code: currentContact?.zip_code || null,
-    created_at: currentContact?.created_at || new Date().toISOString(),
-    updated_at: currentContact?.updated_at || new Date().toISOString(),
+    street_address: currentContact?.street_address || null,
+    updated_at: currentContact?.updated_at || new Date(),
     user: dbUser,
+    user_id: dbUser.id,
+    zip_code: currentContact?.zip_code || null,
   });
 
   const hasFormChanged = useCallback((): boolean => {
@@ -96,25 +104,25 @@ export function EmergencyContactForm({
           ...prev,
           [name]: value || null,
         }));
-        break;
+      break;
       case 'phone':
         setFormData(prev => ({
           ...prev,
           [name]: formatPhoneNumber(value),
         }));
-        break;
+      break;
       case 'state':
         setFormData(prev => ({
           ...prev,
           [name]: formatState(value),
         }));
-        break;
+      break;
       case 'zip_code':
         setFormData(prev => ({
           ...prev,
           [name]: formatZipCode(value),
         }));
-        break;
+      break;
       default:
         setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -123,26 +131,27 @@ export function EmergencyContactForm({
   const handleSaveChanges = useCallback(async () => {
     try {
       if (!isLoaded || !clerkUser) {
-        return { success: false, message: 'Not authenticated' };
+        return { message: 'Not authenticated', success: false };
       }
 
       if (!hasFormChanged()) {
-        return { success: true, message: 'No changes detected' };
+        return { message: 'No changes detected', success: true };
       }
 
       if (!formData.first_name || !formData.last_name) {
-        return { success: false, message: 'Please fill in all required fields' };
+        return { message: 'Please fill in all required fields', success: false };
       }
 
       if (!isValidPhoneNumber(formData.phone)) {
-        return { success: false, message: 'Please enter a valid phone number' };
+        return { message: 'Please enter a valid phone number', success: false };
       }
 
       const updatedContact = await updateEmergencyContact(dbUser.id, formData);
-      return { success: true, data: updatedContact };
-    } catch (error) {
+      return { data: updatedContact, success: true };
+    }
+ catch (error) {
       console.error('Error updating emergency contact:', error);
-      return { success: false, message: 'Failed to update emergency contact' };
+      return { message: 'Failed to update emergency contact', success: false };
     }
   }, [formData, dbUser.id, isLoaded, clerkUser, hasFormChanged]);
 
@@ -204,7 +213,7 @@ export function EmergencyContactForm({
   // Add this new handler for Select components
   const handleSelectChange = (name: keyof EmergencyContact) => (value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  }
 
   return (
     <>
@@ -312,10 +321,7 @@ export function EmergencyContactForm({
           <div className="flex flex-col gap-4 md:col-span-6 md:grid md:grid-cols-12">
             <div className="flex flex-col gap-2 md:col-span-6">
               <Label htmlFor="state">State</Label>
-              <Select
-                value={formData.state || ''}
-                onValueChange={handleSelectChange('state')}
-              >
+              <Select value={formData.state || ''} onValueChange={handleSelectChange('state')}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>

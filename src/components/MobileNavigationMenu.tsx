@@ -1,50 +1,55 @@
 'use client';
 
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
+import * as SheetPrimitive from '@radix-ui/react-dialog';
+import * as React from 'react';
 
-type MobileNavigationMenuProps = {
-  leftNav?: React.ReactNode;
-  rightNav?: React.ReactNode;
-};
+interface MobileNavigationMenuProps {
+  leftNav?: React.ReactNode
+  rightNav?: React.ReactNode
+}
 
 export function MobileNavigationMenu({ leftNav, rightNav }: MobileNavigationMenuProps) {
-  const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-
-  // Close sheet when pathname changes (i.e., when navigating)
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-      <SheetTrigger asChild className="md:hidden">
+    <SheetPrimitive.Root>
+      <SheetPrimitive.Trigger asChild>
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary dark:text-gray-200 dark:hover:bg-gray-800"
+          className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 dark:hover:bg-gray-800"
         >
           <span className="sr-only">Open menu</span>
-          <Menu className="size-6" />
+          <svg
+            className="size-6"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
         </button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-        <nav className="flex h-full flex-col justify-between">
-          {leftNav && (
-            <div className="space-y-1 py-4">
-              <ul className="flex flex-col items-start justify-start space-y-1">{leftNav}</ul>
-            </div>
+      </SheetPrimitive.Trigger>
+      <SheetPrimitive.Portal>
+        <SheetPrimitive.Content
+          className={cn(
+            'fixed inset-y-0 left-0 z-50 h-full w-[300px] gap-4 border-r bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:w-[400px]',
           )}
-          {rightNav && (
-            <div className="space-y-1 border-t border-gray-300 py-4">
-              <ul className="flex flex-col items-start justify-start space-y-1">{rightNav}</ul>
-            </div>
-          )}
-        </nav>
-      </SheetContent>
-    </Sheet>
+        >
+          <nav className="flex h-full flex-col justify-between">
+            {leftNav && <div className="space-y-1 py-4">{leftNav}</div>}
+            {rightNav && <div className="space-y-1 border-t border-gray-200 py-4">{rightNav}</div>}
+          </nav>
+          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
+        </SheetPrimitive.Content>
+      </SheetPrimitive.Portal>
+    </SheetPrimitive.Root>
   );
 }

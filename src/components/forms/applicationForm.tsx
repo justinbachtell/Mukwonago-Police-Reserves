@@ -18,9 +18,9 @@ import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { toast } from 'sonner';
 
-type Props = {
-  user: DBUser;
-};
+interface Props {
+  user: DBUser
+}
 
 export function ApplicationForm({ user }: Props) {
   const router = useRouter();
@@ -33,24 +33,29 @@ export function ApplicationForm({ user }: Props) {
     startTransition(async () => {
       try {
         await createApplication({
+          availability: formData.get(
+            'availability',
+          ) as (typeof availabilityEnum.enumValues)[number],
+          city: formData.get('city') as string,
+          driver_license: formData.get('driver_license') as string,
+          email: formData.get('email') as string,
           first_name: formData.get('first_name') as string,
           last_name: formData.get('last_name') as string,
-          email: formData.get('email') as string,
           phone: formData.get('phone') as string,
-          driver_license: formData.get('driver_license') as string,
-          street_address: formData.get('street_address') as string,
-          city: formData.get('city') as string,
+          position: formData.get('position') as (typeof positionsEnum.enumValues)[number],
+          prior_experience: formData.get(
+            'prior_experience',
+          ) as (typeof priorExperienceEnum.enumValues)[number],
           state: formData.get('state') as string,
-          zip_code: formData.get('zip_code') as string,
-          prior_experience: formData.get('prior_experience') as typeof priorExperienceEnum.enumValues[number],
-          availability: formData.get('availability') as typeof availabilityEnum.enumValues[number],
-          position: formData.get('position') as typeof positionsEnum.enumValues[number],
+          street_address: formData.get('street_address') as string,
           user_id: user.id,
+          zip_code: formData.get('zip_code') as string,
         });
 
         toast.success('Application submitted successfully');
         router.refresh();
-      } catch (error) {
+      }
+ catch (error) {
         console.error('Error submitting application:', error);
         toast.error('Failed to submit application. Please try again.');
       }

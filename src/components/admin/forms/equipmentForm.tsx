@@ -1,124 +1,174 @@
+/* eslint-disable unused-imports/no-unused-vars */
 'use client';
 
 import { createEquipment } from '@/actions/equipment';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { toISOString } from '@/lib/utils';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+
+const equipmentFormSchema = z.object({
+  description: z.string().optional(),
+  is_obsolete: z.boolean().optional(),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  notes: z.string().optional(),
+  purchase_date: z.date().optional(),
+  serial_number: z.string().optional(),
+});
+
+type EquipmentFormValues = z.infer<typeof equipmentFormSchema>
 
 export function EquipmentForm() {
-  const router = useRouter();
-  const [newEquipment, setNewEquipment] = useState({
-    name: '',
-    description: '',
-    serial_number: '',
-    purchase_date: '',
-    notes: '',
+  const { toast } = useToast();
+  const form = useForm<EquipmentFormValues>({
+    defaultValues: {
+      description: '',
+      is_obsolete: false,
+      name: '',
+      notes: '',
+      purchase_date: new Date(),
+      serial_number: '',
+    },
+    resolver: zodResolver(equipmentFormSchema),
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewEquipment(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: EquipmentFormValues) => {
     try {
-      await createEquipment(newEquipment);
+      await createEquipment(data);
       toast({
-        title: 'Equipment created successfully',
-        description: 'The new equipment has been added to the database.',
+        description: 'New equipment has been added successfully.',
+        title: 'Equipment created',
       });
-      setNewEquipment({
-        name: '',
+      form.reset({
+        ...form.getValues(),
         description: '',
-        serial_number: '',
-        purchase_date: '',
+        is_obsolete: false,
+        name: '',
         notes: '',
+        purchase_date: new Date(),
+        serial_number: '',
       });
-      router.refresh();
-    } catch (error) {
+    }
+ catch (error) {
       toast({
-        title: 'Failed to create equipment',
-        description: 'There was an error creating the equipment.',
+        description: 'Failed to create equipment. Please try again.',
+        title: 'Error',
         variant: 'destructive',
       });
-      console.error('Error creating equipment:', error);
     }
   };
 
   return (
-    <Card className="p-6">
-      <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
-        Create New Equipment
-      </h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Equipment Name</Label>
-          <Input
-            id="name"
-            name="name"
-            value={newEquipment.name}
-            onChange={handleInputChange}
-            required
-            placeholder="Enter equipment name"
-          />
-        </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Enter equipment name" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Input
-            id="description"
-            name="description"
-            value={newEquipment.description}
-            onChange={handleInputChange}
-            placeholder="Enter equipment description"
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter equipment description" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="serial_number">Serial Number</Label>
-          <Input
-            id="serial_number"
-            name="serial_number"
-            value={newEquipment.serial_number}
-            onChange={handleInputChange}
-            placeholder="Enter serial number"
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="serial_number"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Serial Number</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Enter serial number" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="purchase_date">Purchase Date</Label>
-          <Input
-            type="date"
-            id="purchase_date"
-            name="purchase_date"
-            value={newEquipment.purchase_date}
-            onChange={handleInputChange}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="purchase_date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Purchase Date</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  value={field.value ? toISOString(field.value).split('T')[0] : ''}
+                  onChange={e => field.onChange(e.target.valueAsDate)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Input
-            id="notes"
-            name="notes"
-            value={newEquipment.notes}
-            onChange={handleInputChange}
-            placeholder="Any additional notes"
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="is_obsolete"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Obsolete</FormLabel>
+                <FormDescription>
+                  Mark this equipment as obsolete if it is no longer in use
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
-        <Button
-          type="submit"
-          className="w-full rounded-lg bg-blue-700 px-8 py-2 text-white hover:bg-blue-800"
-        >
-          Create Equipment
-        </Button>
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder="Enter any additional notes" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit">Create Equipment</Button>
       </form>
-    </Card>
+    </Form>
   );
 }

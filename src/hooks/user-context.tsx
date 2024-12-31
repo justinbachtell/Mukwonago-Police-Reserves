@@ -1,16 +1,16 @@
 'use client';
 
 import type { DBUser } from '@/types/user';
-import { getCurrentUser } from '@/actions/user';
-import { useAuth } from '@clerk/nextjs';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useAuth } from '@clerk/nextjs';
+import { getCurrentUser } from '@/actions/user';
 
-type UserContextType = {
-  user: DBUser | null;
-  isLoading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-};
+interface UserContextType {
+  user: DBUser | null
+  isLoading: boolean
+  error: Error | null
+  refetch: () => Promise<void>
+}
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -27,12 +27,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (isSignedIn) {
         const response = await getCurrentUser();
         setUser(response as DBUser);
-      } else {
+      }
+ else {
         setUser(null);
       }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch user'));
-    } finally {
+    }
+ finally {
       setIsLoading(false);
     }
   }, [isSignedIn]);
@@ -43,18 +45,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isLoaded, fetchUser]);
 
-  const value = useMemo(() => ({
-    user,
-    isLoading,
-    error,
-    refetch: fetchUser,
-  }), [user, isLoading, error, fetchUser]);
-
-  return (
-    <UserContext.Provider value={value}>
-      {children}
-    </UserContext.Provider>
+  const value = useMemo(
+    () => ({
+      error,
+      isLoading,
+      refetch: fetchUser,
+      user,
+    }),
+    [user, isLoading, error, fetchUser],
   );
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
 export function useUser() {

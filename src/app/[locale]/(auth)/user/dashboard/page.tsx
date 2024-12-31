@@ -1,19 +1,19 @@
-import { getUserApplications } from '@/actions/application';
-import { getCurrentUser } from '@/actions/user';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Clock } from 'lucide-react';
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { getUserApplications } from '@/actions/application'
+import { getCurrentUser } from '@/actions/user'
+import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
+import { Clock } from 'lucide-react'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
-type Props = {
-  params: Promise<{ locale: string }>;
-};
+interface Props {
+  params: Promise<{ locale: string }>
+}
 
 export async function generateMetadata(_props: Props) {
   return {
-    title: 'User Dashboard',
     description: 'View your application status and details',
+    title: 'User Dashboard',
   };
 }
 
@@ -48,34 +48,31 @@ export default async function DashboardPage() {
                 <div className="space-y-2">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-                      Reserve Officer Application Status
+                    Reserve Officer Application Status
                     </h2>
                     <Badge
                       className="w-fit text-sm font-medium"
                       variant={
                         latestApplication.status === 'approved'
-                          ? 'success'
+                          ? 'default'
                           : latestApplication.status === 'rejected'
                             ? 'destructive'
                             : 'secondary'
                       }
                     >
                       {latestApplication.status.charAt(0).toUpperCase()
-                      + latestApplication.status.slice(1)}
+                    + latestApplication.status.slice(1)}
                     </Badge>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Submitted on
+                  Submitted on
                     {' '}
                     <span className="font-medium">
-                      {new Date(latestApplication.created_at).toLocaleDateString(
-                        undefined,
-                        {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        },
-                      )}
+                      {new Date(latestApplication.created_at).toLocaleDateString(undefined, {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
                     </span>
                   </p>
                 </div>
@@ -90,21 +87,17 @@ export default async function DashboardPage() {
                 </div>
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">
-                    Start Your Journey
+                  Start Your Journey
                   </h2>
                   <p className="text-base text-gray-600 dark:text-gray-300 sm:text-lg">
-                    You haven't submitted an application yet.
+                  You haven't submitted an application yet.
                   </p>
                   <Link
                     href="/user/application"
                     className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:hover:bg-blue-600 sm:px-6 sm:py-3 sm:text-base"
                   >
-                    Apply Now
-                    <svg
-                      className="ml-2 size-4 sm:size-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
+                  Apply Now
+                    <svg className="ml-2 size-4 sm:size-5" viewBox="0 0 20 20" fill="currentColor">
                       <path
                         fillRule="evenodd"
                         d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"

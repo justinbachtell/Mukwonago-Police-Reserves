@@ -4,8 +4,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 
 export default async function CenteredLayout(props: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
+  children: React.ReactNode
+  params: Promise<{ locale: string }>
 }) {
   const { locale } = await props.params;
   setRequestLocale(locale);
@@ -53,9 +53,7 @@ export default async function CenteredLayout(props: {
         </li>
       )}
     >
-      <div className="container mx-auto flex justify-center px-4 py-8">
-        {props.children}
-      </div>
+      <div className="container mx-auto flex justify-center px-4 py-8">{props.children}</div>
     </BaseTemplate>
   );
 }

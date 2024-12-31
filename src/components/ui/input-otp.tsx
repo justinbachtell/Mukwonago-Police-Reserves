@@ -1,10 +1,9 @@
 'use client';
 
-import { cn } from '@/utils/utils';
-import { OTPInput, OTPInputContext } from 'input-otp';
-import { Dot } from 'lucide-react';
-
-import * as React from 'react';
+import { cn } from '@/lib/utils'
+import { OTPInput, OTPInputContext } from 'input-otp'
+import { Dot } from 'lucide-react'
+import * as React from 'react'
 
 const InputOTP = React.forwardRef<
   React.ElementRef<typeof OTPInput>,
@@ -33,12 +32,9 @@ InputOTPGroup.displayName = 'InputOTPGroup';
 const InputOTPSlot = React.forwardRef<
   React.ElementRef<'div'>,
   React.ComponentPropsWithoutRef<'div'> & { index: number }
->(({ index, className, ...props }, ref) => {
+>(({ className, index, ...props }, ref) => {
   const inputOTPContext = React.useContext(OTPInputContext);
-  const slot = inputOTPContext.slots[index];
-  const char = slot?.char;
-  const hasFakeCaret = slot?.hasFakeCaret;
-  const isActive = slot?.isActive;
+  const { char, hasFakeCaret, isActive } = inputOTPContext?.slots[index] || {};
 
   return (
     <div
@@ -53,12 +49,12 @@ const InputOTPSlot = React.forwardRef<
       {char}
       {hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="animate-caret-blink h-4 w-px bg-foreground duration-1000" />
+          <div className="h-4 w-px animate-caret-blink bg-foreground duration-1000" />
         </div>
       )}
     </div>
   );
-});
+})
 InputOTPSlot.displayName = 'InputOTPSlot';
 
 const InputOTPSeparator = React.forwardRef<

@@ -1,19 +1,19 @@
-import { getCurrentAssignedEquipment } from '@/actions/assignedEquipment';
-import { getCurrentEmergencyContact } from '@/actions/emergencyContact';
-import { getCurrentUniformSizes } from '@/actions/uniformSizes';
-import { getCurrentUser, getUserApplications } from '@/actions/user';
-import { CompletedApplicationForm } from '@/components/forms/completedApplicationForm';
-import { ProfileForm } from '@/components/forms/profileForm';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { getCurrentAssignedEquipment } from '@/actions/assignedEquipment'
+import { getCurrentEmergencyContact } from '@/actions/emergencyContact'
+import { getCurrentUniformSizes } from '@/actions/uniformSizes'
+import { getCurrentUser, getUserApplications } from '@/actions/user'
+import { CompletedApplicationForm } from '@/components/forms/completedApplicationForm'
+import { ProfileForm } from '@/components/forms/profileForm'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { redirect } from 'next/navigation';
+} from '@/components/ui/dialog'
+import { redirect } from 'next/navigation'
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
@@ -22,12 +22,38 @@ export default async function ProfilePage() {
     redirect('/sign-in');
   }
 
-  const [currentSizes, currentEmergencyContact, currentEquipment, applications] = await Promise.all([
-    getCurrentUniformSizes(user.id),
-    getCurrentEmergencyContact(user.id),
-    getCurrentAssignedEquipment(user.id),
-    getUserApplications(),
-  ]);
+  const [currentSizes, currentEmergencyContact, currentEquipmentData, applications]
+    = await Promise.all([
+      getCurrentUniformSizes(user.id),
+      getCurrentEmergencyContact(user.id),
+      getCurrentAssignedEquipment(user.id),
+      getUserApplications(),
+    ]);
+
+  const currentEquipment = currentEquipmentData
+    ? {
+        ...currentEquipmentData,
+        checked_out_at: new Date(currentEquipmentData.checked_out_at),
+        checked_in_at: currentEquipmentData.checked_in_at
+          ? new Date(currentEquipmentData.checked_in_at)
+          : null,
+        expected_return_date: currentEquipmentData.expected_return_date
+          ? new Date(currentEquipmentData.expected_return_date)
+          : null,
+        created_at: new Date(currentEquipmentData.created_at),
+        updated_at: new Date(currentEquipmentData.updated_at),
+        equipment: currentEquipmentData.equipment
+          ? {
+              ...currentEquipmentData.equipment,
+              purchase_date: currentEquipmentData.equipment.purchase_date
+                ? new Date(currentEquipmentData.equipment.purchase_date)
+                : null,
+              created_at: new Date(currentEquipmentData.equipment.created_at),
+              updated_at: new Date(currentEquipmentData.equipment.updated_at),
+            }
+          : null,
+      }
+    : null;
 
   const latestApplication = applications[0];
 
@@ -63,28 +89,29 @@ export default async function ProfilePage() {
                     <span className="flex flex-col">
                       Submitted on
                       {' '}
-                      {latestApplication?.created_at ? new Date(latestApplication.created_at).toLocaleDateString() : 'N/A'}
+                      {latestApplication?.created_at
+                        ? new Date(latestApplication.created_at).toLocaleDateString()
+                        : 'N/A'}
                     </span>
                     <span className="flex flex-row items-center gap-2">
                       Status:
                       {' '}
-                      <Badge variant={
-                        latestApplication?.status === 'approved'
-                          ? 'success'
-                          : latestApplication?.status === 'rejected'
-                            ? 'destructive'
-                            : 'secondary'
-                      }
+                      <Badge
+                        variant={
+                          latestApplication?.status === 'approved'
+                            ? 'default'
+                            : latestApplication?.status === 'rejected'
+                              ? 'destructive'
+                              : 'secondary'
+                        }
                       >
-                        {latestApplication?.status.charAt(0).toUpperCase() + latestApplication?.status.slice(1) || 'Not submitted'}
+                        {latestApplication?.status.charAt(0).toUpperCase()
+                        + latestApplication?.status.slice(1) || 'Not submitted'}
                       </Badge>
                     </span>
                   </div>
                 </DialogHeader>
-                <CompletedApplicationForm
-                  user={user}
-                  application={latestApplication}
-                />
+                <CompletedApplicationForm user={user} application={latestApplication} />
               </DialogContent>
             </Dialog>
           )}

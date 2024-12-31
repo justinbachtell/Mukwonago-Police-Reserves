@@ -3,9 +3,9 @@ import { ArrowRight, Award, Building2, Shield, Star, Users } from 'lucide-react'
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 
-type IIndexProps = {
-  params: Promise<{ locale: string }>;
-};
+interface IIndexProps {
+  params: Promise<{ locale: string }>
+}
 
 export async function generateMetadata(props: IIndexProps) {
   const { locale } = await props.params;
@@ -15,8 +15,8 @@ export async function generateMetadata(props: IIndexProps) {
   });
 
   return {
-    title: t('title'),
     description: t('description'),
+    title: t('title'),
   };
 }
 
@@ -36,9 +36,7 @@ export default async function Index(props: IIndexProps) {
           <h1 className="mb-6 text-5xl font-bold tracking-tight text-gray-900 dark:text-white">
             {t('title')}
           </h1>
-          <p className="mb-8 text-xl text-gray-600 dark:text-gray-300">
-            {t('description')}
-          </p>
+          <p className="mb-8 text-xl text-gray-600 dark:text-gray-300">{t('description')}</p>
           <div className="flex justify-center gap-4">
             <Button
               asChild
@@ -68,9 +66,9 @@ export default async function Index(props: IIndexProps) {
               Serving Our Community Since 1926
             </h2>
             <p className="mx-auto max-w-3xl text-lg text-gray-600 dark:text-gray-300">
-              The Mukwonago Police Department provides 24/7 police protection to over 8,000 residents
-              across 8.2 square miles. Our reserve officers play a vital role in supporting our
-              full-time officers and maintaining public safety.
+              The Mukwonago Police Department provides 24/7 police protection to over 8,000
+              residents across 8.2 square miles. Our reserve officers play a vital role in
+              supporting our full-time officers and maintaining public safety.
             </p>
           </div>
           <div className="grid gap-8 md:grid-cols-4">
@@ -80,7 +78,8 @@ export default async function Index(props: IIndexProps) {
                 Professional Department
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Join a modern, well-equipped police department committed to excellence in law enforcement.
+                Join a modern, well-equipped police department committed to excellence in law
+                enforcement.
               </p>
             </div>
             <div className="rounded-xl bg-gray-50 p-8 dark:bg-gray-800">
@@ -88,18 +87,14 @@ export default async function Index(props: IIndexProps) {
               <h3 className="mb-3 text-xl font-semibold text-gray-900 dark:text-white">
                 {t('features.serve.title')}
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                {t('features.serve.description')}
-              </p>
+              <p className="text-gray-600 dark:text-gray-300">{t('features.serve.description')}</p>
             </div>
             <div className="rounded-xl bg-gray-50 p-8 dark:bg-gray-800">
               <Users className="mb-4 size-12 text-blue-700 dark:text-blue-400" />
               <h3 className="mb-3 text-xl font-semibold text-gray-900 dark:text-white">
                 {t('features.join.title')}
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                {t('features.join.description')}
-              </p>
+              <p className="text-gray-600 dark:text-gray-300">{t('features.join.description')}</p>
             </div>
             <div className="rounded-xl bg-gray-50 p-8 dark:bg-gray-800">
               <Award className="mb-4 size-12 text-blue-700 dark:text-blue-400" />
@@ -155,9 +150,7 @@ export default async function Index(props: IIndexProps) {
             </div>
             <div className="rounded-xl bg-gray-50 p-8 dark:bg-gray-800">
               <Award className="mb-4 size-12 text-blue-700 dark:text-blue-400" />
-              <h3 className="mb-3 text-xl font-semibold text-gray-900 dark:text-white">
-                Benefits
-              </h3>
+              <h3 className="mb-3 text-xl font-semibold text-gray-900 dark:text-white">Benefits</h3>
               <ul className="list-inside list-disc space-y-2 text-gray-600 dark:text-gray-300">
                 <li>Professional training</li>
                 <li>Law enforcement experience</li>
@@ -173,12 +166,8 @@ export default async function Index(props: IIndexProps) {
       {/* CTA Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="rounded-2xl bg-blue-700 p-12 text-center dark:bg-blue-800">
-          <h2 className="mb-4 text-3xl font-bold text-white">
-            {t('cta.title')}
-          </h2>
-          <p className="mx-auto mb-8 max-w-2xl text-blue-100">
-            {t('cta.description')}
-          </p>
+          <h2 className="mb-4 text-3xl font-bold text-white">{t('cta.title')}</h2>
+          <p className="mx-auto mb-8 max-w-2xl text-blue-100">{t('cta.description')}</p>
           <div className="flex justify-center gap-4">
             <Button
               asChild

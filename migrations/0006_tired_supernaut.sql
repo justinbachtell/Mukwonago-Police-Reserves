@@ -1,1 +1,0 @@
-ALTER TABLE "application" ALTER COLUMN "phone" SET NOT NULL;

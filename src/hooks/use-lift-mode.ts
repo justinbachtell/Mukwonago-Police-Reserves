@@ -8,10 +8,8 @@ export function useLiftMode(name: string) {
 
   function toggleLiftMode(name: string) {
     setChunks((prev) => {
-      return prev.includes(name)
-        ? prev.filter(n => n !== name)
-        : [...prev, name];
-    });
+      return prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name];
+    })
   }
 
   return {

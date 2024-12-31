@@ -3,9 +3,9 @@
 import type { AssignedEquipment } from '@/types/assignedEquipment';
 import type { SaveResult } from '@/types/forms';
 import type { DBUser } from '@/types/user';
-import { updateAssignedEquipment } from '@/actions/assignedEquipment';
+import { useCallback, useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -14,71 +14,92 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useUser } from '@clerk/nextjs';
-import { useCallback, useEffect, useState } from 'react';
+import { getAssignedEquipment } from '@/actions/assignedEquipment';
+import { formatDate } from '@/lib/utils';
 
-type AssignedEquipmentFormProps = {
-  user: DBUser;
-  currentEquipment: AssignedEquipment;
-  saveRef: React.RefObject<(() => Promise<SaveResult>) | null>;
-};
+interface AssignedEquipmentFormProps {
+  user: DBUser
+  saveRef: React.MutableRefObject<(() => Promise<SaveResult>) | null>
+}
 
-type Condition = 'new' | 'good' | 'fair' | 'poor' | 'damaged/broken';
+type AssignedEquipmentWithDates = Omit<
+  AssignedEquipment,
+  | 'checked_out_at'
+  | 'checked_in_at'
+  | 'expected_return_date'
+  | 'created_at'
+  | 'updated_at'
+  | 'equipment'
+> & {
+  checked_out_at: Date
+  checked_in_at: Date | null
+  expected_return_date: Date | null
+  created_at: Date
+  updated_at: Date
+  equipment: {
+    id: number
+    name: string
+    description: string | null
+    serial_number: string | null
+    purchase_date: Date | null
+    notes: string | null
+    is_assigned: boolean
+    assigned_to: number | null
+    created_at: Date
+    updated_at: Date
+    is_obsolete: boolean
+  } | null
+}
 
-export function AssignedEquipmentForm({
-  currentEquipment,
-  saveRef,
-}: AssignedEquipmentFormProps) {
-  const { user: clerkUser, isLoaded } = useUser();
-  const [formData, setFormData] = useState<AssignedEquipment>(currentEquipment);
+export function AssignedEquipmentForm({ saveRef, user }: AssignedEquipmentFormProps) {
+  const [assignedEquipment, setAssignedEquipment] = useState<AssignedEquipmentWithDates[]>([]);
 
-  const hasFormChanged = useCallback((): boolean => {
-    return formData.condition !== currentEquipment.condition;
-  }, [formData.condition, currentEquipment.condition]);
+  useEffect(() => {
+    const loadEquipment = async () => {
+      const equipment = await getAssignedEquipment(user.id);
+      const sortedEquipment = equipment
+        .map(item => ({
+          ...item,
+          checked_in_at: item.checked_in_at ? new Date(item.checked_in_at) : null,
+          checked_out_at: new Date(item.checked_out_at),
+          created_at: new Date(item.created_at),
+          equipment: item.equipment
+            ? {
+              ...item.equipment,
+              purchase_date: item.equipment.purchase_date
+                ? new Date(item.equipment.purchase_date)
+                : null,
+              created_at: new Date(item.equipment.created_at),
+              updated_at: new Date(item.equipment.updated_at),
+              is_obsolete: item.equipment.is_obsolete ?? false,
+            }
+            : null,
+          expected_return_date: item.expected_return_date
+            ? new Date(item.expected_return_date)
+            : null,
+          updated_at: new Date(item.updated_at),
+        }))
+        .sort((a, b) => {
+          if (!a.checked_in_at && b.checked_in_at) {
+            return -1;
+          }
+          if (a.checked_in_at && !b.checked_in_at) {
+            return 1;
+          }
+          return b.checked_out_at.getTime() - a.checked_out_at.getTime();
+        })
+      setAssignedEquipment(sortedEquipment);
+    }
+    loadEquipment();
+  }, [user.id]);
 
   const handleSaveChanges = useCallback(async () => {
-    try {
-      if (!isLoaded || !clerkUser) {
-        return { success: false, message: 'Not authenticated' };
-      }
+    return { message: 'No changes needed', success: true };
+  }, []);
 
-      if (!hasFormChanged()) {
-        return { success: true, message: 'No changes detected' };
-      }
-
-      const dataToUpdate = {
-        id: currentEquipment.id,
-        condition: formData.condition,
-        notes: formData.notes || undefined,
-      };
-
-      const updatedEquipment = await updateAssignedEquipment(currentEquipment.id, dataToUpdate);
-      if (!updatedEquipment) {
-        return { success: false, message: 'Failed to update equipment' };
-      }
-
-      setFormData(updatedEquipment);
-      return { success: true, data: updatedEquipment };
-    } catch (error) {
-      console.error('Error updating equipment condition:', error);
-      return { success: false, message: 'Failed to update equipment condition' };
-    }
-  }, [formData, currentEquipment.id, isLoaded, clerkUser, hasFormChanged]);
-
-  // Store the save function in the ref
   useEffect(() => {
     saveRef.current = handleSaveChanges;
   }, [handleSaveChanges, saveRef]);
-
-  const handleSelectChange = (value: Condition) => {
-    setFormData((prev: AssignedEquipment) => ({
-      ...prev,
-      condition: value,
-      notes: prev.notes,
-    }));
-  };
-
-  const CONDITIONS: Condition[] = ['new', 'good', 'fair', 'poor', 'damaged/broken'];
 
   return (
     <Card className="p-6 shadow-md md:col-span-12">
@@ -90,43 +111,56 @@ export function AssignedEquipmentForm({
           <TableRow>
             <TableHead>Equipment</TableHead>
             <TableHead>Condition</TableHead>
-            <TableHead>Assigned On</TableHead>
+            <TableHead>Checked Out</TableHead>
             <TableHead>Expected Return</TableHead>
+            <TableHead>Returned On</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead>Notes</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow>
-            <TableCell>{formData.equipment?.name}</TableCell>
-            <TableCell>
-              <Select
-                value={formData.condition}
-                onValueChange={handleSelectChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CONDITIONS.map(condition => (
-                    <SelectItem key={condition} value={condition}>
-                      {condition.charAt(0).toUpperCase() + condition.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </TableCell>
-            <TableCell>
-              {new Date(formData.checked_out_at).toLocaleDateString()}
-            </TableCell>
-            <TableCell>
-              {formData.expected_return_date
-                ? new Date(formData.expected_return_date).toLocaleDateString()
-                : 'N/A'}
-            </TableCell>
-            <TableCell>
-              {formData.notes || 'N/A'}
-            </TableCell>
-          </TableRow>
+          {assignedEquipment.length === 0
+            ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  No equipment assigned
+                  </TableCell>
+                </TableRow>
+              )
+            : (
+                assignedEquipment.map(item => (
+                  <TableRow key={item.id} className={item.checked_in_at ? 'opacity-40' : ''}>
+                    <TableCell>
+                      {item.equipment?.name}
+                      {item.equipment?.serial_number && (
+                        <span className="ml-1 text-sm text-muted-foreground">
+                        (
+                          {item.equipment.serial_number}
+                        )
+</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="capitalize">{item.condition}</TableCell>
+                    <TableCell>{formatDate(item.checked_out_at.toISOString())}</TableCell>
+                    <TableCell>
+                      {item.expected_return_date
+                        ? formatDate(item.expected_return_date.toISOString())
+                        : 'Not specified'}
+                    </TableCell>
+                    <TableCell>
+                      {item.checked_in_at
+                        ? formatDate(item.checked_in_at.toISOString())
+                        : 'Not returned'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={item.checked_in_at ? 'secondary' : 'default'}>
+                        {item.checked_in_at ? 'Returned' : 'Active'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{item.notes || 'No notes'}</TableCell>
+                  </TableRow>
+                ))
+              )}
         </TableBody>
       </Table>
     </Card>

@@ -5,9 +5,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-          Admin Dashboard
-        </h1>
+        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
         <p className="text-gray-600 dark:text-gray-300">
           Overview of your organization's statistics and management tools.
         </p>
@@ -21,9 +19,7 @@ export default async function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Active members in your organization
-            </p>
+            <p className="text-xs text-muted-foreground">Active members in your organization</p>
           </CardContent>
         </Card>
 
@@ -34,9 +30,7 @@ export default async function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Total equipment items in inventory
-            </p>
+            <p className="text-xs text-muted-foreground">Total equipment items in inventory</p>
           </CardContent>
         </Card>
       </div>
