@@ -3,12 +3,18 @@
 import type { SaveResult } from '@/types/forms';
 import type { UniformSizes } from '@/types/uniformSizes';
 import type { DBUser } from '@/types/user';
-import { updateUniformSizes } from '@/actions/uniformSizes';
+import { useCallback, useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useUser } from '@clerk/nextjs';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { updateUniformSizes } from '@/actions/uniformSizes';
 import { Textarea } from '../ui/textarea';
 
 // Standard shirt sizes including all common variations
@@ -58,42 +64,42 @@ const SHOE_SIZES = [
   '15',
 ];
 
-type UniformSizesFormProps = {
-  user: DBUser;
-  currentSizes: UniformSizes;
-  saveRef: React.RefObject<(() => Promise<SaveResult>) | null>;
-};
+interface UniformSizesFormProps {
+  user: DBUser
+  currentSizes: UniformSizes
+  saveRef: React.MutableRefObject<(() => Promise<SaveResult>) | null>
+}
 
-export function UniformSizesForm({ user: dbUser, currentSizes, saveRef }: UniformSizesFormProps) {
-  const { user: clerkUser, isLoaded } = useUser();
+export function UniformSizesForm({ currentSizes, saveRef, user: dbUser }: UniformSizesFormProps) {
+  const { isLoaded, user: clerkUser } = useUser();
 
   const [uniformData, setUniformData] = useState<UniformSizes>({
+    created_at: currentSizes?.created_at || new Date(),
     id: currentSizes?.id || 0,
-    user_id: dbUser.id,
-    shirt_size: currentSizes?.shirt_size || '',
-    pant_size: currentSizes?.pant_size || '',
-    shoe_size: currentSizes?.shoe_size || '',
-    notes: currentSizes?.notes || '',
     is_current: true,
-    created_at: currentSizes?.created_at || new Date().toISOString(),
-    updated_at: currentSizes?.updated_at || new Date().toISOString(),
+    notes: currentSizes?.notes || '',
+    pant_size: currentSizes?.pant_size || '',
+    shirt_size: currentSizes?.shirt_size || '',
+    shoe_size: currentSizes?.shoe_size || '',
+    updated_at: currentSizes?.updated_at || new Date(),
     user: dbUser,
+    user_id: dbUser.id,
   });
 
   // Update state when props change
   useEffect(() => {
     if (currentSizes) {
       setUniformData({
+        created_at: currentSizes.created_at || new Date(),
         id: currentSizes.id,
-        user_id: dbUser.id,
-        shirt_size: currentSizes.shirt_size,
-        pant_size: currentSizes.pant_size,
-        shoe_size: currentSizes.shoe_size,
-        notes: currentSizes.notes || '',
         is_current: true,
-        created_at: currentSizes.created_at || new Date().toISOString(),
-        updated_at: currentSizes.updated_at || new Date().toISOString(),
+        notes: currentSizes.notes || '',
+        pant_size: currentSizes.pant_size,
+        shirt_size: currentSizes.shirt_size,
+        shoe_size: currentSizes.shoe_size,
+        updated_at: currentSizes.updated_at || new Date(),
         user: dbUser,
+        user_id: dbUser.id,
       });
     }
   }, [currentSizes, dbUser]);
@@ -109,23 +115,24 @@ export function UniformSizesForm({ user: dbUser, currentSizes, saveRef }: Unifor
 
   const handleUniformChange = (name: keyof UniformSizes, value: string) => {
     setUniformData(prev => ({ ...prev, [name]: value }));
-  };
+  }
 
   const handleUniformSizesSaveChanges = useCallback(async () => {
     try {
       if (!isLoaded || !clerkUser) {
-        return { success: false, message: 'Not authenticated' };
+        return { message: 'Not authenticated', success: false };
       }
 
       if (!hasUniformSizesChanged()) {
-        return { success: true, message: 'No changes detected' };
+        return { message: 'No changes detected', success: true };
       }
 
       const updatedSizes = await updateUniformSizes(dbUser.id, uniformData);
-      return { success: true, data: updatedSizes };
-    } catch (error) {
+      return { data: updatedSizes, success: true };
+    }
+ catch (error) {
       console.error('Error updating uniform sizes:', error);
-      return { success: false, message: 'Failed to update uniform sizes' };
+      return { message: 'Failed to update uniform sizes', success: false };
     }
   }, [uniformData, dbUser.id, isLoaded, clerkUser, hasUniformSizesChanged]);
 
@@ -136,9 +143,7 @@ export function UniformSizesForm({ user: dbUser, currentSizes, saveRef }: Unifor
 
   return (
     <Card className="flex flex-col p-6 shadow-md md:col-span-3">
-      <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
-        Uniform Sizes
-      </h2>
+      <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">Uniform Sizes</h2>
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="shirt_size">Shirt Size</Label>

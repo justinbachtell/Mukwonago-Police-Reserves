@@ -3,18 +3,18 @@ import { describe, expect, it } from 'vitest';
 
 // Mock user data
 const mockAdminUser = {
-  id: 1,
-  first_name: 'Admin',
-  last_name: 'User',
   email: 'admin@example.com',
+  first_name: 'Admin',
+  id: 1,
+  last_name: 'User',
   role: 'admin',
 };
 
 const mockRegularUser = {
-  id: 2,
-  first_name: 'Regular',
-  last_name: 'User',
   email: 'user@example.com',
+  first_name: 'Regular',
+  id: 2,
+  last_name: 'User',
   role: 'user',
 };
 
@@ -23,7 +23,7 @@ vi.mock('@/actions/user', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-describe('Admin Access Control', () => {
+describe('admin Access Control', () => {
   it('should allow admin users to access admin routes', async () => {
     // Mock getCurrentUser to return admin user
     (getCurrentUser as any).mockResolvedValue(mockAdminUser);
@@ -32,7 +32,7 @@ describe('Admin Access Control', () => {
 
     expect(user).toBeDefined();
     expect(user?.role).toBe('admin');
-  });
+  })
 
   it('should not allow regular users to access admin routes', async () => {
     // Mock getCurrentUser to return regular user
@@ -42,7 +42,7 @@ describe('Admin Access Control', () => {
 
     expect(user).toBeDefined();
     expect(user?.role).not.toBe('admin');
-  });
+  })
 
   it('should handle unauthenticated users', async () => {
     // Mock getCurrentUser to return null (unauthenticated)
@@ -51,5 +51,5 @@ describe('Admin Access Control', () => {
     const user = await getCurrentUser();
 
     expect(user).toBeNull();
-  });
+  })
 });

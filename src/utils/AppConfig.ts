@@ -3,8 +3,8 @@ import type { LocalePrefixMode } from 'node_modules/next-intl/dist/types/src/rou
 const localePrefix: LocalePrefixMode = 'as-needed';
 
 export const AppConfig = {
-  name: 'Village of Mukwonago Police Reserves',
-  locales: ['en'],
   defaultLocale: 'en',
   localePrefix,
+  locales: ['en'],
+  name: 'Village of Mukwonago Police Reserves',
 };

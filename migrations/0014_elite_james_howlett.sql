@@ -1,1 +1,0 @@
-ALTER TABLE "user" ADD COLUMN "driver_license_state" text;

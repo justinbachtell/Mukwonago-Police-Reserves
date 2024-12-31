@@ -14,12 +14,12 @@ import {
 } from '@/components/ui/select';
 import { availabilityEnum, positionsEnum, priorExperienceEnum } from '@/models/Schema';
 
-type Props = {
-  user: DBUser;
-  application: Application;
-};
+interface Props {
+  user: DBUser
+  application: Application
+}
 
-export function CompletedApplicationForm({ user, application }: Props) {
+export function CompletedApplicationForm({ application, user }: Props) {
   return (
     <form className="space-y-6">
       <Card className="p-6">

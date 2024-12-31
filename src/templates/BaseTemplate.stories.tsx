@@ -5,12 +5,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { BaseTemplate } from './BaseTemplate';
 
 const meta = {
-  title: 'Example/BaseTemplate',
   component: BaseTemplate,
-  parameters: {
-    layout: 'fullscreen',
-  },
-  tags: ['autodocs'],
   decorators: [
     Story => (
       <NextIntlClientProvider locale="en" messages={messages}>
@@ -18,10 +13,15 @@ const meta = {
       </NextIntlClientProvider>
     ),
   ],
+  parameters: {
+    layout: 'fullscreen',
+  },
+  tags: ['autodocs'],
+  title: 'Example/BaseTemplate',
 } satisfies Meta<typeof BaseTemplate>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<typeof meta>
 
 export const BaseWithReactComponent = {
   args: {

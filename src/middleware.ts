@@ -14,6 +14,8 @@ const isProtectedRoute = createRouteMatcher([
   '/:locale/dashboard(.*)',
   '/application(.*)',
   '/:locale/application(.*)',
+  '/contacts(.*)',
+  '/:locale/contacts(.*)',
 ]);
 
 const isAuthPage = createRouteMatcher([
@@ -23,18 +25,12 @@ const isAuthPage = createRouteMatcher([
   '/:locale/sign-up(.*)',
 ]);
 
-export default function middleware(
-  request: NextRequest,
-  event: NextFetchEvent,
-) {
+export default function middleware(request: NextRequest, event: NextFetchEvent) {
   // Run Clerk middleware only when it's necessary
-  if (
-    isAuthPage(request) || isProtectedRoute(request)
-  ) {
+  if (isAuthPage(request) || isProtectedRoute(request)) {
     return clerkMiddleware(async (auth, req) => {
       if (isProtectedRoute(req)) {
-        const locale
-          = req.nextUrl.pathname.match(/(\/.*)\/user\/dashboard/)?.at(1) ?? '';
+        const locale = req.nextUrl.pathname.match(/(\/.*)\/user\/dashboard/)?.at(1) ?? '';
 
         const signInUrl = new URL(`${locale}/sign-in`, req.url);
 

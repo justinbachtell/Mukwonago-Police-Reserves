@@ -3,11 +3,11 @@
 import * as React from 'react';
 
 export function useCopyToClipboard({
-  timeout = 2000,
   onCopy,
+  timeout = 2000,
 }: {
-  timeout?: number;
-  onCopy?: () => void;
+  timeout?: number
+  onCopy?: () => void
 } = {}) {
   const [isCopied, setIsCopied] = React.useState(false);
 
@@ -31,7 +31,7 @@ export function useCopyToClipboard({
         setIsCopied(false);
       }, timeout);
     }, console.error);
-  };
+  }
 
-  return { isCopied, copyToClipboard };
+  return { copyToClipboard, isCopied };
 }

@@ -2,9 +2,9 @@ import { getI18nPath } from '@/utils/Helpers';
 import { UserProfile } from '@clerk/nextjs';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-type ISettingsPageProps = {
-  params: Promise<{ locale: string }>;
-};
+interface ISettingsPageProps {
+  params: Promise<{ locale: string }>
+}
 
 export async function generateMetadata(props: ISettingsPageProps) {
   const { locale } = await props.params;
@@ -24,9 +24,7 @@ export default async function SettingsPage(props: ISettingsPageProps) {
 
   return (
     <div className="container mx-auto flex justify-center px-4 py-8">
-      <UserProfile
-        path={getI18nPath('/user/settings', locale)}
-      />
+      <UserProfile path={getI18nPath('/user/settings', locale)} />
     </div>
   );
-};
+}

@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     },
     {
       rel: 'icon',
-      type: 'image/png',
       sizes: '32x32',
+      type: 'image/png',
       url: '/favicon-32x32.png',
     },
     {
       rel: 'icon',
-      type: 'image/png',
       sizes: '16x16',
+      type: 'image/png',
       url: '/favicon-16x16.png',
     },
     {
@@ -39,7 +39,6 @@ export function generateStaticParams() {
 // Improve security with Arcjet
 const aj = arcjet.withRule(
   detectBot({
-    mode: 'LIVE',
     // Block all bots except the following
     allow: [
       // See https://docs.arcjet.com/bot-protection/identifying-bots
@@ -47,12 +46,13 @@ const aj = arcjet.withRule(
       'CATEGORY:PREVIEW', // Allow preview links to show OG images
       'CATEGORY:MONITOR', // Allow uptime monitoring services
     ],
+    mode: 'LIVE',
   }),
 );
 
 export default async function RootLayout(props: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
+  children: React.ReactNode
+  params: Promise<{ locale: string }>
 }) {
   const { locale } = await props.params;
 
@@ -87,10 +87,7 @@ export default async function RootLayout(props: {
   return (
     <html lang={locale}>
       <body suppressHydrationWarning className="overflow-x-hidden">
-        <NextIntlClientProvider
-          locale={locale}
-          messages={messages}
-        >
+        <NextIntlClientProvider locale={locale} messages={messages}>
           {props.children}
         </NextIntlClientProvider>
       </body>

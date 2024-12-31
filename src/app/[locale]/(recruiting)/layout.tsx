@@ -4,8 +4,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 
 export default async function RecruitingLayout(props: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
+  children: React.ReactNode
+  params: Promise<{ locale: string }>
 }) {
   const { locale } = await props.params;
   setRequestLocale(locale);
@@ -65,9 +65,7 @@ export default async function RecruitingLayout(props: {
         </>
       )}
     >
-      <div className="[&_p]:my-6">
-        {props.children}
-      </div>
+      <div className="[&_p]:my-6">{props.children}</div>
     </BaseTemplate>
   );
 }

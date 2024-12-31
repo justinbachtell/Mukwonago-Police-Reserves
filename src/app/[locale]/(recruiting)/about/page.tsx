@@ -13,8 +13,9 @@ export default function AboutPage() {
             About Our Police Reserves
           </h1>
           <p className="mb-8 text-xl text-gray-600 dark:text-gray-300">
-            The Village of Mukwonago Police Reserves is a vital part of our law enforcement community,
-            supporting the Police Department in maintaining public safety and community service.
+            The Village of Mukwonago Police Reserves is a vital part of our law enforcement
+            community, supporting the Police Department in maintaining public safety and community
+            service.
           </p>
         </div>
       </div>
@@ -30,12 +31,13 @@ export default function AboutPage() {
               </h2>
               <p className="mb-4 text-gray-600 dark:text-gray-300">
                 The Mukwonago Police Department serves a population of over 8,000 residents across
-                approximately 8.2 square miles. Our department consists of dedicated full-time officers,
-                supported by our reserve officers who help maintain 24/7 police protection.
+                approximately 8.2 square miles. Our department consists of dedicated full-time
+                officers, supported by our reserve officers who help maintain 24/7 police
+                protection.
               </p>
               <p className="text-gray-600 dark:text-gray-300">
-                Located at 627 S Rochester Street, our department is committed to providing professional
-                law enforcement services to our community.
+                Located at 627 S Rochester Street, our department is committed to providing
+                professional law enforcement services to our community.
               </p>
             </Card>
 
@@ -45,8 +47,8 @@ export default function AboutPage() {
                 Reserve Program
               </h2>
               <p className="mb-4 text-gray-600 dark:text-gray-300">
-                Our Police Reserves program offers a unique opportunity for community members to serve
-                alongside full-time officers. Reserve officers assist with:
+                Our Police Reserves program offers a unique opportunity for community members to
+                serve alongside full-time officers. Reserve officers assist with:
               </p>
               <ul className="mb-4 list-inside list-disc space-y-2 text-gray-600 dark:text-gray-300">
                 <li>Patrol duties</li>
@@ -106,9 +108,7 @@ export default function AboutPage() {
       {/* CTA Section */}
       <div className="container mx-auto px-4 pb-20">
         <Card className="rounded-2xl bg-blue-700 p-12 text-center dark:bg-blue-800">
-          <h2 className="mb-4 text-3xl font-bold text-white">
-            Join Our Team
-          </h2>
+          <h2 className="mb-4 text-3xl font-bold text-white">Join Our Team</h2>
           <p className="mx-auto mb-8 max-w-2xl text-blue-100">
             If you're interested in serving your community and gaining valuable law enforcement
             experience, we encourage you to apply to our Police Reserves program.

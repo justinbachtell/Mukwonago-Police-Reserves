@@ -9,7 +9,7 @@ test.describe('Authentication Flow', () => {
 
     // Should be redirected to sign in page
     expect(page.url()).toContain('/sign-in');
-  });
+  })
 
   test('should show sign in and sign up links on home page', async ({ page }) => {
     await page.goto('/');
@@ -23,7 +23,7 @@ test.describe('Authentication Flow', () => {
     const applyNowLink = page.getByTitle('Apply Now');
 
     await expect(applyNowLink).toBeVisible();
-  });
+  })
 
   test('should navigate through main navigation', async ({ page }) => {
     await page.goto('/');
@@ -34,8 +34,10 @@ test.describe('Authentication Flow', () => {
     await expect(page).toHaveURL('/about');
 
     // Check if About page content is visible
-    await expect(page.getByRole('heading', {
-      name: /about our police reserves/i,
-    })).toBeVisible();
-  });
+    await expect(
+      page.getByRole('heading', {
+        name: /about our police reserves/i,
+      }),
+    ).toBeVisible();
+  })
 });

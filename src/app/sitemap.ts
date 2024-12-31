@@ -4,10 +4,10 @@ import { getBaseUrl } from '@/utils/Helpers';
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: `${getBaseUrl()}/`,
-      lastModified: new Date(),
       changeFrequency: 'daily',
+      lastModified: new Date(),
       priority: 0.7,
+      url: `${getBaseUrl()}/`,
     },
     // Add more URLs here
   ];

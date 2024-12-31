@@ -6,49 +6,58 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { positionsEnum, rolesEnum } from '@/models/Schema';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-type UserEditFormProps = {
-  user: DBUser;
-};
+interface UserEditFormProps {
+  user: DBUser
+}
 
 export function UserEditForm({ user }: UserEditFormProps) {
   const router = useRouter();
   const [userData, setUserData] = useState({
+    callsign: user.callsign || '',
+    city: user.city || '',
+    driver_license: user.driver_license || '',
+    email: user.email,
     first_name: user.first_name,
     last_name: user.last_name,
-    email: user.email,
     phone: user.phone || '',
-    driver_license: user.driver_license || '',
-    street_address: user.street_address || '',
-    city: user.city || '',
-    state: user.state || '',
-    zip_code: user.zip_code || '',
-    role: user.role,
     position: user.position,
+    radio_number: user.radio_number || '',
+    role: user.role,
+    state: user.state || '',
+    street_address: user.street_address || '',
+    zip_code: user.zip_code || '',
   });
 
   const handleInputChange = (name: keyof typeof userData, value: string) => {
     setUserData(prev => ({ ...prev, [name]: value }));
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await updateUser(user.id, userData);
       toast({
-        title: 'User updated successfully',
         description: 'The user information has been updated.',
+        title: 'User updated successfully',
       });
       router.refresh();
-    } catch (error) {
+    }
+ catch (error) {
       toast({
-        title: 'Failed to update user',
         description: 'There was an error updating the user information.',
+        title: 'Failed to update user',
         variant: 'destructive',
       });
       console.error('Error updating user:', error);
@@ -146,6 +155,24 @@ export function UserEditForm({ user }: UserEditFormProps) {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="callsign">Callsign</Label>
+            <Input
+              id="callsign"
+              value={userData.callsign}
+              onChange={e => handleInputChange('callsign', e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="radio_number">Radio Number</Label>
+            <Input
+              id="radio_number"
+              value={userData.radio_number}
+              onChange={e => handleInputChange('radio_number', e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
             <Select
               value={userData.role}
@@ -185,16 +212,10 @@ export function UserEditForm({ user }: UserEditFormProps) {
         </div>
 
         <div className="flex justify-end space-x-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
+          <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button type="submit">
-            Save Changes
-          </Button>
+          <Button type="submit">Save Changes</Button>
         </div>
       </form>
     </Card>

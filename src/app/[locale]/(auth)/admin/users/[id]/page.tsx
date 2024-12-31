@@ -2,18 +2,15 @@ import { getCurrentUser, getUserById } from '@/actions/user';
 import { UserEditForm } from '@/components/admin/forms/userEditForm';
 import { notFound, redirect } from 'next/navigation';
 
-type PageProps = {
+interface PageProps {
   params: Promise<{
-    locale: string;
-    id: string;
-  }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-};
+    locale: string
+    id: string
+  }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
 
-export default async function UserEditPage({
-  params,
-  searchParams: _searchParams,
-}: PageProps) {
+export default async function UserEditPage({ params, searchParams: _searchParams }: PageProps) {
   try {
     // Get current user with error handling
     const currentUser = await getCurrentUser();
@@ -63,7 +60,8 @@ export default async function UserEditPage({
         </div>
       </div>
     );
-  } catch (error) {
+  }
+ catch (error) {
     console.error('Error in UserEditPage:', error);
     redirect('/error'); // Create this page or redirect to appropriate error page
   }

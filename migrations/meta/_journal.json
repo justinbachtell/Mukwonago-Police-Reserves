@@ -5,120 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1734630834287,
-      "tag": "0000_funny_hercules",
+      "when": 1735573962326,
+      "tag": "0000_clear_professor_monster",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1734636587376,
-      "tag": "0001_mighty_penance",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1734639404378,
-      "tag": "0002_careless_silverclaw",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1734662398651,
-      "tag": "0003_huge_ronan",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1734662463964,
-      "tag": "0004_silky_prima",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1734662529160,
-      "tag": "0005_fresh_mindworm",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1734662569641,
-      "tag": "0006_tired_supernaut",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1734662742355,
-      "tag": "0007_cute_zeigeist",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1734663501664,
-      "tag": "0008_outstanding_beast",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1734666947127,
-      "tag": "0009_dapper_ares",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1734713110997,
-      "tag": "0010_unique_dreadnoughts",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1734713129650,
-      "tag": "0011_amused_ikaris",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1734713614286,
-      "tag": "0012_bitter_blue_shield",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "7",
-      "when": 1734749622407,
-      "tag": "0013_cloudy_norman_osborn",
-      "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "7",
-      "when": 1734836123828,
-      "tag": "0014_elite_james_howlett",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "7",
-      "when": 1734838486945,
-      "tag": "0015_many_kid_colt",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "7",
-      "when": 1735007835222,
-      "tag": "0016_outgoing_tarot",
+      "when": 1735576103306,
+      "tag": "0001_zippy_martin_li",
       "breakpoints": true
     }
   ]

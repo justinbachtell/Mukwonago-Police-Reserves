@@ -10,7 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { STATES } from '@/libs/States';
 import { useUser } from '@clerk/nextjs';
@@ -19,12 +25,26 @@ import { AssignedEquipmentForm } from './assignedEquipmentForm';
 import { EmergencyContactForm } from './emergencyContactForm';
 import { UniformSizesForm } from './uniformSizesForm';
 
-type ProfileFormProps = {
-  user: DBUser;
-  currentSizes: UniformSizes;
-  currentEmergencyContact: EmergencyContact;
-  currentEquipment: AssignedEquipment | null;
-};
+interface ProfileFormProps {
+  user: DBUser
+  currentSizes: UniformSizes
+  currentEmergencyContact: EmergencyContact
+  currentEquipment: AssignedEquipment | null
+}
+
+interface UpdateUserData {
+  first_name: string
+  last_name: string
+  phone: string
+  street_address: string
+  city: string
+  state: string
+  zip_code: string
+  driver_license: string
+  driver_license_state: string
+  callsign: string | null
+  radio_number: string | null
+}
 
 function formatPhoneNumber(value: string): string {
   // Remove all non-numeric characters
@@ -36,9 +56,11 @@ function formatPhoneNumber(value: string): string {
   // Format the number
   if (trimmed.length > 6) {
     return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3, 6)}-${trimmed.slice(6)}`;
-  } else if (trimmed.length > 3) {
+  }
+ else if (trimmed.length > 3) {
     return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3)}`;
-  } else if (trimmed.length > 0) {
+  }
+ else if (trimmed.length > 0) {
     return `(${trimmed}`;
   }
 
@@ -62,12 +84,12 @@ function isValidZipCode(zipCode: string): boolean {
 }
 
 export function ProfileForm({
-  user: initialUser,
-  currentSizes: initialSizes,
   currentEmergencyContact,
   currentEquipment,
+  currentSizes: initialSizes,
+  user: initialUser,
 }: ProfileFormProps) {
-  const { user: clerkUser, isLoaded } = useUser();
+  const { isLoaded, user: clerkUser } = useUser();
   const [isSaving, setIsSaving] = useState(false);
   const [user, setUser] = useState(initialUser);
   const [currentSizes, setCurrentSizes] = useState(initialSizes);
@@ -79,15 +101,15 @@ export function ProfileForm({
   const assignedEquipmentSaveRef = useRef<(() => Promise<SaveResult>) | null>(null);
 
   const [formData, setFormData] = useState({
+    city: user.city || '',
+    driver_license: user.driver_license || '',
+    driver_license_state: user.driver_license_state || '',
     first_name: user.first_name || '',
     last_name: user.last_name || '',
     phone: user.phone || '',
-    street_address: user.street_address || '',
-    city: user.city || '',
     state: user.state || '',
+    street_address: user.street_address || '',
     zip_code: user.zip_code || '',
-    driver_license: user.driver_license || '',
-    driver_license_state: user.driver_license_state || '',
   });
 
   const hasFormChanged = useCallback((): boolean => {
@@ -113,25 +135,25 @@ export function ProfileForm({
           ...prev,
           [name]: formatPhoneNumber(value),
         }));
-        break;
+      break;
       case 'state':
         setFormData(prev => ({
           ...prev,
           [name]: formatState(value),
         }));
-        break;
+      break;
       case 'zip_code':
         setFormData(prev => ({
           ...prev,
           [name]: formatZipCode(value),
         }));
-        break;
+      break;
       case 'driver_license_state':
         setFormData(prev => ({
           ...prev,
           [name]: formatState(value),
         }));
-        break;
+      break;
       default:
         setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -140,33 +162,40 @@ export function ProfileForm({
   const handleMainFormSave = async () => {
     try {
       if (!isLoaded || !clerkUser) {
-        return { success: false, message: 'Not authenticated' };
+        return { message: 'Not authenticated', success: false };
       }
 
       if (!hasFormChanged()) {
-        return { success: true, message: 'No changes detected' };
+        return { message: 'No changes detected', success: true };
       }
 
       if (formData.phone && !isValidPhoneNumber(formData.phone)) {
-        return { success: false, message: 'Please enter a complete phone number' };
+        return { message: 'Please enter a complete phone number', success: false };
       }
 
       if (formData.zip_code && !isValidZipCode(formData.zip_code)) {
-        return { success: false, message: 'Please enter a valid 5-digit ZIP code' };
+        return { message: 'Please enter a valid 5-digit ZIP code', success: false };
       }
 
+      const updateData: UpdateUserData = {
+        ...formData,
+        callsign: user.callsign,
+        radio_number: user.radio_number,
+      };
+
       const [updatedUser] = await Promise.all([
-        updateUser(user.id, formData),
+        updateUser(user.id, updateData),
         clerkUser.update({
           firstName: formData.first_name,
           lastName: formData.last_name,
         }),
       ]);
 
-      return { success: true, data: updatedUser };
-    } catch (error) {
+      return { data: updatedUser, success: true };
+    }
+ catch (error) {
       console.error('Error updating profile:', error);
-      return { success: false, message: 'Failed to update profile' };
+      return { message: 'Failed to update profile', success: false };
     }
   };
 
@@ -176,20 +205,33 @@ export function ProfileForm({
 
       const results = await Promise.all([
         handleMainFormSave(),
-        uniformSizesSaveRef.current?.() ?? Promise.resolve({ success: true, message: 'No changes' }),
-        emergencyContactSaveRef.current?.() ?? Promise.resolve({ success: true, message: 'No changes' }),
-        assignedEquipmentSaveRef.current?.() ?? Promise.resolve({ success: true, message: 'No changes' }),
+        uniformSizesSaveRef.current?.()
+        ?? Promise.resolve({ message: 'No changes', success: true }),
+        emergencyContactSaveRef.current?.()
+        ?? Promise.resolve({ message: 'No changes', success: true }),
+        assignedEquipmentSaveRef.current?.()
+        ?? Promise.resolve({ message: 'No changes', success: true }),
       ]);
 
       const [mainResult, uniformResult, emergencyResult, equipmentResult] = results as SaveResult[];
 
-      if (!mainResult?.success || !uniformResult?.success || !emergencyResult?.success || !equipmentResult?.success) {
+      if (
+        !mainResult?.success
+        || !uniformResult?.success
+        || !emergencyResult?.success
+        || !equipmentResult?.success
+      ) {
         toast({
+          description:
+            mainResult?.message
+            || uniformResult?.message
+            || emergencyResult?.message
+            || equipmentResult?.message
+            || 'An error occurred while saving.',
           title: 'Failed to save changes',
-          description: mainResult?.message || uniformResult?.message || emergencyResult?.message || equipmentResult?.message || 'An error occurred while saving.',
           variant: 'destructive',
         });
-        return;
+        return
       }
 
       // Update local state with new data
@@ -205,17 +247,19 @@ export function ProfileForm({
 
       // Success toast if at least one form had changes
       toast({
-        title: 'Changes saved successfully',
         description: 'Your profile has been updated.',
+        title: 'Changes saved successfully',
       });
-    } catch (err) {
+    }
+ catch (err) {
       console.error('Error saving changes:', err);
       toast({
-        title: 'Error',
         description: 'An unexpected error occurred.',
+        title: 'Error',
         variant: 'destructive',
       });
-    } finally {
+    }
+ finally {
       setIsSaving(false);
     }
   };
@@ -294,7 +338,8 @@ export function ProfileForm({
               <Label htmlFor="driver_license_state">Driver's License State</Label>
               <Select
                 value={formData.driver_license_state}
-                onValueChange={value => setFormData(prev => ({ ...prev, driver_license_state: value }))}
+                onValueChange={value =>
+                  setFormData(prev => ({ ...prev, driver_license_state: value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select state" />
@@ -378,11 +423,7 @@ export function ProfileForm({
       </Card>
 
       {/* Uniform Sizes */}
-      <UniformSizesForm
-        user={user}
-        currentSizes={currentSizes}
-        saveRef={uniformSizesSaveRef}
-      />
+      <UniformSizesForm user={user} currentSizes={currentSizes} saveRef={uniformSizesSaveRef} />
 
       {/* Emergency Contact */}
       <EmergencyContactForm
@@ -393,11 +434,7 @@ export function ProfileForm({
 
       {/* Assigned Equipment */}
       {assignedEquipment && (
-        <AssignedEquipmentForm
-          user={user}
-          currentEquipment={assignedEquipment}
-          saveRef={assignedEquipmentSaveRef}
-        />
+        <AssignedEquipmentForm user={user} saveRef={assignedEquipmentSaveRef} />
       )}
 
       {/* Save Button */}

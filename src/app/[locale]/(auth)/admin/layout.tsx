@@ -3,7 +3,14 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { BaseTemplate } from '@/templates/BaseTemplate';
 import { SignOutButton } from '@clerk/nextjs';
-import { LayoutDashboard, LogOut, Settings, Shield, User } from 'lucide-react';
+import {
+  LayoutDashboard,
+  LogOut,
+  Mail,
+  Settings,
+  Shield,
+  User,
+} from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -11,8 +18,8 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout(props: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
+  children: React.ReactNode
+  params: Promise<{ locale: string }>
 }) {
   const { locale } = await props.params;
   setRequestLocale(locale);
@@ -42,6 +49,15 @@ export default async function AdminLayout(props: {
             >
               <LayoutDashboard className="size-4" />
               <span>{t('dashboard_link')}</span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/contacts"
+              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              <Mail className="size-4" />
+              <span>{t('contacts_link')}</span>
             </Link>
           </li>
           <li>
@@ -91,9 +107,9 @@ export default async function AdminLayout(props: {
       sidebar={(
         <div className="flex">
           <AdminSidebar />
-          <SidebarInset>
+          <SidebarInset ref={undefined}>
             <div className="flex h-14 items-center gap-0 px-1">
-              <SidebarTrigger />
+              <SidebarTrigger ref={undefined} />
               <div className="flex-1" />
             </div>
           </SidebarInset>

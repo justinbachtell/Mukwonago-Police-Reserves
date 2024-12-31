@@ -15,10 +15,11 @@ export {
 
 // Create a base Arcjet instance which can be imported and extended in each route.
 export default arcjet({
-  // Get your site key from https://launch.arcjet.com/Q6eLbRE
-  key: Env.ARCJET_KEY!,
   // Identify the user by their IP address
   characteristics: ['ip.src'],
+  // Get your site key from https://launch.arcjet.com/Q6eLbRE
+  key: Env.ARCJET_KEY!,
+  log: logger,
   rules: [
     // Protect against common attacks with Arcjet Shield
     shield({
@@ -26,5 +27,4 @@ export default arcjet({
     }),
     // Other rules are added in different routes
   ],
-  log: logger,
 });
