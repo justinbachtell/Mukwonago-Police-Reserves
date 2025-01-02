@@ -13,20 +13,6 @@ export default antfu({
 
   // Rules configuration
   rules: {
-    // Enable strict style rules
-    'style/jsx-wrap-multilines': [
-      'error',
-      {
-        declaration: 'parens-new-line',
-        assignment: 'parens-new-line',
-        return: 'parens-new-line',
-        arrow: 'parens-new-line',
-        condition: 'parens-new-line',
-        logical: 'parens-new-line',
-        prop: 'parens-new-line'
-      }
-    ],
-
     // Disable other style rules temporarily
     'style/semi': 'off',
     'style/member-delimiter-style': 'off',
@@ -48,6 +34,7 @@ export default antfu({
     'arrow-parens': 'off',
     'style/multiline-ternary': 'off',
     'style/jsx-curly-newline': 'off',
+    'style/jsx-wrap-multilines': 'off',
 
     // Disable perfectionist rules temporarily
     'perfectionist/sort-objects': 'off',
@@ -58,6 +45,7 @@ export default antfu({
     // Disable React-specific rules
     'react/no-unstable-context-value': 'off',
     'react-dom/no-missing-button-type': 'off',
+    'react/no-array-index-key': 'off',
 
     // Disable other strict rules
     'antfu/no-top-level-await': 'off',

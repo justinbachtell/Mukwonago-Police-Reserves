@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1735573962326,
-      "tag": "0000_clear_professor_monster",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1735576103306,
-      "tag": "0001_zippy_martin_li",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1735696423055,
-      "tag": "0002_milky_terror",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1735843019483,
-      "tag": "0003_long_famine",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1735844861833,
-      "tag": "0004_next_pretty_boy",
+      "when": 1735852237189,
+      "tag": "0000_sparkling_scorpion",
       "breakpoints": true
     }
   ]

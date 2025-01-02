@@ -1,128 +1,94 @@
-import { getCurrentAssignedEquipment } from '@/actions/assignedEquipment'
+import { Suspense } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingShell, LoadingForm } from '@/components/loading/LoadingShell'
+import { ProfileForm } from '@/components/forms/profileForm'
+import { getCurrentUser } from '@/actions/user'
 import { getCurrentEmergencyContact } from '@/actions/emergencyContact'
 import { getCurrentUniformSizes } from '@/actions/uniformSizes'
-import { getCurrentUser, getUserApplications } from '@/actions/user'
-import { CompletedApplicationForm } from '@/components/forms/completedApplicationForm'
-import { ProfileForm } from '@/components/forms/profileForm'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { redirect } from 'next/navigation'
+import { getCurrentAssignedEquipment } from '@/actions/assignedEquipment'
 
-export default async function ProfilePage() {
-  const user = await getCurrentUser();
-
+async function ProfileHeader() {
+  const user = await getCurrentUser()
   if (!user) {
-    redirect('/sign-in');
+    return null
   }
 
-  const [currentSizes, currentEmergencyContact, currentEquipmentData, applications]
-    = await Promise.all([
+  return (
+    <div className='flex items-center gap-6'>
+      <div className='space-y-2'>
+        <h1 className='text-3xl font-bold'>
+          {user.first_name} {user.last_name}&apos;s Profile
+        </h1>
+        <p className='text-muted-foreground'>{user.email}</p>
+      </div>
+    </div>
+  )
+}
+
+async function ProfileFormWrapper() {
+  const user = await getCurrentUser()
+  if (!user) {
+    return null
+  }
+
+  const [currentSizes, currentEmergencyContact, currentEquipmentData] =
+    await Promise.all([
       getCurrentUniformSizes(user.id),
       getCurrentEmergencyContact(user.id),
-      getCurrentAssignedEquipment(user.id),
-      getUserApplications(),
-    ]);
+      getCurrentAssignedEquipment(user.id)
+    ])
 
   const currentEquipment = currentEquipmentData
     ? {
-      ...currentEquipmentData,
-      checked_out_at: new Date(currentEquipmentData.checked_out_at),
-      checked_in_at: currentEquipmentData.checked_in_at
-        ? new Date(currentEquipmentData.checked_in_at)
-        : null,
-      expected_return_date: currentEquipmentData.expected_return_date
-        ? new Date(currentEquipmentData.expected_return_date)
-        : null,
-      created_at: new Date(currentEquipmentData.created_at),
-      updated_at: new Date(currentEquipmentData.updated_at),
-      equipment: currentEquipmentData.equipment
-        ? {
-          ...currentEquipmentData.equipment,
-          purchase_date: currentEquipmentData.equipment.purchase_date
-            ? new Date(currentEquipmentData.equipment.purchase_date)
-            : null,
-          created_at: new Date(currentEquipmentData.equipment.created_at),
-          updated_at: new Date(currentEquipmentData.equipment.updated_at),
-        }
-        : null,
-    }
-    : null;
-
-  const latestApplication = applications[0];
+        ...currentEquipmentData,
+        checked_out_at: new Date(currentEquipmentData.checked_out_at),
+        checked_in_at: currentEquipmentData.checked_in_at
+          ? new Date(currentEquipmentData.checked_in_at)
+          : null,
+        expected_return_date: currentEquipmentData.expected_return_date
+          ? new Date(currentEquipmentData.expected_return_date)
+          : null,
+        created_at: new Date(currentEquipmentData.created_at),
+        updated_at: new Date(currentEquipmentData.updated_at),
+        equipment: currentEquipmentData.equipment
+          ? {
+              ...currentEquipmentData.equipment,
+              purchase_date: currentEquipmentData.equipment.purchase_date
+                ? new Date(currentEquipmentData.equipment.purchase_date)
+                : null,
+              created_at: new Date(currentEquipmentData.equipment.created_at),
+              updated_at: new Date(currentEquipmentData.equipment.updated_at)
+            }
+          : null
+      }
+    : null
 
   return (
-    <div className="mx-auto px-4 py-8 lg:container">
-      <div className="mb-8 flex flex-col justify-between md:flex-row">
-        <div className="flex flex-col">
-          <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-            Profile Settings
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Update your personal information and preferences.
-          </p>
-        </div>
-        <div className="flex flex-col">
-          {latestApplication && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="secondary" className="mt-6">
-                  View Completed Application
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[800px]">
-                <DialogHeader className="flex flex-col gap-2">
-                  <DialogTitle>
-                    Completed Application for
-                    {' '}
-                    {user.first_name}
-                    {' '}
-                    {user.last_name}
-                  </DialogTitle>
-                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                    <span className="flex flex-col">
-                      Submitted on
-                      {' '}
-                      {latestApplication?.created_at
-                        ? new Date(latestApplication.created_at).toLocaleDateString()
-                        : 'N/A'}
-                    </span>
-                    <span className="flex flex-row items-center gap-2">
-                      Status:
-                      {' '}
-                      <Badge
-                        variant={
-                          latestApplication?.status === 'approved'
-                            ? 'default'
-                            : latestApplication?.status === 'rejected'
-                              ? 'destructive'
-                              : 'secondary'
-                        }
-                      >
-                        {latestApplication?.status.charAt(0).toUpperCase()
-                        + latestApplication?.status.slice(1) || 'Not submitted'}
-                      </Badge>
-                    </span>
-                  </div>
-                </DialogHeader>
-                <CompletedApplicationForm user={user} application={latestApplication} />
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      </div>
-      <ProfileForm
-        user={user}
-        currentSizes={currentSizes}
-        currentEmergencyContact={currentEmergencyContact}
-        currentEquipment={currentEquipment}
-      />
+    <ProfileForm
+      user={user}
+      currentSizes={currentSizes}
+      currentEmergencyContact={currentEmergencyContact}
+      currentEquipment={currentEquipment}
+    />
+  )
+}
+
+export default function ProfilePage() {
+  return (
+    <div className='container py-8 space-y-8 mx-auto'>
+      <Suspense
+        fallback={
+          <LoadingShell className='flex items-center gap-6'>
+            <Skeleton className='h-24 w-24 rounded-full' />
+          </LoadingShell>
+        }
+      >
+        <ProfileHeader />
+      </Suspense>
+
+      <Suspense fallback={<LoadingForm />}>
+        <ProfileFormWrapper />
+      </Suspense>
     </div>
-  );
+  )
 }

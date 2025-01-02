@@ -3,12 +3,35 @@
 import type { Event } from '@/types/event'
 import { Button } from '@/components/ui/button'
 import { LayoutGrid, Table } from 'lucide-react'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { EventsTable } from './EventsTable'
 import { EventsGrid } from './EventsGrid'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface EventsViewProps {
   events: Event[]
+}
+
+function EventsTableSkeleton() {
+  return (
+    <div className='space-y-4'>
+      <div className='rounded-md border'>
+        <div className='p-4'>
+          <div className='space-y-3'>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className='flex justify-between items-center'>
+                <Skeleton className='h-4 w-[200px]' />
+                <div className='flex gap-2'>
+                  <Skeleton className='h-8 w-8' />
+                  <Skeleton className='h-8 w-8' />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function EventsView({ events }: EventsViewProps) {
@@ -44,11 +67,13 @@ export function EventsView({ events }: EventsViewProps) {
         </div>
       </div>
 
-      {viewMode === 'table' ? (
-        <EventsTable data={events} />
-      ) : (
-        <EventsGrid data={events} />
-      )}
+      <Suspense fallback={<EventsTableSkeleton />}>
+        {viewMode === 'table' ? (
+          <EventsTable data={events} />
+        ) : (
+          <EventsGrid data={events} />
+        )}
+      </Suspense>
     </div>
   )
 }

@@ -3,12 +3,35 @@
 import type { Training } from '@/types/training'
 import { Button } from '@/components/ui/button'
 import { LayoutGrid, Table } from 'lucide-react'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { TrainingTable } from './TrainingTable'
 import { TrainingGrid } from './TrainingGrid'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface TrainingViewProps {
   training: Training[]
+}
+
+function TrainingTableSkeleton() {
+  return (
+    <div className='space-y-4'>
+      <div className='rounded-md border'>
+        <div className='p-4'>
+          <div className='space-y-3'>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className='flex justify-between items-center'>
+                <Skeleton className='h-4 w-[200px]' />
+                <div className='flex gap-2'>
+                  <Skeleton className='h-8 w-8' />
+                  <Skeleton className='h-8 w-8' />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function TrainingView({ training }: TrainingViewProps) {
@@ -44,11 +67,13 @@ export function TrainingView({ training }: TrainingViewProps) {
         </div>
       </div>
 
-      {viewMode === 'table' ? (
-        <TrainingTable data={training} />
-      ) : (
-        <TrainingGrid data={training} />
-      )}
+      <Suspense fallback={<TrainingTableSkeleton />}>
+        {viewMode === 'table' ? (
+          <TrainingTable data={training} />
+        ) : (
+          <TrainingGrid data={training} />
+        )}
+      </Suspense>
     </div>
   )
 }
