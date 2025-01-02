@@ -49,8 +49,5 @@ local
 .vscode
 .cursorrules
 
-# database
-/migrations
-
 # vercel
 .vercel
