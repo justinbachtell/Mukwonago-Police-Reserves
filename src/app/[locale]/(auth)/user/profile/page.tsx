@@ -32,27 +32,27 @@ export default async function ProfilePage() {
 
   const currentEquipment = currentEquipmentData
     ? {
-        ...currentEquipmentData,
-        checked_out_at: new Date(currentEquipmentData.checked_out_at),
-        checked_in_at: currentEquipmentData.checked_in_at
-          ? new Date(currentEquipmentData.checked_in_at)
-          : null,
-        expected_return_date: currentEquipmentData.expected_return_date
-          ? new Date(currentEquipmentData.expected_return_date)
-          : null,
-        created_at: new Date(currentEquipmentData.created_at),
-        updated_at: new Date(currentEquipmentData.updated_at),
-        equipment: currentEquipmentData.equipment
-          ? {
-              ...currentEquipmentData.equipment,
-              purchase_date: currentEquipmentData.equipment.purchase_date
-                ? new Date(currentEquipmentData.equipment.purchase_date)
-                : null,
-              created_at: new Date(currentEquipmentData.equipment.created_at),
-              updated_at: new Date(currentEquipmentData.equipment.updated_at),
-            }
-          : null,
-      }
+      ...currentEquipmentData,
+      checked_out_at: new Date(currentEquipmentData.checked_out_at),
+      checked_in_at: currentEquipmentData.checked_in_at
+        ? new Date(currentEquipmentData.checked_in_at)
+        : null,
+      expected_return_date: currentEquipmentData.expected_return_date
+        ? new Date(currentEquipmentData.expected_return_date)
+        : null,
+      created_at: new Date(currentEquipmentData.created_at),
+      updated_at: new Date(currentEquipmentData.updated_at),
+      equipment: currentEquipmentData.equipment
+        ? {
+          ...currentEquipmentData.equipment,
+          purchase_date: currentEquipmentData.equipment.purchase_date
+            ? new Date(currentEquipmentData.equipment.purchase_date)
+            : null,
+          created_at: new Date(currentEquipmentData.equipment.created_at),
+          updated_at: new Date(currentEquipmentData.equipment.updated_at),
+        }
+        : null,
+    }
     : null;
 
   const latestApplication = applications[0];

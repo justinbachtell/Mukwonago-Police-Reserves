@@ -52,7 +52,7 @@ export async function updateUniformSizes(user_id: number, data: UniformSizes) {
       updated_at: new Date(updatedUniformSizes.updated_at),
     };
   }
- catch (error) {
+  catch (error) {
     console.error('Error updating uniform sizes:', error);
     throw new Error('Failed to update uniform sizes');
   }
@@ -93,7 +93,7 @@ export async function getCurrentUniformSizes(userId: number): Promise<UniformSiz
 
     return result;
   }
- catch (error) {
+  catch (error) {
     console.error('Error fetching current uniform sizes:', error);
     throw new Error('Failed to fetch current uniform sizes');
   }
@@ -134,7 +134,7 @@ async function createDefaultUniformSizes(dbUser: DBUser): Promise<UniformSizes> 
       user_id: newSizes.user_id,
     };
   }
- catch (error) {
+  catch (error) {
     console.error('Error creating default uniform sizes:', error);
     throw new Error('Failed to create default uniform sizes');
   }

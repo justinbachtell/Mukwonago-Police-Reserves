@@ -63,7 +63,7 @@ export function EquipmentForm() {
         serial_number: '',
       });
     }
- catch (error) {
+    catch (error) {
       toast({
         description: 'Failed to create equipment. Please try again.',
         title: 'Error',

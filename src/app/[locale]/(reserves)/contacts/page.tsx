@@ -27,7 +27,7 @@ export default async function ContactsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
           Department Contacts
         </h1>
@@ -35,7 +35,10 @@ export default async function ContactsPage() {
           Contact information for all department members.
         </p>
       </div>
-      <ContactsTable data={contacts} isAdmin={currentUser.role === 'admin'} />
+      <ContactsTable
+        data={contacts}
+        isAdmin={currentUser.role === "admin"}
+      />
     </div>
   );
 }

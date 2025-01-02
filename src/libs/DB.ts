@@ -16,36 +16,35 @@ let drizzle;
 
 if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD && Env.DATABASE_URL) {
   client = new Client({
-    connectionString: Env.DATABASE_URL,
-  });
-  await client.connect();
+    connectionString: Env.DATABASE_URL
+  })
+  await client.connect()
 
-  drizzle = drizzlePg(client, { schema });
+  drizzle = drizzlePg(client, { schema })
 
   // await seed(drizzle, schema, { count: 10 });
 
   await migratePg(drizzle, {
-    migrationsFolder: path.join(process.cwd(), 'migrations'),
-  });
-}
- else {
+    migrationsFolder: path.join(process.cwd(), 'migrations')
+  })
+} else {
   // Stores the db connection in the global scope to prevent multiple instances due to hot reloading with Next.js
   const global = globalThis as unknown as {
     client: PGlite
     drizzle: PgliteDatabase<typeof schema>
-  };
-
-  if (!global.client) {
-    global.client = new PGlite();
-    await global.client.waitReady;
-
-    global.drizzle = drizzlePglite(global.client, { schema });
   }
 
-  drizzle = global.drizzle;
+  if (!global.client) {
+    global.client = new PGlite()
+    await global.client.waitReady
+
+    global.drizzle = drizzlePglite(global.client, { schema })
+  }
+
+  drizzle = global.drizzle
   await migratePglite(global.drizzle, {
-    migrationsFolder: path.join(process.cwd(), 'migrations'),
-  });
+    migrationsFolder: path.join(process.cwd(), 'migrations')
+  })
 }
 
 export const db = drizzle;

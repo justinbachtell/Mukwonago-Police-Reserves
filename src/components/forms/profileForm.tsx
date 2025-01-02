@@ -57,10 +57,10 @@ function formatPhoneNumber(value: string): string {
   if (trimmed.length > 6) {
     return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3, 6)}-${trimmed.slice(6)}`;
   }
- else if (trimmed.length > 3) {
+  else if (trimmed.length > 3) {
     return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3)}`;
   }
- else if (trimmed.length > 0) {
+  else if (trimmed.length > 0) {
     return `(${trimmed}`;
   }
 
@@ -135,25 +135,25 @@ export function ProfileForm({
           ...prev,
           [name]: formatPhoneNumber(value),
         }));
-      break;
+        break;
       case 'state':
         setFormData(prev => ({
           ...prev,
           [name]: formatState(value),
         }));
-      break;
+        break;
       case 'zip_code':
         setFormData(prev => ({
           ...prev,
           [name]: formatZipCode(value),
         }));
-      break;
+        break;
       case 'driver_license_state':
         setFormData(prev => ({
           ...prev,
           [name]: formatState(value),
         }));
-      break;
+        break;
       default:
         setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -193,7 +193,7 @@ export function ProfileForm({
 
       return { data: updatedUser, success: true };
     }
- catch (error) {
+    catch (error) {
       console.error('Error updating profile:', error);
       return { message: 'Failed to update profile', success: false };
     }
@@ -251,7 +251,7 @@ export function ProfileForm({
         title: 'Changes saved successfully',
       });
     }
- catch (err) {
+    catch (err) {
       console.error('Error saving changes:', err);
       toast({
         description: 'An unexpected error occurred.',
@@ -259,7 +259,7 @@ export function ProfileForm({
         variant: 'destructive',
       });
     }
- finally {
+    finally {
       setIsSaving(false);
     }
   };

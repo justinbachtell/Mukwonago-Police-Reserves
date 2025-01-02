@@ -35,10 +35,10 @@ function formatPhoneNumber(value: string): string {
   if (trimmed.length > 6) {
     return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3, 6)}-${trimmed.slice(6)}`;
   }
- else if (trimmed.length > 3) {
+  else if (trimmed.length > 3) {
     return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3)}`;
   }
- else if (trimmed.length > 0) {
+  else if (trimmed.length > 0) {
     return `(${trimmed}`;
   }
 
@@ -104,25 +104,25 @@ export function EmergencyContactForm({
           ...prev,
           [name]: value || null,
         }));
-      break;
+        break;
       case 'phone':
         setFormData(prev => ({
           ...prev,
           [name]: formatPhoneNumber(value),
         }));
-      break;
+        break;
       case 'state':
         setFormData(prev => ({
           ...prev,
           [name]: formatState(value),
         }));
-      break;
+        break;
       case 'zip_code':
         setFormData(prev => ({
           ...prev,
           [name]: formatZipCode(value),
         }));
-      break;
+        break;
       default:
         setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -149,7 +149,7 @@ export function EmergencyContactForm({
       const updatedContact = await updateEmergencyContact(dbUser.id, formData);
       return { data: updatedContact, success: true };
     }
- catch (error) {
+    catch (error) {
       console.error('Error updating emergency contact:', error);
       return { message: 'Failed to update emergency contact', success: false };
     }

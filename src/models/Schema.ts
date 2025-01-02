@@ -186,58 +186,223 @@ export const assignedEquipment = pgTable('assigned_equipment', {
     .notNull(),
 }).enableRLS();
 
+export const events = pgTable('events', {
+  id: serial('id').primaryKey(),
+  event_date: timestamp('event_date', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  event_type: text('event_type').notNull(),
+  event_location: text('event_location').notNull(),
+  event_name: text('event_name').notNull(),
+  event_start_time: timestamp('event_start_time', {
+    mode: 'string',
+    withTimezone: true
+  })
+    .defaultNow()
+    .notNull(),
+  event_end_time: timestamp('event_end_time', {
+    mode: 'string',
+    withTimezone: true
+  })
+    .defaultNow()
+    .notNull(),
+  created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  notes: text('notes'),
+  updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull()
+}).enableRLS()
+
+export const eventAssignments = pgTable(
+  'event_assignments',
+  {
+    id: serial('id').primaryKey(),
+    event_id: integer('event_id')
+      .references(() => events.id)
+      .notNull(),
+    user_id: integer('user_id')
+      .references(() => user.id)
+      .notNull(),
+    created_at: timestamp('created_at', {
+      mode: 'string',
+      withTimezone: true
+    })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp('updated_at', {
+      mode: 'string',
+      withTimezone: true
+    })
+      .defaultNow()
+      .notNull()
+  },
+  table => [
+    unique('event_assignment_event_user').on(table.event_id, table.user_id)
+  ]
+).enableRLS()
+
+export const training = pgTable('training', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  training_date: timestamp('training_date', {
+    mode: 'string',
+    withTimezone: true
+  })
+    .defaultNow()
+    .notNull(),
+  training_location: text('training_location').notNull(),
+  training_type: text('training_type').notNull(),
+  training_instructor: integer('training_instructor')
+    .references(() => user.id)
+    .notNull(),
+  training_start_time: timestamp('training_start_time', {
+    mode: 'string',
+    withTimezone: true
+  })
+    .defaultNow()
+    .notNull(),
+  training_end_time: timestamp('training_end_time', {
+    mode: 'string',
+    withTimezone: true
+  })
+    .defaultNow()
+    .notNull(),
+  created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull()
+}).enableRLS()
+
+export const trainingAssignments = pgTable(
+  'training_assignments',
+  {
+    id: serial('id').primaryKey(),
+    training_id: integer('training_id')
+      .references(() => training.id)
+      .notNull(),
+    user_id: integer('user_id')
+      .references(() => user.id)
+      .notNull(),
+    created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
+      .defaultNow()
+      .notNull()
+  },
+  table => [
+    unique('training_assignment_training_user').on(
+      table.training_id,
+      table.user_id
+    )
+  ]
+).enableRLS()
+
 export const userRelations = relations(user, ({ many, one }) => ({
   applications: many(application),
   assignedEquipment: many(assignedEquipment),
   currentAssignedEquipment: one(assignedEquipment, {
     fields: [user.id],
     references: [assignedEquipment.user_id],
-    relationName: 'currentAssignedEquipment',
+    relationName: 'currentAssignedEquipment'
   }),
   currentUniformSizes: one(uniformSizes, {
     fields: [user.id],
     references: [uniformSizes.user_id],
-    relationName: 'currentUniformSizes',
+    relationName: 'currentUniformSizes'
   }),
   emergencyContacts: many(emergencyContact),
-}));
+  eventAssignments: many(eventAssignments),
+  trainingAssignments: many(trainingAssignments)
+}))
 
 export const uniformSizesRelations = relations(uniformSizes, ({ one }) => ({
   user: one(user, {
     fields: [uniformSizes.user_id],
-    references: [user.id],
-  }),
-}));
+    references: [user.id]
+  })
+}))
 
 export const applicationRelations = relations(application, ({ one }) => ({
   user: one(user, {
     fields: [application.user_id],
-    references: [user.id],
-  }),
-}));
+    references: [user.id]
+  })
+}))
 
 export const equipmentRelations = relations(equipment, ({ many, one }) => ({
   assignedTo: one(user, {
     fields: [equipment.assigned_to],
-    references: [user.id],
+    references: [user.id]
   }),
-  assignments: many(assignedEquipment),
-}));
+  assignments: many(assignedEquipment)
+}))
 
-export const assignedEquipmentRelations = relations(assignedEquipment, ({ one }) => ({
-  equipment: one(equipment, {
-    fields: [assignedEquipment.equipment_id],
-    references: [equipment.id],
-  }),
-  user: one(user, {
-    fields: [assignedEquipment.user_id],
-    references: [user.id],
-  }),
-}));
+export const assignedEquipmentRelations = relations(
+  assignedEquipment,
+  ({ one }) => ({
+    equipment: one(equipment, {
+      fields: [assignedEquipment.equipment_id],
+      references: [equipment.id]
+    }),
+    user: one(user, {
+      fields: [assignedEquipment.user_id],
+      references: [user.id]
+    })
+  })
+)
 
-export const emergencyContactRelations = relations(emergencyContact, ({ one }) => ({
-  user: one(user, {
-    fields: [emergencyContact.user_id],
-    references: [user.id],
-  }),
-}));
+export const emergencyContactRelations = relations(
+  emergencyContact,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [emergencyContact.user_id],
+      references: [user.id]
+    })
+  })
+)
+
+export const eventRelations = relations(events, ({ many }) => ({
+  assignments: many(eventAssignments)
+}))
+
+export const eventAssignmentRelations = relations(
+  eventAssignments,
+  ({ one }) => ({
+    event: one(events, {
+      fields: [eventAssignments.event_id],
+      references: [events.id]
+    }),
+    user: one(user, {
+      fields: [eventAssignments.user_id],
+      references: [user.id]
+    })
+  })
+)
+
+export const trainingAssignmentRelations = relations(
+  trainingAssignments,
+  ({ one }) => ({
+    training: one(training, {
+      fields: [trainingAssignments.training_id],
+      references: [training.id]
+    }),
+    user: one(user, {
+      fields: [trainingAssignments.user_id],
+      references: [user.id]
+    })
+  })
+)
+
+export const trainingRelations = relations(training, ({ many, one }) => ({
+  assignments: many(trainingAssignments),
+  instructor: one(user, {
+    fields: [training.training_instructor],
+    references: [user.id]
+  })
+}))

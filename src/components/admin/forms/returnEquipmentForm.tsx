@@ -62,7 +62,7 @@ export function ReturnEquipmentForm({ assignmentId, currentCondition }: ReturnEq
       });
       window.location.reload();
     }
- catch (error) {
+    catch (error) {
       console.error('Error returning equipment:', error);
       toast({
         description: 'Failed to return equipment. Please try again.',

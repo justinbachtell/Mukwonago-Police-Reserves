@@ -61,13 +61,13 @@ export default async function UserEquipmentPage({ params }: Props) {
       created_at: new Date(item.created_at),
       equipment: item.equipment
         ? {
-            ...item.equipment,
-            purchase_date: item.equipment.purchase_date
-              ? new Date(item.equipment.purchase_date)
-              : null,
-            created_at: new Date(item.equipment.created_at),
-            updated_at: new Date(item.equipment.updated_at),
-          }
+          ...item.equipment,
+          purchase_date: item.equipment.purchase_date
+            ? new Date(item.equipment.purchase_date)
+            : null,
+          created_at: new Date(item.equipment.created_at),
+          updated_at: new Date(item.equipment.updated_at),
+        }
         : null,
       expected_return_date: item.expected_return_date ? new Date(item.expected_return_date) : null,
       updated_at: new Date(item.updated_at),
@@ -137,8 +137,8 @@ export default async function UserEquipmentPage({ params }: Props) {
                   ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center text-muted-foreground">
-                          No equipment assigned
-                        </TableCell>
+                        No equipment assigned
+                      </TableCell>
                     </TableRow>
                   )
                   : (
@@ -148,10 +148,10 @@ export default async function UserEquipmentPage({ params }: Props) {
                           {item.equipment?.name}
                           {item.equipment?.serial_number && (
                             <span className="ml-1 text-sm text-muted-foreground">
-                                (
-                                {item.equipment.serial_number}
-                                )
-                              </span>
+                              (
+                              {item.equipment.serial_number}
+                              )
+                            </span>
                           )}
                         </TableCell>
                         <TableCell className="capitalize">{item.condition}</TableCell>
@@ -180,8 +180,8 @@ export default async function UserEquipmentPage({ params }: Props) {
                             )
                             : (
                               <p>
-                                    Returned
-                                    {item.checked_in_at.toLocaleDateString()}
+                                Returned
+                                {item.checked_in_at.toLocaleDateString()}
                               </p>
                             )}
                         </TableCell>

@@ -10,7 +10,10 @@ import {
   Settings,
   Shield,
   User,
-} from 'lucide-react';
+  Home,
+  Calendar,
+  FilePen
+} from 'lucide-react'
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -42,30 +45,57 @@ export default async function AdminLayout(props: {
     <BaseTemplate
       leftNav={(
         <>
-          <li>
+          <li className='flex justify-start list-none'>
             <Link
-              href="/user/dashboard/"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+              href='/'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
             >
-              <LayoutDashboard className="size-4" />
+              <Home className='size-4' />
+              <span>{t('home_link')}</span>
+            </Link>
+          </li>
+          <li className='flex justify-start list-none'>
+            <Link
+              href='/user/dashboard/'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+            >
+              <LayoutDashboard className='size-4' />
               <span>{t('dashboard_link')}</span>
             </Link>
           </li>
-          <li>
+          <li className='flex justify-start list-none'>
             <Link
-              href="/contacts"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+              href='/contacts'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
             >
-              <Mail className="size-4" />
+              <Mail className='size-4' />
               <span>{t('contacts_link')}</span>
             </Link>
           </li>
-          <li>
+          <li className='flex justify-start list-none'>
             <Link
-              href="/admin/users"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+              href='/events'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
             >
-              <Shield className="size-4" />
+              <Calendar className='size-4' />
+              <span>{t('events_link')}</span>
+            </Link>
+          </li>
+          <li className='flex justify-start list-none'>
+            <Link
+              href='/training'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+            >
+              <FilePen className='size-4' />
+              <span>{t('training_link')}</span>
+            </Link>
+          </li>
+          <li className='flex justify-start list-none'>
+            <Link
+              href='/admin/users'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+            >
+              <Shield className='size-4' />
               <span>{t('admin_link')}</span>
             </Link>
           </li>
@@ -73,31 +103,31 @@ export default async function AdminLayout(props: {
       )}
       rightNav={(
         <>
-          <li>
+          <li className='flex justify-start list-none'>
             <Link
-              href="/user/profile"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+              href='/user/profile'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
             >
-              <User className="size-4" />
+              <User className='size-4' />
               <span>{t('profile_link')}</span>
             </Link>
           </li>
-          <li>
+          <li className='flex justify-start list-none'>
             <Link
-              href="/user/settings"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+              href='/user/settings'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
             >
-              <Settings className="size-5" />
+              <Settings className='size-5' />
               <span>{t('settings_link')}</span>
             </Link>
           </li>
-          <li>
+          <li className='flex justify-start list-none'>
             <SignOutButton>
               <button
-                className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-                type="button"
+                className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+                type='button'
               >
-                <LogOut className="size-4" />
+                <LogOut className='size-4' />
                 <span>{t('sign_out')}</span>
               </button>
             </SignOutButton>
@@ -105,20 +135,20 @@ export default async function AdminLayout(props: {
         </>
       )}
       sidebar={(
-        <div className="flex">
+        <div className='flex'>
           <AdminSidebar />
           <SidebarInset ref={undefined}>
-            <div className="flex h-14 items-center gap-0 px-1">
+            <div className='flex h-14 items-center gap-0 px-1'>
               <SidebarTrigger ref={undefined} />
-              <div className="flex-1" />
+              <div className='flex-1' />
             </div>
           </SidebarInset>
         </div>
       )}
     >
-      <div className="flex-1 transition-[padding] duration-300 ease-in-out">
+      <div className='flex-1 transition-[padding] duration-300 ease-in-out'>
         {props.children}
       </div>
     </BaseTemplate>
-  );
+  )
 }

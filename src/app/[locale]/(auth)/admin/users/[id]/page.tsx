@@ -61,7 +61,7 @@ export default async function UserEditPage({ params, searchParams: _searchParams
       </div>
     );
   }
- catch (error) {
+  catch (error) {
     console.error('Error in UserEditPage:', error);
     redirect('/error'); // Create this page or redirect to appropriate error page
   }

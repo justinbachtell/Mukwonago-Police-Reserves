@@ -76,7 +76,7 @@ const SidebarProvider = React.forwardRef<
             if (setOpenProp) {
               setOpenProp(openState);
             }
- else {
+            else {
               _setOpen(openState);
             }
 

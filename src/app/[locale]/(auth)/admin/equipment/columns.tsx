@@ -63,15 +63,15 @@ export const columns: ColumnDef<EquipmentWithUser>[] = [
       const date = row.getValue('purchase_date')
       return date
         ? (
-            <div className={`flex flex-col px-4 ${row.original.is_obsolete ? 'opacity-40' : ''}`}>
-              <span className="truncate">{new Date(date as string).toLocaleDateString()}</span>
-            </div>
-          )
+          <div className={`flex flex-col px-4 ${row.original.is_obsolete ? 'opacity-40' : ''}`}>
+            <span className="truncate">{new Date(date as string).toLocaleDateString()}</span>
+          </div>
+        )
         : (
-            <div className={`flex flex-col px-4 ${row.original.is_obsolete ? 'opacity-40' : ''}`}>
-              <span className="truncate">Not specified</span>
-            </div>
-          );
+          <div className={`flex flex-col px-4 ${row.original.is_obsolete ? 'opacity-40' : ''}`}>
+            <span className="truncate">Not specified</span>
+          </div>
+        );
     },
     header: ({ column }) => (
       <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
@@ -95,15 +95,15 @@ export const columns: ColumnDef<EquipmentWithUser>[] = [
       }
       return isAssigned
         ? (
-            <div className="flex flex-col px-4">
-              <Badge variant="secondary">Assigned</Badge>
-            </div>
-          )
+          <div className="flex flex-col px-4">
+            <Badge variant="secondary">Assigned</Badge>
+          </div>
+        )
         : (
-            <div className="flex flex-col px-4">
-              <Badge variant="default">Available</Badge>
-            </div>
-          );
+          <div className="flex flex-col px-4">
+            <Badge variant="default">Available</Badge>
+          </div>
+        );
     },
     enableSorting: true,
     header: ({ column }) => (

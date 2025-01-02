@@ -3,6 +3,7 @@ import { getAllApplications } from '@/actions/application';
 import { getAllUsers } from '@/actions/user';
 import { DataTable } from '@/components/ui/data-table';
 import { columns } from './columns';
+import { toISOString } from '@/lib/utils'
 
 type UserWithApplication = Omit<DBUser, 'created_at' | 'updated_at'> & {
   application_status: 'pending' | 'approved' | 'rejected' | null
@@ -19,9 +20,9 @@ export default async function UserManagementPage() {
     return {
       ...user,
       application_status: application?.status ?? null,
-      created_at: user.created_at.toISOString(),
-      updated_at: user.updated_at.toISOString(),
-    };
+      created_at: toISOString(user.created_at),
+      updated_at: toISOString(user.updated_at)
+    }
   })
 
   return (

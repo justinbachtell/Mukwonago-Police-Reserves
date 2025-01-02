@@ -18,23 +18,23 @@ export default async function RecruitingLayout(props: {
     <BaseTemplate
       leftNav={(
         <>
-          <li>
+          <li className='flex justify-start list-none'>
             <Link
-              href="/"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-              title="Home"
+              href='/'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+              title='Home'
             >
-              <Home className="size-4" />
+              <Home className='size-4' />
               <span>{t('home_link')}</span>
             </Link>
           </li>
-          <li>
+          <li className='flex justify-start list-none'>
             <Link
-              href="/about"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-              title="About"
+              href='/about'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+              title='About'
             >
-              <Bot className="size-4" />
+              <Bot className='size-4' />
               <span>{t('about_link')}</span>
             </Link>
           </li>
@@ -42,30 +42,30 @@ export default async function RecruitingLayout(props: {
       )}
       rightNav={(
         <>
-          <li>
+          <li className='flex justify-start list-none'>
             <Link
-              href="/sign-up"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-              title="Apply Now"
+              href='/sign-up'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+              title='Apply Now'
             >
-              <NotebookPen className="size-4" />
+              <NotebookPen className='size-4' />
               <span>{t('apply_now_link')}</span>
             </Link>
           </li>
-          <li>
+          <li className='flex justify-start list-none'>
             <Link
-              href="/sign-in"
-              className="flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-              title="Sign in"
+              href='/sign-in'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+              title='Sign in'
             >
-              <CircleUserRound className="size-5" />
+              <CircleUserRound className='size-5' />
               <span>{t('sign_in_link')}</span>
             </Link>
           </li>
         </>
       )}
     >
-      <div className="[&_p]:my-6">{props.children}</div>
+      <div className='[&_p]:my-6'>{props.children}</div>
     </BaseTemplate>
-  );
+  )
 }

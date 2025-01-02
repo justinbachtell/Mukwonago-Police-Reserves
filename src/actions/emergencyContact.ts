@@ -59,7 +59,7 @@ export async function updateEmergencyContact(user_id: number, data: EmergencyCon
       updated_at: new Date(updatedEmergencyContact.updated_at),
     };
   }
- catch (error) {
+  catch (error) {
     console.error('Error updating emergency contact:', error);
     throw new Error('Failed to update emergency contact');
   }
@@ -105,7 +105,7 @@ export async function getCurrentEmergencyContact(userId: number): Promise<Emerge
 
     return result;
   }
- catch (error) {
+  catch (error) {
     console.error('Error fetching current emergency contact:', error);
     throw new Error('Failed to fetch current emergency contact');
   }
@@ -150,7 +150,7 @@ async function createDefaultEmergencyContact(dbUser: DBUser): Promise<EmergencyC
       zip_code: newContact.zip_code || '',
     };
   }
- catch (error) {
+  catch (error) {
     console.error('Error creating default emergency contact:', error);
     throw new Error('Failed to create default emergency contact');
   }

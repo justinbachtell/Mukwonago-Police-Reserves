@@ -54,7 +54,7 @@ export function UserEditForm({ user }: UserEditFormProps) {
       });
       router.refresh();
     }
- catch (error) {
+    catch (error) {
       toast({
         description: 'There was an error updating the user information.',
         title: 'Failed to update user',
