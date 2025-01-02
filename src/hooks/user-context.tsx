@@ -28,13 +28,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const response = await getCurrentUser();
         setUser(response as DBUser);
       }
- else {
+      else {
         setUser(null);
       }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch user'));
     }
- finally {
+    finally {
       setIsLoading(false);
     }
   }, [isSignedIn]);

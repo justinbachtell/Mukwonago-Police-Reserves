@@ -67,7 +67,7 @@ export function AssignEquipmentForm({
       });
       form.reset();
     }
- catch {
+    catch {
       toast({
         description: 'Failed to assign equipment. Please try again.',
         title: 'Error',

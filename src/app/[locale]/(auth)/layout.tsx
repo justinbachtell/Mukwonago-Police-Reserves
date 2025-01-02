@@ -1,5 +1,5 @@
 import { routing } from '@/libs/i18nNavigation';
-import { enUS, frFR } from '@clerk/localizations';
+import { enUS, esES } from "@clerk/localizations";
 import { ClerkProvider } from '@clerk/nextjs';
 import { setRequestLocale } from 'next-intl/server';
 
@@ -15,8 +15,8 @@ export default async function AuthLayout(props: {
   let dashboardUrl = '/user/dashboard';
   let afterSignOutUrl = '/';
 
-  if (locale === 'fr') {
-    clerkLocale = frFR;
+  if (locale === "es") {
+    clerkLocale = esES;
   }
 
   if (locale !== routing.defaultLocale) {

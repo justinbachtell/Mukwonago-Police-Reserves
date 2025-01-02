@@ -130,7 +130,7 @@ export function UniformSizesForm({ currentSizes, saveRef, user: dbUser }: Unifor
       const updatedSizes = await updateUniformSizes(dbUser.id, uniformData);
       return { data: updatedSizes, success: true };
     }
- catch (error) {
+    catch (error) {
       console.error('Error updating uniform sizes:', error);
       return { message: 'Failed to update uniform sizes', success: false };
     }

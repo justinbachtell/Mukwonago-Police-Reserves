@@ -18,7 +18,7 @@ if (Env.LOGTAIL_SOURCE_TOKEN) {
     },
   ]);
 }
- else {
+else {
   stream = pretty({
     colorize: true,
   });

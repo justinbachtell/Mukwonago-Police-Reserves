@@ -121,46 +121,46 @@ export function AssignedEquipmentForm({ saveRef, user }: AssignedEquipmentFormPr
         <TableBody>
           {assignedEquipment.length === 0
             ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   No equipment assigned
-                  </TableCell>
-                </TableRow>
-              )
+                </TableCell>
+              </TableRow>
+            )
             : (
-                assignedEquipment.map(item => (
-                  <TableRow key={item.id} className={item.checked_in_at ? 'opacity-40' : ''}>
-                    <TableCell>
-                      {item.equipment?.name}
-                      {item.equipment?.serial_number && (
-                        <span className="ml-1 text-sm text-muted-foreground">
+              assignedEquipment.map(item => (
+                <TableRow key={item.id} className={item.checked_in_at ? 'opacity-40' : ''}>
+                  <TableCell>
+                    {item.equipment?.name}
+                    {item.equipment?.serial_number && (
+                      <span className="ml-1 text-sm text-muted-foreground">
                         (
-                          {item.equipment.serial_number}
+                        {item.equipment.serial_number}
                         )
-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="capitalize">{item.condition}</TableCell>
-                    <TableCell>{formatDate(item.checked_out_at.toISOString())}</TableCell>
-                    <TableCell>
-                      {item.expected_return_date
-                        ? formatDate(item.expected_return_date.toISOString())
-                        : 'Not specified'}
-                    </TableCell>
-                    <TableCell>
-                      {item.checked_in_at
-                        ? formatDate(item.checked_in_at.toISOString())
-                        : 'Not returned'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={item.checked_in_at ? 'secondary' : 'default'}>
-                        {item.checked_in_at ? 'Returned' : 'Active'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{item.notes || 'No notes'}</TableCell>
-                  </TableRow>
-                ))
-              )}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="capitalize">{item.condition}</TableCell>
+                  <TableCell>{formatDate(item.checked_out_at.toISOString())}</TableCell>
+                  <TableCell>
+                    {item.expected_return_date
+                      ? formatDate(item.expected_return_date.toISOString())
+                      : 'Not specified'}
+                  </TableCell>
+                  <TableCell>
+                    {item.checked_in_at
+                      ? formatDate(item.checked_in_at.toISOString())
+                      : 'Not returned'}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={item.checked_in_at ? 'secondary' : 'default'}>
+                      {item.checked_in_at ? 'Returned' : 'Active'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{item.notes || 'No notes'}</TableCell>
+                </TableRow>
+              ))
+            )}
         </TableBody>
       </Table>
     </Card>

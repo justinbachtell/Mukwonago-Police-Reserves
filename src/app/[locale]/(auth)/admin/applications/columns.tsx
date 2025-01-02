@@ -7,70 +7,80 @@ import { toast } from 'sonner';
 
 export const columns: ColumnDef<Application>[] = [
   {
-    accessorKey: 'first_name',
-    header: 'First Name',
+    accessorKey: "first_name",
+    header: "First Name",
   },
   {
-    accessorKey: 'last_name',
-    header: 'Last Name',
+    accessorKey: "last_name",
+    header: "Last Name",
   },
   {
-    accessorKey: 'email',
-    header: 'Email',
+    accessorKey: "email",
+    header: "Email",
   },
   {
-    accessorKey: 'phone',
-    header: 'Phone',
+    accessorKey: "phone",
+    header: "Phone",
   },
   {
-    accessorKey: 'position',
+    accessorKey: "position",
     cell: ({ row }) => {
-      const position = row.getValue('position') as string
+      const position = row.getValue("position") as string;
       return (
-        <Badge variant="outline" className="capitalize">
-          {position.replace('_', ' ')}
+        <Badge
+          variant="outline"
+          className="capitalize"
+        >
+          {position.replace("_", " ")}
         </Badge>
-      )
+      );
     },
-    header: 'Position',
+    header: "Position",
   },
   {
-    accessorKey: 'status',
+    accessorKey: "status",
     cell: ({ row }) => {
-      const status = row.getValue('status') as string
+      const status = row.getValue("status") as string;
       return (
         <Badge
           variant={
-            status === 'pending' ? 'outline' : status === 'approved' ? 'default' : 'destructive'
+            status === "pending"
+              ? "outline"
+              : status === "approved"
+                ? "default"
+                : "destructive"
           }
           className="capitalize"
         >
           {status}
         </Badge>
-      )
+      );
     },
-    header: 'Status',
+    header: "Status",
   },
   {
     cell: ({ row }) => {
-      const application = row.original
-      const isDecided = application.status !== 'pending'
+      const application = row.original;
+      const isDecided = application.status !== "pending";
 
-      const handleStatusUpdate = async (status: 'approved' | 'rejected') => {
+      const handleStatusUpdate = async (
+        status: "approved" | "rejected"
+      ) => {
         try {
-          await updateApplicationStatus(application.id, status)
-          toast.success(`Application ${status} successfully`)
+          await updateApplicationStatus(application.id, status);
+          toast.success(`Application ${status} successfully`);
+          window.location.reload();
         } catch {
-          toast.error('Failed to update application status')
+          toast.error("Failed to update application status");
         }
-      }
+      };
 
       return (
         <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleStatusUpdate('approved')}
+            onClick={() => handleStatusUpdate("approved")}
             disabled={isDecided}
           >
             Approve
@@ -78,16 +88,16 @@ export const columns: ColumnDef<Application>[] = [
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleStatusUpdate('rejected')}
+            onClick={() => handleStatusUpdate("rejected")}
             disabled={isDecided}
             className="text-destructive"
           >
             Reject
           </Button>
         </div>
-      )
+      );
     },
-    header: 'Actions',
-    id: 'actions',
+    header: "Actions",
+    id: "actions",
   },
 ];

@@ -4,39 +4,59 @@ import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { SignOutButton } from '@clerk/nextjs';
-import { Boxes, ClipboardList, LayoutDashboard, LogOut, Settings, Shield, Users } from 'lucide-react';
+import {
+  Boxes,
+  Calendar,
+  ClipboardList,
+  FilePen,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Shield,
+  Users,
+} from "lucide-react";
 import * as React from 'react';
 
 const sidebarItems = {
   management: [
     {
       icon: Users,
-      title: 'Users',
-      url: '/admin/users',
+      title: "Users",
+      url: "/admin/users",
     },
     {
       icon: Boxes,
-      title: 'Equipment',
-      url: '/admin/equipment',
+      title: "Equipment",
+      url: "/admin/equipment",
     },
     {
       icon: ClipboardList,
-      title: 'Applications',
-      url: '/admin/applications',
+      title: "Applications",
+      url: "/admin/applications",
+    },
+    {
+      icon: Calendar,
+      title: "Events",
+      url: "/admin/events",
+    },
+    {
+      icon: FilePen,
+      title: "Training",
+      url: "/admin/training",
     },
   ],
   overview: [
     {
       icon: LayoutDashboard,
-      name: 'Dashboard',
-      url: '/admin/dashboard',
+      name: "Dashboard",
+      url: "/admin/dashboard",
     },
   ],
   settings: [
     {
       icon: Settings,
-      title: 'Settings',
-      url: '/admin/settings',
+      title: "Settings",
+      url: "/admin/settings",
     },
   ],
 };

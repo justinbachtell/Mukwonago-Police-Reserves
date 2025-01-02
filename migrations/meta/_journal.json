@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1735573962326,
-      "tag": "0000_clear_professor_monster",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1735576103306,
-      "tag": "0001_zippy_martin_li",
+      "when": 1735852237189,
+      "tag": "0000_sparkling_scorpion",
       "breakpoints": true
     }
   ]

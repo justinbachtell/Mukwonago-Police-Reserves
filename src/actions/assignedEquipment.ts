@@ -73,7 +73,7 @@ export async function createAssignedEquipment(data: CreateAssignedEquipmentData)
 
     return newAssignment;
   }
- catch (error) {
+  catch (error) {
     console.error('Error creating equipment assignment:', error);
     throw new Error('Failed to create equipment assignment');
   }
@@ -122,17 +122,17 @@ export async function getAssignedEquipment(userId: number) {
       created_at: assignment.created_at,
       equipment: assignment.equipment
         ? {
-            ...assignment.equipment,
-            purchase_date: assignment.equipment.purchase_date,
-            created_at: assignment.equipment.created_at,
-            updated_at: assignment.equipment.updated_at,
-          }
+          ...assignment.equipment,
+          purchase_date: assignment.equipment.purchase_date,
+          created_at: assignment.equipment.created_at,
+          updated_at: assignment.equipment.updated_at,
+        }
         : null,
       expected_return_date: assignment.expected_return_date,
       updated_at: assignment.updated_at,
     }));
   }
- catch (error) {
+  catch (error) {
     console.error('Error getting equipment assignments:', error);
     throw new Error('Failed to get equipment assignments');
   }
@@ -185,7 +185,7 @@ export async function updateAssignedEquipment(
         : null,
     };
   }
- catch (error) {
+  catch (error) {
     console.error('Error updating equipment assignment:', error);
     return null;
   }
@@ -237,7 +237,7 @@ export async function returnEquipment(
     revalidatePath('/admin/users/[id]/equipment');
     revalidatePath(`/admin/users/${assignmentId}/equipment`);
   }
- catch (error) {
+  catch (error) {
     console.error('Error returning equipment:', error);
     throw new Error('Failed to return equipment');
   }
@@ -247,7 +247,7 @@ export async function deleteAssignedEquipment(assignmentId: number) {
   try {
     await db.delete(assignedEquipment).where(eq(assignedEquipment.id, assignmentId));
   }
- catch (error) {
+  catch (error) {
     console.error('Error deleting equipment assignment:', error);
     throw new Error('Failed to delete equipment assignment');
   }
@@ -286,17 +286,17 @@ export async function getCurrentAssignedEquipment(userId: number) {
       created_at: assignment.created_at,
       equipment: assignment.equipment
         ? {
-            ...assignment.equipment,
-            purchase_date: assignment.equipment.purchase_date,
-            created_at: assignment.equipment.created_at,
-            updated_at: assignment.equipment.updated_at,
-          }
+          ...assignment.equipment,
+          purchase_date: assignment.equipment.purchase_date,
+          created_at: assignment.equipment.created_at,
+          updated_at: assignment.equipment.updated_at,
+        }
         : null,
       expected_return_date: assignment.expected_return_date,
       updated_at: assignment.updated_at,
     };
   }
- catch (error) {
+  catch (error) {
     console.error('Error getting equipment assignment:', error);
     return null;
   }

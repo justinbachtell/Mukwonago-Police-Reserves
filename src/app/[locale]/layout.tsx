@@ -5,35 +5,35 @@ import { routing } from '@/libs/i18nNavigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import '@/styles/global.css';
+import "@/styles/global.css";
 
 export const metadata: Metadata = {
   icons: [
     {
-      rel: 'apple-touch-icon',
-      url: '/apple-touch-icon.png',
+      rel: "apple-touch-icon",
+      url: "/apple-touch-icon.png",
     },
     {
-      rel: 'icon',
-      sizes: '32x32',
-      type: 'image/png',
-      url: '/favicon-32x32.png',
+      rel: "icon",
+      sizes: "32x32",
+      type: "image/png",
+      url: "/favicon-32x32.png",
     },
     {
-      rel: 'icon',
-      sizes: '16x16',
-      type: 'image/png',
-      url: '/favicon-16x16.png',
+      rel: "icon",
+      sizes: "16x16",
+      type: "image/png",
+      url: "/favicon-16x16.png",
     },
     {
-      rel: 'icon',
-      url: '/favicon.ico',
+      rel: "icon",
+      url: "/favicon.ico",
     },
   ],
 };
 
 export function generateStaticParams() {
-  return routing.locales.map(locale => ({ locale }));
+  return routing.locales.map((locale) => ({ locale }));
 }
 
 // Improve security with Arcjet
@@ -42,17 +42,17 @@ const aj = arcjet.withRule(
     // Block all bots except the following
     allow: [
       // See https://docs.arcjet.com/bot-protection/identifying-bots
-      'CATEGORY:SEARCH_ENGINE', // Allow search engines
-      'CATEGORY:PREVIEW', // Allow preview links to show OG images
-      'CATEGORY:MONITOR', // Allow uptime monitoring services
+      "CATEGORY:SEARCH_ENGINE", // Allow search engines
+      "CATEGORY:PREVIEW", // Allow preview links to show OG images
+      "CATEGORY:MONITOR", // Allow uptime monitoring services
     ],
-    mode: 'LIVE',
-  }),
+    mode: "LIVE",
+  })
 );
 
 export default async function RootLayout(props: {
-  children: React.ReactNode
-  params: Promise<{ locale: string }>
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
   const { locale } = await props.params;
 
@@ -71,10 +71,10 @@ export default async function RootLayout(props: {
     // redirect or show a custom error page
     if (decision.isDenied()) {
       if (decision.reason.isBot()) {
-        throw new Error('No bots allowed');
+        throw new Error("No bots allowed");
       }
 
-      throw new Error('Access denied');
+      throw new Error("Access denied");
     }
   }
 
@@ -86,8 +86,14 @@ export default async function RootLayout(props: {
 
   return (
     <html lang={locale}>
-      <body suppressHydrationWarning className="overflow-x-hidden">
-        <NextIntlClientProvider locale={locale} messages={messages}>
+      <body
+        suppressHydrationWarning
+        className="overflow-x-hidden"
+      >
+        <NextIntlClientProvider
+          locale={locale}
+          messages={messages}
+        >
           {props.children}
         </NextIntlClientProvider>
       </body>

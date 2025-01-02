@@ -217,53 +217,53 @@ const ChartTooltipContent = React.forwardRef<
                       item,
                       index,
                       item.payload,
-                      )
+                    )
                   )
                   : (
                     <>
                       {itemConfig?.icon
-                          ? (
-                              <itemConfig.icon />
-                            )
-                          : (
-                              !hideIndicator && (
-                                <div
-                                  className={cn(
-                                    "shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]",
-                                    {
-                                      "h-2.5 w-2.5":
+                        ? (
+                          <itemConfig.icon />
+                        )
+                        : (
+                          !hideIndicator && (
+                            <div
+                              className={cn(
+                                "shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]",
+                                {
+                                  "h-2.5 w-2.5":
                                                                 indicator
                                                                 === 'dot',
-                                      "my-0.5":
+                                  "my-0.5":
                                                                 nestLabel
                                                                 && indicator
                                                                 === 'dashed',
-                                      "w-0 border-[1.5px] border-dashed bg-transparent":
+                                  "w-0 border-[1.5px] border-dashed bg-transparent":
                                                                 indicator
                                                                 === 'dashed',
-                                      "w-1":
+                                  "w-1":
                                                                 indicator
                                                                 === 'line',
-                                    }
-                                  )}
-                                  style={
-                                    {
-                                      '--color-bg':
+                                }
+                              )}
+                              style={
+                                {
+                                  '--color-bg':
                                                                 indicatorColor,
-                                      '--color-border':
+                                  '--color-border':
                                                                 indicatorColor,
-                                    } as React.CSSProperties
-                                  }
-                                />
-                              )
-                            )}
+                                } as React.CSSProperties
+                              }
+                            />
+                          )
+                        )}
                       <div
                         className={cn(
                           "flex flex-1 justify-between leading-none",
                           nestLabel
                             ? 'items-end'
                             : 'items-center',
-                          )}
+                        )}
                       >
                         <div className="grid gap-1.5">
                           {nestLabel
@@ -344,16 +344,16 @@ const ChartLegendContent = React.forwardRef<
             >
               {itemConfig?.icon && !hideIcon
                 ? (
-                    <itemConfig.icon />
-                  )
+                  <itemConfig.icon />
+                )
                 : (
-                    <div
-                      className="size-2 shrink-0 rounded-[2px]"
-                      style={{
-                        backgroundColor: item.color,
-                      }}
-                    />
-                  )}
+                  <div
+                    className="size-2 shrink-0 rounded-[2px]"
+                    style={{
+                      backgroundColor: item.color,
+                    }}
+                  />
+                )}
               {itemConfig?.label}
             </div>
           )
@@ -389,7 +389,7 @@ function getPayloadConfigFromPayload(
   ) {
     configLabelKey = payload[key as keyof typeof payload] as string;
   }
- else if (
+  else if (
     payloadPayload
     && key in payloadPayload
     && typeof payloadPayload[key as keyof typeof payloadPayload] === 'string'

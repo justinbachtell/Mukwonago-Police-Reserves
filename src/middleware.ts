@@ -6,16 +6,20 @@ import { routing } from './libs/i18nNavigation';
 const intlMiddleware = createMiddleware(routing);
 
 const isProtectedRoute = createRouteMatcher([
-  '/admin/(.*)',
-  '/:locale/admin/(.*)',
-  '/user/(dashboard|settings|profile|applications)(.*)',
-  '/:locale/user/(dashboard|settings|profile|applications)(.*)',
-  '/dashboard(.*)',
-  '/:locale/dashboard(.*)',
-  '/application(.*)',
-  '/:locale/application(.*)',
-  '/contacts(.*)',
-  '/:locale/contacts(.*)',
+  "/admin/(.*)",
+  "/:locale/admin/(.*)",
+  "/user/(dashboard|settings|profile|applications)(.*)",
+  "/:locale/user/(dashboard|settings|profile|applications)(.*)",
+  "/dashboard(.*)",
+  "/:locale/dashboard(.*)",
+  "/application(.*)",
+  "/:locale/application(.*)",
+  "/contacts(.*)",
+  "/:locale/contacts(.*)",
+  "/events(.*)",
+  "/:locale/events(.*)",
+  "/training(.*)",
+  "/:locale/training(.*)",
 ]);
 
 const isAuthPage = createRouteMatcher([

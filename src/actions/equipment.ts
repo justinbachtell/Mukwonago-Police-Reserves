@@ -16,7 +16,7 @@ export async function getAllEquipment() {
       updated_at: item.updated_at,
     }));
   }
- catch (error) {
+  catch (error) {
     console.error('Error fetching equipment:', error);
     throw new Error('Failed to fetch equipment');
   }
@@ -54,7 +54,7 @@ export async function getAvailableEquipment() {
       updated_at: item.updated_at,
     }));
   }
- catch (error) {
+  catch (error) {
     console.error('Error fetching available equipment:', error);
     throw new Error('Failed to fetch available equipment');
   }
@@ -97,7 +97,7 @@ export async function createEquipment(data: {
       updated_at: newEquipment.updated_at,
     };
   }
- catch (error) {
+  catch (error) {
     console.error('Error creating equipment:', error);
     throw new Error('Failed to create equipment');
   }
@@ -108,7 +108,7 @@ export async function markAsObsolete(id: number) {
     await db.update(equipment).set({ is_obsolete: true }).where(eq(equipment.id, id));
     revalidatePath('/admin/equipment');
   }
- catch (error) {
+  catch (error) {
     console.error('Error marking equipment as obsolete:', error);
     throw new Error('Failed to mark equipment as obsolete');
   }
@@ -119,7 +119,7 @@ export async function deleteEquipment(id: number) {
     await db.delete(equipment).where(eq(equipment.id, id));
     revalidatePath('/admin/equipment');
   }
- catch (error) {
+  catch (error) {
     console.error('Error deleting equipment:', error);
     throw new Error('Failed to delete equipment');
   }
@@ -139,7 +139,7 @@ export async function getEquipment(id: number) {
       updated_at: equipmentItem.updated_at,
     };
   }
- catch (error) {
+  catch (error) {
     console.error('Error fetching equipment:', error);
     throw new Error('Failed to fetch equipment');
   }

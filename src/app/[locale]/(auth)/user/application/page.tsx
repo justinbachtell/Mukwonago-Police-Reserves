@@ -57,14 +57,14 @@ export default async function ApplicationPage() {
                 </div>
                 <div>
                   <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-                      Application Status
-                    </h2>
+                    Application Status
+                  </h2>
                   <p className="capitalize text-gray-600 dark:text-gray-300">
                     {latestApplication.status}
                   </p>
                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      Submitted on
-                      {' '}
+                    Submitted on
+                    {' '}
                     {new Date(latestApplication.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -73,13 +73,13 @@ export default async function ApplicationPage() {
 
             <Card className="p-6">
               <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-                  Application Details
-                </h2>
+                Application Details
+              </h2>
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
                   <h3 className="mb-2 font-semibold text-gray-900 dark:text-white">
-                      Personal Information
-                    </h3>
+                    Personal Information
+                  </h3>
                   <dl className="space-y-2">
                     <div>
                       <dt className="text-sm text-gray-500 dark:text-gray-400">Name</dt>
@@ -108,8 +108,8 @@ export default async function ApplicationPage() {
 
                 <div>
                   <h3 className="mb-2 font-semibold text-gray-900 dark:text-white">
-                      Address Information
-                    </h3>
+                    Address Information
+                  </h3>
                   <dl className="space-y-2">
                     <div>
                       <dt className="text-sm text-gray-500 dark:text-gray-400">Street Address</dt>
@@ -134,8 +134,8 @@ export default async function ApplicationPage() {
 
                 <div>
                   <h3 className="mb-2 font-semibold text-gray-900 dark:text-white">
-                      Additional Information
-                    </h3>
+                    Additional Information
+                  </h3>
                   <dl className="space-y-2">
                     <div>
                       <dt className="text-sm text-gray-500 dark:text-gray-400">Prior Experience</dt>

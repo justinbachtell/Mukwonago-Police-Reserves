@@ -55,7 +55,7 @@ export function ApplicationForm({ user }: Props) {
         toast.success('Application submitted successfully');
         router.refresh();
       }
- catch (error) {
+      catch (error) {
         console.error('Error submitting application:', error);
         toast.error('Failed to submit application. Please try again.');
       }

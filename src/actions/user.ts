@@ -82,7 +82,7 @@ export async function getCurrentUser() {
       updated_at: new Date(dbUser.updated_at),
     } as DBUser;
   }
- catch (error) {
+  catch (error) {
     console.error('Error fetching current user', error);
     throw error;
   }
@@ -146,7 +146,7 @@ export async function updateUser(
       updated_at: new Date(updatedUser.updated_at),
     } as DBUser;
   }
- catch (error) {
+  catch (error) {
     console.error('Error updating user:', error);
     throw new Error('Failed to update user');
   }

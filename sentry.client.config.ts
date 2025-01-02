@@ -7,10 +7,25 @@ import * as Spotlight from '@spotlightjs/spotlight';
 
 Sentry.init({
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
+  debug: process.env.NODE_ENV === 'development',
 
   // Sentry DSN
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+
+  // Adjust performance monitoring
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.2 : 1.0,
+
+  // Add toast-specific error handling
+  beforeSend(event) {
+    // Add additional context for toast-related errors
+    if (event.extra?.component === 'toast') {
+      event.tags = {
+        ...event.tags,
+        toast_action: String(event.extra.action || '')
+      }
+    }
+    return event
+  },
 
   // Add optional integrations for additional features
   integrations: [
@@ -18,8 +33,8 @@ Sentry.init({
     Sentry.replayIntegration({
       blockAllMedia: true,
       // Additional Replay configuration goes in here, for example:
-      maskAllText: true,
-    }),
+      maskAllText: true
+    })
   ],
 
   // Define how likely Replay events are sampled when an error occurs.
@@ -28,11 +43,8 @@ Sentry.init({
   // Define how likely Replay events are sampled.
   // This sets the sample rate to be 10%. You may want this to be 100% while
   // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
-
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
-});
+  replaysSessionSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0
+})
 
 if (process.env.NODE_ENV === 'development') {
   Spotlight.init();
