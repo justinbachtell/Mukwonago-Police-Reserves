@@ -1,6 +1,6 @@
 import { getAllEvents } from '@/actions/event'
 import { EventsManagementTable } from '@/components/admin/events/EventsManagementTable'
-import type { EventType } from '@/types/event'
+import type { Event, EventType } from '@/types/event'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,14 +15,21 @@ import { Plus } from 'lucide-react'
 export default async function AdminEventsPage() {
   const rawEvents = await getAllEvents()
 
-  const events = rawEvents.map(event => ({
+  const events: Event[] = rawEvents.map(event => ({
     ...event,
     created_at: new Date(event.created_at),
     event_date: new Date(event.event_date),
     event_end_time: new Date(event.event_end_time),
     event_start_time: new Date(event.event_start_time),
     updated_at: new Date(event.updated_at),
-    event_type: event.event_type as EventType
+    event_type: event.event_type as EventType,
+    assignments: event.assignments?.map(assignment => ({
+      ...assignment,
+      completion_status: assignment.completion_status || undefined,
+      completion_notes: assignment.completion_notes || null,
+      created_at: new Date(assignment.created_at),
+      updated_at: new Date(assignment.updated_at)
+    }))
   }))
 
   return (

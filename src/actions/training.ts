@@ -1,77 +1,76 @@
 'use server'
 
-import type { Training, TrainingType } from '@/types/training'
+import type { TrainingType } from '@/types/training'
 import { toISOString } from '@/lib/utils'
 import { db } from '@/libs/DB'
 import { training } from '@/models/Schema'
 import { eq } from 'drizzle-orm'
 
-export async function getAllTraining() {
+export async function getTrainings() {
   try {
-    const training = await db.query.training.findMany({
+    const trainings = await db.query.training.findMany({
       with: {
-        instructor: {
-          columns: {
-            id: true,
-            first_name: true,
-            last_name: true
-          }
-        },
         assignments: {
           with: {
             user: true
           }
-        }
+        },
+        instructor: true
       }
     })
 
-    return training.map(t => ({
-      ...t,
-      training_type: t.training_type as TrainingType
-    }))
+    return trainings
   } catch (error) {
-    console.error('Error fetching training:', error)
-    throw new Error('Failed to fetch training')
+    console.error('Error fetching trainings:', error)
+    throw new Error('Failed to fetch trainings')
   }
 }
 
-export async function getTrainingById(id: number) {
+export async function getTraining(id: number) {
   try {
-    const [trainingSession] = await db
-      .select()
-      .from(training)
-      .where(eq(training.id, id))
-    if (!trainingSession) {
-      return null
-    }
+    const [result] = await db.query.training.findMany({
+      where: eq(training.id, id),
+      with: {
+        assignments: {
+          with: {
+            user: true
+          }
+        },
+        instructor: true
+      }
+    })
 
-    return {
-      ...trainingSession,
-      created_at: new Date(trainingSession.created_at),
-      training_date: new Date(trainingSession.training_date),
-      training_end_time: new Date(trainingSession.training_end_time),
-      training_start_time: new Date(trainingSession.training_start_time),
-      updated_at: new Date(trainingSession.updated_at)
-    }
+    return result
   } catch (error) {
     console.error('Error fetching training:', error)
     throw new Error('Failed to fetch training')
   }
 }
 
-export async function createTraining(
-  data: Omit<Training, 'id' | 'created_at' | 'updated_at'>
-) {
+interface CreateTrainingInput {
+  name: string
+  description: string | null
+  training_date: Date
+  training_location: string
+  training_type: TrainingType
+  training_instructor: number
+  training_start_time: Date
+  training_end_time: Date
+}
+
+interface UpdateTrainingInput extends Partial<CreateTrainingInput> {}
+
+export async function createTraining(data: CreateTrainingInput) {
   try {
     const now = toISOString(new Date())
     const [newTraining] = await db
       .insert(training)
       .values({
         ...data,
-        created_at: now,
         training_date: toISOString(data.training_date),
-        training_end_time: toISOString(data.training_end_time),
         training_start_time: toISOString(data.training_start_time),
+        training_end_time: toISOString(data.training_end_time),
+        created_at: now,
         updated_at: now
       })
       .returning()
@@ -94,10 +93,7 @@ export async function createTraining(
   }
 }
 
-export async function updateTraining(
-  id: number,
-  data: Partial<Omit<Training, 'id' | 'created_at' | 'updated_at'>>
-) {
+export async function updateTraining(id: number, data: UpdateTrainingInput) {
   try {
     const [updatedTraining] = await db
       .update(training)
@@ -106,11 +102,11 @@ export async function updateTraining(
         training_date: data.training_date
           ? toISOString(data.training_date)
           : undefined,
-        training_end_time: data.training_end_time
-          ? toISOString(data.training_end_time)
-          : undefined,
         training_start_time: data.training_start_time
           ? toISOString(data.training_start_time)
+          : undefined,
+        training_end_time: data.training_end_time
+          ? toISOString(data.training_end_time)
           : undefined,
         updated_at: toISOString(new Date())
       })
@@ -141,9 +137,11 @@ export async function deleteTraining(id: number) {
       .delete(training)
       .where(eq(training.id, id))
       .returning()
+
     if (!deletedTraining) {
       throw new Error('Failed to delete training')
     }
+
     return deletedTraining
   } catch (error) {
     console.error('Error deleting training:', error)

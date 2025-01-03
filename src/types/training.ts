@@ -1,31 +1,34 @@
 import type { DBUser } from './user'
-import type { TrainingAssignment } from './trainingAssignment'
+import type { training } from '@/models/Schema'
 
-export const trainingTypes = [
-  'firearms',
-  'defensive_tactics',
-  'emergency_vehicle_operations',
-  'first_aid',
-  'legal_updates',
-  'other'
-] as const
-
-export type TrainingType = (typeof trainingTypes)[number]
-
-export type TrainingInstructor = Pick<DBUser, 'id' | 'first_name' | 'last_name'>
+export type TrainingType = (typeof training.training_type.enumValues)[number]
 
 export interface Training {
   id: number
   name: string
   description: string | null
-  training_date: Date | string
+  training_date: string | Date
   training_location: string
   training_type: TrainingType
   training_instructor: number
-  training_start_time: Date | string
-  training_end_time: Date | string
-  created_at: Date | string
-  updated_at: Date | string
-  instructor?: TrainingInstructor | null
-  assignments?: TrainingAssignment[]
+  training_start_time: string | Date
+  training_end_time: string | Date
+  created_at: string | Date
+  updated_at: string | Date
+  assignments?: {
+    completion_status:
+      | 'completed'
+      | 'incomplete'
+      | 'excused'
+      | 'unexcused'
+      | null
+    created_at: string
+    id: number
+    updated_at: string
+    user_id: number
+    completion_notes: string | null
+    training_id: number
+    user: DBUser
+  }[]
+  instructor?: Partial<DBUser>
 }

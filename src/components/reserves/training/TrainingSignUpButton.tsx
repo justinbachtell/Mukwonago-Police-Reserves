@@ -18,6 +18,10 @@ export function TrainingSignUpButton({ training }: TrainingSignUpButtonProps) {
   const [isSignedUp, setIsSignedUp] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
+  const isTrainingPast = () => {
+    return new Date(training.training_end_time) < new Date()
+  }
+
   useEffect(() => {
     const checkSignUpStatus = async () => {
       const user = await getCurrentUser()
@@ -63,6 +67,16 @@ export function TrainingSignUpButton({ training }: TrainingSignUpButtonProps) {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const isPast = isTrainingPast()
+
+  if (isPast) {
+    return (
+      <Button variant='outline' disabled>
+        Training Ended
+      </Button>
+    )
   }
 
   return (

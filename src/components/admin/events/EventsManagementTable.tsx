@@ -2,6 +2,7 @@
 
 import type { Event } from '@/types/event'
 import type { ColumnDef } from '@tanstack/react-table'
+import type { CompletionStatus } from '@/types/eventAssignment'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/data-table'
@@ -15,7 +16,11 @@ import {
 import { Pencil, Trash, Users } from 'lucide-react'
 import { EventForm } from '../forms/EventForm'
 import { deleteEvent } from '@/actions/event'
-import { deleteEventAssignment } from '@/actions/eventAssignment'
+import {
+  deleteEventAssignment,
+  updateEventAssignmentCompletion
+} from '@/actions/eventAssignment'
+import { CompletionStatusDialog } from '../shared/CompletionStatusDialog'
 import { toast } from 'sonner'
 import { useState } from 'react'
 
@@ -25,6 +30,12 @@ interface EventsManagementTableProps {
 
 export function EventsManagementTable({ data }: EventsManagementTableProps) {
   const [openDialogs, setOpenDialogs] = useState<Record<number, boolean>>({})
+  const [selectedAssignment, setSelectedAssignment] = useState<{
+    eventId: number
+    userId: number
+    status?: CompletionStatus | null
+    notes?: string | null
+  } | null>(null)
 
   const handleDelete = async (id: number) => {
     try {
@@ -52,8 +63,33 @@ export function EventsManagementTable({ data }: EventsManagementTableProps) {
     }
   }
 
+  const handleUpdateCompletion = async (data: {
+    completion_status: CompletionStatus
+    completion_notes?: string
+  }) => {
+    if (!selectedAssignment) {
+      return
+    }
+
+    try {
+      await updateEventAssignmentCompletion(
+        selectedAssignment.eventId,
+        selectedAssignment.userId,
+        data
+      )
+      setSelectedAssignment(null)
+    } catch (error) {
+      console.error('Error updating completion status:', error)
+      throw error
+    }
+  }
+
   const toggleDialog = (eventId: number, isOpen: boolean) => {
     setOpenDialogs(prev => ({ ...prev, [eventId]: isOpen }))
+  }
+
+  const isEventPast = (event: Event) => {
+    return new Date(event.event_end_time) < new Date()
   }
 
   const columns: ColumnDef<Event>[] = [
@@ -113,6 +149,8 @@ export function EventsManagementTable({ data }: EventsManagementTableProps) {
       cell: ({ row }) => {
         const event = row.original
         const assignments = event.assignments || []
+        const isPast = isEventPast(event)
+
         return (
           <Dialog
             open={openDialogs[event.id]}
@@ -140,23 +178,57 @@ export function EventsManagementTable({ data }: EventsManagementTableProps) {
                         key={assignment.id}
                         className='flex items-center justify-between py-2'
                       >
-                        <span className='text-sm'>
-                          {assignment.user?.first_name}{' '}
-                          {assignment.user?.last_name}
-                        </span>
-                        <Button
-                          variant='destructive'
-                          size='sm'
-                          onClick={() =>
-                            handleRemoveParticipant(
-                              event.id,
-                              assignment.user_id
-                            )
-                          }
-                        >
-                          <Trash className='size-4' />
-                          <span className='sr-only'>Remove participant</span>
-                        </Button>
+                        <div>
+                          <span className='text-sm'>
+                            {assignment.user?.first_name}{' '}
+                            {assignment.user?.last_name}
+                          </span>
+                          {isPast && assignment.completion_status && (
+                            <Badge
+                              variant={
+                                assignment.completion_status === 'completed'
+                                  ? 'default'
+                                  : assignment.completion_status === 'excused'
+                                    ? 'secondary'
+                                    : 'destructive'
+                              }
+                              className='ml-2'
+                            >
+                              {assignment.completion_status}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className='flex gap-2'>
+                          {isPast && (
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() =>
+                                setSelectedAssignment({
+                                  eventId: event.id,
+                                  userId: assignment.user_id,
+                                  status: assignment.completion_status,
+                                  notes: assignment.completion_notes
+                                })
+                              }
+                            >
+                              Update Status
+                            </Button>
+                          )}
+                          <Button
+                            variant='destructive'
+                            size='sm'
+                            onClick={() =>
+                              handleRemoveParticipant(
+                                event.id,
+                                assignment.user_id
+                              )
+                            }
+                          >
+                            <Trash className='size-4' />
+                            <span className='sr-only'>Remove participant</span>
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -204,5 +276,19 @@ export function EventsManagementTable({ data }: EventsManagementTableProps) {
     }
   ]
 
-  return <DataTable columns={columns} data={data} />
+  return (
+    <>
+      <DataTable columns={columns} data={data} />
+      {selectedAssignment && (
+        <CompletionStatusDialog
+          isOpen
+          onClose={() => setSelectedAssignment(null)}
+          onSubmit={handleUpdateCompletion}
+          title='Update Completion Status'
+          currentStatus={selectedAssignment.status}
+          currentNotes={selectedAssignment.notes}
+        />
+      )}
+    </>
+  )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import type { Event } from '@/types/event'
-import type { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/data-table'
@@ -23,6 +23,9 @@ interface EventsTableProps {
 export function EventsTable({ data }: EventsTableProps) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false)
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'event_date', desc: false }
+  ])
 
   const columns: ColumnDef<Event>[] = [
     {
@@ -136,5 +139,12 @@ export function EventsTable({ data }: EventsTableProps) {
     }
   ]
 
-  return <DataTable columns={columns} data={data} />
+  return (
+    <DataTable
+      columns={columns}
+      data={data}
+      sorting={sorting}
+      onSortingChange={setSorting}
+    />
+  )
 }

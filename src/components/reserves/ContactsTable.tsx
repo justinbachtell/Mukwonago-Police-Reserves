@@ -1,7 +1,8 @@
 'use client';
 
 import type { DBUser } from '@/types/user';
-import type { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/data-table'
@@ -14,6 +15,10 @@ interface ContactsTableProps {
 }
 
 export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'last_name', desc: false }
+  ])
+
   const columns: ColumnDef<DBUser>[] = [
     {
       accessorKey: 'first_name',
@@ -179,5 +184,12 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
     },
   ];
 
-  return <DataTable columns={columns} data={data} />;
+  return (
+    <DataTable
+      columns={columns}
+      data={data}
+      sorting={sorting}
+      onSortingChange={setSorting}
+    />
+  )
 }

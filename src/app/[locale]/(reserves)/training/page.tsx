@@ -1,9 +1,9 @@
-import { getAllTraining } from '@/actions/training'
+import { getTrainings } from '@/actions/training'
 import { TrainingView } from '@/components/reserves/training/TrainingView'
 import type { TrainingType } from '@/types/training'
 
 export default async function TrainingPage() {
-  const rawTraining = await getAllTraining()
+  const rawTraining = await getTrainings()
 
   const training = rawTraining.map(t => ({
     ...t,

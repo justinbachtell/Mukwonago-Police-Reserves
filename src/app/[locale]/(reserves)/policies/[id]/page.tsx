@@ -1,6 +1,7 @@
 import { getPolicy, getPolicyUrl } from '@/actions/policy'
 import { PDFViewer } from '@/components/ui/pdf-viewer'
 import { notFound } from 'next/navigation'
+import { format } from 'date-fns'
 
 interface PageProps {
   params: Promise<{
@@ -43,7 +44,8 @@ export default async function PolicyPage({
               Policy Number: {policy.policy_number}
             </p>
             <p className='text-muted-foreground'>
-              Effective Date: {policy.effective_date.toLocaleDateString()}
+              Effective Date:{' '}
+              {format(new Date(policy.effective_date), 'MM/dd/yyyy')}
             </p>
             {policy.description && (
               <p className='text-muted-foreground'>{policy.description}</p>
