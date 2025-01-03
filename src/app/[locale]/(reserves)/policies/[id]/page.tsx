@@ -35,7 +35,7 @@ export default async function PolicyPage({
     const signedUrl = await getPolicyUrl(policy.policy_url)
 
     return (
-      <div className='container py-8 mx-auto'>
+      <div className='container mx-auto py-8'>
         <div className='flex flex-col gap-8'>
           <div className='flex flex-col gap-2'>
             <h1 className='text-2xl font-bold'>{policy.name}</h1>
