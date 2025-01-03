@@ -3,12 +3,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function UserEquipmentLoading() {
   return (
-    <div className='container py-8 space-y-6 mx-auto'>
+    <div className='container mx-auto space-y-6 py-8'>
       <LoadingHeader />
 
       {/* User Info */}
       <div className='flex items-center gap-4 pb-4'>
-        <Skeleton className='h-12 w-12 rounded-full' />
+        <Skeleton className='size-12 rounded-full' />
         <div className='space-y-2'>
           <Skeleton className='h-5 w-[200px]' />
           <Skeleton className='h-4 w-[150px]' />
@@ -36,8 +36,8 @@ export default function UserEquipmentLoading() {
                   </div>
                 </div>
                 <div className='flex gap-2'>
-                  <Skeleton className='h-8 w-8' />
-                  <Skeleton className='h-8 w-8' />
+                  <Skeleton className='size-8' />
+                  <Skeleton className='size-8' />
                 </div>
               </div>
             ))}

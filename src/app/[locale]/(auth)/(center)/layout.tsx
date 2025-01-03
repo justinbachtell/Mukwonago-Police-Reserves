@@ -1,5 +1,5 @@
 import { BaseTemplate } from '@/templates/BaseTemplate';
-import { Bot, CircleUserRound, Home } from 'lucide-react';
+import { Bot, CircleUserRound } from 'lucide-react'
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 
@@ -16,19 +16,9 @@ export default async function CenteredLayout(props: {
 
   return (
     <BaseTemplate
-      leftNav={(
+      leftNav={
         <>
-          <li className='flex justify-start list-none'>
-            <Link
-              href='/'
-              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
-              title='Home'
-            >
-              <Home className='size-4' />
-              <span>{t('home_link')}</span>
-            </Link>
-          </li>
-          <li className='flex justify-start list-none'>
+          <li className='flex list-none justify-start'>
             <Link
               href='/about'
               className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -39,9 +29,9 @@ export default async function CenteredLayout(props: {
             </Link>
           </li>
         </>
-      )}
-      rightNav={(
-        <li className='flex justify-start list-none'>
+      }
+      rightNav={
+        <li className='flex list-none justify-start'>
           <Link
             href='/sign-in'
             className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -51,7 +41,7 @@ export default async function CenteredLayout(props: {
             <span>{t('sign_in_link')}</span>
           </Link>
         </li>
-      )}
+      }
     >
       <div className='container mx-auto flex justify-center px-4 py-8'>
         {props.children}

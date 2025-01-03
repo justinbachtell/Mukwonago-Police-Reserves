@@ -13,39 +13,49 @@ import {
 
 export const rolesEnum = pgEnum('role', ['admin', 'member', 'guest']);
 
-export const positionsEnum = pgEnum('position', ['officer', 'reserve', 'admin', 'staff']);
+export const positionsEnum = pgEnum('position', [
+  'candidate',
+  'officer',
+  'reserve',
+  'admin',
+  'staff'
+])
 
-export const applicationStatusEnum = pgEnum('status', ['pending', 'approved', 'rejected']);
+export const applicationStatusEnum = pgEnum('status', [
+  'pending',
+  'approved',
+  'rejected'
+])
 
 export const equipmentConditionEnum = pgEnum('equipment_condition', [
   'new',
   'good',
   'fair',
   'poor',
-  'damaged/broken',
-]);
+  'damaged/broken'
+])
 
 export const priorExperienceEnum = pgEnum('prior_experience', [
   'none',
   'less_than_1_year',
   '1_to_3_years',
-  'more_than_3_years',
-]);
+  'more_than_3_years'
+])
 
 export const availabilityEnum = pgEnum('availability', [
   'weekdays',
   'weekends',
   'both',
-  'flexible',
-]);
+  'flexible'
+])
 
 export const equipmentCategoryEnum = pgEnum('equipment_category', [
   'uniform',
   'gear',
   'communication',
   'safety',
-  'other',
-]);
+  'other'
+])
 
 export const user = pgTable(
   'user',
@@ -71,13 +81,13 @@ export const user = pgTable(
     updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
       .defaultNow()
       .notNull(),
-    zip_code: text('zip_code'),
+    zip_code: text('zip_code')
   },
   table => [
     unique('user_email_unique').on(table.email),
-    unique('user_clerk_id_unique').on(table.clerk_id),
-  ],
-).enableRLS();
+    unique('user_clerk_id_unique').on(table.clerk_id)
+  ]
+).enableRLS()
 
 export const emergencyContact = pgTable('emergency_contact', {
   city: text('city'),
@@ -99,8 +109,8 @@ export const emergencyContact = pgTable('emergency_contact', {
   user_id: integer('user_id')
     .references(() => user.id)
     .notNull(),
-  zip_code: text('zip_code'),
-}).enableRLS();
+  zip_code: text('zip_code')
+}).enableRLS()
 
 export const uniformSizes = pgTable('uniform_sizes', {
   created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
@@ -117,8 +127,8 @@ export const uniformSizes = pgTable('uniform_sizes', {
     .notNull(),
   user_id: integer('user_id')
     .references(() => user.id)
-    .notNull(),
-}).enableRLS();
+    .notNull()
+}).enableRLS()
 
 export const application = pgTable('application', {
   availability: availabilityEnum('availability').notNull(),
@@ -144,28 +154,38 @@ export const application = pgTable('application', {
   user_id: integer('user_id')
     .references(() => user.id)
     .notNull(),
-  zip_code: text('zip_code').notNull(),
-}).enableRLS();
+  zip_code: text('zip_code').notNull()
+}).enableRLS()
 
 export const equipment = pgTable('equipment', {
   assigned_to: integer('assigned_to').references(() => user.id),
-  created_at: timestamp('created_at', { mode: 'string', withTimezone: true }).notNull(),
+  created_at: timestamp('created_at', {
+    mode: 'string',
+    withTimezone: true
+  }).notNull(),
   description: text('description'),
   id: serial('id').primaryKey(),
   is_assigned: boolean('is_assigned').notNull().default(false),
   is_obsolete: boolean('is_obsolete').notNull().default(false),
   name: text('name').notNull(),
   notes: text('notes'),
-  purchase_date: timestamp('purchase_date', { mode: 'string', withTimezone: true }).default(
-    sql`now()`,
-  ),
+  purchase_date: timestamp('purchase_date', {
+    mode: 'string',
+    withTimezone: true
+  }).default(sql`now()`),
   serial_number: text('serial_number'),
-  updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true }).notNull(),
-}).enableRLS();
+  updated_at: timestamp('updated_at', {
+    mode: 'string',
+    withTimezone: true
+  }).notNull()
+}).enableRLS()
 
 export const assignedEquipment = pgTable('assigned_equipment', {
   checked_in_at: timestamp('checked_in_at', { mode: 'string' }),
-  checked_out_at: timestamp('checked_out_at', { mode: 'string', withTimezone: true })
+  checked_out_at: timestamp('checked_out_at', {
+    mode: 'string',
+    withTimezone: true
+  })
     .defaultNow()
     .notNull(),
   condition: equipmentConditionEnum('condition').notNull(),
@@ -183,8 +203,8 @@ export const assignedEquipment = pgTable('assigned_equipment', {
     .notNull(),
   user_id: integer('user_id')
     .references(() => user.id)
-    .notNull(),
-}).enableRLS();
+    .notNull()
+}).enableRLS()
 
 export const events = pgTable('events', {
   id: serial('id').primaryKey(),
@@ -302,6 +322,27 @@ export const trainingAssignments = pgTable(
     )
   ]
 ).enableRLS()
+
+export const policies = pgTable('policies', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  policy_type: text('policy_type').notNull(),
+  policy_number: text('policy_number').notNull(),
+  policy_url: text('policy_url').notNull(),
+  effective_date: timestamp('effective_date', {
+    mode: 'string',
+    withTimezone: true
+  })
+    .defaultNow()
+    .notNull(),
+  created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull()
+}).enableRLS()
 
 export const userRelations = relations(user, ({ many, one }) => ({
   applications: many(application),

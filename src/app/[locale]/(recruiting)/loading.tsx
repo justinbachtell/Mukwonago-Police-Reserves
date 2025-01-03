@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function RecruitingLoading() {
   return (
-    <div className='container py-8 space-y-8 mx-auto'>
+    <div className='container mx-auto space-y-8 py-8'>
       {/* Hero Section Skeleton */}
       <div className='space-y-4'>
         <Skeleton className='h-16 w-[600px] max-w-full' />

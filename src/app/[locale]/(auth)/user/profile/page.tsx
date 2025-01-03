@@ -75,11 +75,11 @@ async function ProfileFormWrapper() {
 
 export default function ProfilePage() {
   return (
-    <div className='container py-8 space-y-8 mx-auto'>
+    <div className='container mx-auto space-y-8 py-8'>
       <Suspense
         fallback={
           <LoadingShell className='flex items-center gap-6'>
-            <Skeleton className='h-24 w-24 rounded-full' />
+            <Skeleton className='size-24 rounded-full' />
           </LoadingShell>
         }
       >

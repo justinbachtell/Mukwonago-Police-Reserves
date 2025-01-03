@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function ReservesLoading() {
   return (
-    <div className='container py-8 space-y-6 mx-auto'>
+    <div className='container mx-auto space-y-6 py-8'>
       {/* Header Skeleton */}
       <div className='space-y-2'>
         <Skeleton className='h-10 w-[300px]' />

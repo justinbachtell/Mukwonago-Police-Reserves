@@ -21,7 +21,7 @@ export default async function AdminEquipmentPage() {
   }
 
   if (currentUser.role !== 'admin') {
-    redirect('/dashboard');
+    redirect('/user/dashboard')
   }
 
   const equipment: EquipmentWithUser[] = equipmentData.map((item) => {

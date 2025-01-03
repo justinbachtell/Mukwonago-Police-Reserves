@@ -21,7 +21,7 @@ export function TrainingTable({ data }: TrainingTableProps) {
       cell: ({ row }) => {
         const type = row.getValue('training_type') as string
         return (
-          <Badge variant='outline' className='capitalize px-4 py-1'>
+          <Badge variant='outline' className='px-4 py-1 capitalize'>
             {type.replace('_', ' ')}
           </Badge>
         )

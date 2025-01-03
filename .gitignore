@@ -46,7 +46,6 @@ yarn-error.log*
 
 # local folder
 local
-.vscode
 .cursorrules
 
 # vercel

@@ -2,7 +2,7 @@ import { LoadingHeader, LoadingCard } from '@/components/loading/LoadingShell'
 
 export default function AdminDashboardLoading() {
   return (
-    <div className='container py-8 space-y-8 mx-auto'>
+    <div className='container mx-auto space-y-8 py-8'>
       <LoadingHeader />
 
       {/* Stats Grid */}

@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function AdminEquipmentLoading() {
   return (
-    <div className='container py-8 space-y-6 mx-auto'>
+    <div className='container mx-auto space-y-6 py-8'>
       <LoadingHeader />
       <div className='rounded-md border'>
         <div className='p-4'>
@@ -22,9 +22,9 @@ export default function AdminEquipmentLoading() {
                   <Skeleton className='h-4 w-[200px]' />
                 </div>
                 <div className='flex gap-2'>
-                  <Skeleton className='h-8 w-8' />
-                  <Skeleton className='h-8 w-8' />
-                  <Skeleton className='h-8 w-8' />
+                  <Skeleton className='size-8' />
+                  <Skeleton className='size-8' />
+                  <Skeleton className='size-8' />
                 </div>
               </div>
             ))}

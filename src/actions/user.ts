@@ -34,18 +34,20 @@ export async function getCurrentUser() {
           first_name: clerkUser.firstName ?? '',
           last_name: clerkUser.lastName ?? '',
           updated_at: now,
+          role: 'guest',
+          position: 'reserve'
         })
-        .returning();
+        .returning()
 
       if (!newUser) {
-        throw new Error('Failed to create user');
+        throw new Error('Failed to create user')
       }
 
       return {
         ...newUser,
         created_at: new Date(newUser.created_at),
-        updated_at: new Date(newUser.updated_at),
-      } as DBUser;
+        updated_at: new Date(newUser.updated_at)
+      } as DBUser
     }
 
     // Check if Clerk data differs from DB data

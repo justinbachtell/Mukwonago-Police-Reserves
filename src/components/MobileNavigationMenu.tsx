@@ -15,7 +15,7 @@ export function MobileNavigationMenu({ leftNav, rightNav }: MobileNavigationMenu
       <SheetPrimitive.Trigger asChild>
         <button
           type='button'
-          className='lg:hidden inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 dark:hover:bg-gray-800'
+          className='inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 dark:hover:bg-gray-800 lg:hidden'
         >
           <span className='sr-only'>Open menu</span>
           <svg

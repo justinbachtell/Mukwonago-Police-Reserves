@@ -66,7 +66,7 @@ export function EventsManagementTable({ data }: EventsManagementTableProps) {
       cell: ({ row }) => {
         const type = row.getValue('event_type') as string
         return (
-          <Badge variant='outline' className='capitalize px-4 py-1'>
+          <Badge variant='outline' className='px-4 py-1 capitalize'>
             {type.replace('_', ' ')}
           </Badge>
         )
@@ -161,7 +161,7 @@ export function EventsManagementTable({ data }: EventsManagementTableProps) {
                     ))}
                   </div>
                 ) : (
-                  <p className='text-sm text-muted-foreground text-center py-4'>
+                  <p className='py-4 text-center text-sm text-muted-foreground'>
                     No participants yet
                   </p>
                 )}

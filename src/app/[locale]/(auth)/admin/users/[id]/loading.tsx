@@ -3,12 +3,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function UserProfileLoading() {
   return (
-    <div className='container py-8 space-y-6 mx-auto'>
+    <div className='container mx-auto space-y-6 py-8'>
       <LoadingHeader />
 
       {/* User Profile Header */}
       <div className='flex items-center gap-6'>
-        <Skeleton className='h-24 w-24 rounded-full' />
+        <Skeleton className='size-24 rounded-full' />
         <div className='space-y-3'>
           <Skeleton className='h-7 w-[250px]' />
           <div className='flex gap-4'>
