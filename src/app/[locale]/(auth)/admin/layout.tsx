@@ -38,7 +38,7 @@ export default async function AdminLayout(props: {
   }
 
   if (user.role !== 'admin') {
-    redirect('/dashboard')
+    redirect('/user/dashboard')
   }
 
   return (

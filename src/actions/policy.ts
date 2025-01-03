@@ -8,24 +8,21 @@ import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import type { Policy } from '@/types/policy'
 
-// Create a Supabase client with the service role key for admin operations
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error('Supabase URL is not configured')
-}
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('Supabase service role key is not configured')
-}
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error('Supabase credentials are not configured')
+  }
+
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
-  }
-)
+  })
+}
 
 export async function uploadPolicy(
   file: File,
@@ -33,6 +30,7 @@ export async function uploadPolicy(
   policyName: string
 ): Promise<string> {
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     const fileExt = file.name.split('.').pop()
     const sanitizedName = policyName.toLowerCase().replace(/[^a-z0-9]/g, '_')
     const fileName = `${policyNumber}_${sanitizedName}.${fileExt}`
@@ -59,10 +57,7 @@ export async function uploadPolicy(
 
 export async function getPolicyUrl(fileName: string): Promise<string> {
   try {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      throw new Error('Supabase URL is not configured')
-    }
-
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: urlData, error: urlError } = await supabaseAdmin.storage
       .from('policies')
       .createSignedUrl(fileName, 60 * 60) // URL expires in 1 hour
@@ -204,6 +199,7 @@ export async function deletePolicy(id: number) {
     const [policy] = await db.select().from(policies).where(eq(policies.id, id))
 
     if (policy) {
+      const supabaseAdmin = getSupabaseAdmin()
       // Delete the file from storage first
       const { error: deleteStorageError } = await supabaseAdmin.storage
         .from('policies')
