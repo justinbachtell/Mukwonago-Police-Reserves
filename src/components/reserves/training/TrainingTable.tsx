@@ -1,18 +1,23 @@
 'use client'
 
 import type { Training } from '@/types/training'
-import type { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/ui/data-table'
 import { TrainingSignUpButton } from './TrainingSignUpButton'
 import { ArrowUpDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useState } from 'react'
 
 interface TrainingTableProps {
   data: Training[]
 }
 
 export function TrainingTable({ data }: TrainingTableProps) {
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'training_date', desc: false }
+  ])
+
   const columns: ColumnDef<Training>[] = [
     {
       accessorKey: 'name',
@@ -136,5 +141,12 @@ export function TrainingTable({ data }: TrainingTableProps) {
     }
   ]
 
-  return <DataTable columns={columns} data={data} />
+  return (
+    <DataTable
+      columns={columns}
+      data={data}
+      sorting={sorting}
+      onSortingChange={setSorting}
+    />
+  )
 }

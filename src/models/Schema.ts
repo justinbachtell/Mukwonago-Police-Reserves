@@ -57,6 +57,13 @@ export const equipmentCategoryEnum = pgEnum('equipment_category', [
   'other'
 ])
 
+export const completionStatusEnum = pgEnum('completion_status', [
+  'completed',
+  'incomplete',
+  'excused',
+  'unexcused'
+])
+
 export const user = pgTable(
   'user',
   {
@@ -245,6 +252,8 @@ export const eventAssignments = pgTable(
     user_id: integer('user_id')
       .references(() => user.id)
       .notNull(),
+    completion_status: completionStatusEnum('completion_status'),
+    completion_notes: text('completion_notes'),
     created_at: timestamp('created_at', {
       mode: 'string',
       withTimezone: true
@@ -308,6 +317,8 @@ export const trainingAssignments = pgTable(
     user_id: integer('user_id')
       .references(() => user.id)
       .notNull(),
+    completion_status: completionStatusEnum('completion_status'),
+    completion_notes: text('completion_notes'),
     created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -343,6 +354,22 @@ export const policies = pgTable('policies', {
     .defaultNow()
     .notNull()
 }).enableRLS()
+
+export const policyCompletion = pgTable('policy_completion', {
+  id: serial('id').primaryKey(),
+  policy_id: integer('policy_id')
+    .references(() => policies.id)
+    .notNull(),
+  user_id: integer('user_id')
+    .references(() => user.id)
+    .notNull(),
+  created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull()
+})
 
 export const userRelations = relations(user, ({ many, one }) => ({
   applications: many(application),
@@ -447,3 +474,17 @@ export const trainingRelations = relations(training, ({ many, one }) => ({
     references: [user.id]
   })
 }))
+
+export const policyCompletionRelations = relations(
+  policyCompletion,
+  ({ one }) => ({
+    policy: one(policies, {
+      fields: [policyCompletion.policy_id],
+      references: [policies.id]
+    }),
+    user: one(user, {
+      fields: [policyCompletion.user_id],
+      references: [user.id]
+    })
+  })
+)

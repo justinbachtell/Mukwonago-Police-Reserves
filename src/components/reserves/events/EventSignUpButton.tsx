@@ -18,6 +18,10 @@ export function EventSignUpButton({ event }: EventSignUpButtonProps) {
   const [isSignedUp, setIsSignedUp] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
+  const isEventPast = () => {
+    return new Date(event.event_end_time) < new Date()
+  }
+
   useEffect(() => {
     const checkSignUpStatus = async () => {
       const user = await getCurrentUser()
@@ -63,6 +67,16 @@ export function EventSignUpButton({ event }: EventSignUpButtonProps) {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const isPast = isEventPast()
+
+  if (isPast) {
+    return (
+      <Button variant='outline' disabled>
+        Event Ended
+      </Button>
+    )
   }
 
   return (

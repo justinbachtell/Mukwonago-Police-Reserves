@@ -2,11 +2,12 @@
 
 import { toISOString } from '@/lib/utils'
 import { db } from '@/libs/DB'
-import { policies } from '@/models/Schema'
-import { eq } from 'drizzle-orm'
+import { policies, policyCompletion } from '@/models/Schema'
+import { eq, and } from 'drizzle-orm'
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import type { Policy } from '@/types/policy'
+import { getCurrentUser } from '@/actions/user'
 
 function getSupabaseAdmin() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -75,12 +76,12 @@ export async function getPolicyUrl(fileName: string): Promise<string> {
 
 export async function getAllPolicies(): Promise<Policy[]> {
   try {
-    const policyList = await db.select().from(policies)
-    return policyList.map(policy => ({
+    const result = await db.select().from(policies)
+    return result.map(policy => ({
       ...policy,
-      created_at: new Date(policy.created_at),
-      effective_date: new Date(policy.effective_date),
-      updated_at: new Date(policy.updated_at)
+      effective_date: toISOString(policy.effective_date),
+      created_at: toISOString(policy.created_at),
+      updated_at: toISOString(policy.updated_at)
     }))
   } catch (error) {
     console.error('Error fetching policies:', error)
@@ -97,9 +98,9 @@ export async function getPolicy(id: number): Promise<Policy | null> {
 
     return {
       ...policy,
-      created_at: new Date(policy.created_at),
-      effective_date: new Date(policy.effective_date),
-      updated_at: new Date(policy.updated_at)
+      created_at: toISOString(policy.created_at),
+      effective_date: toISOString(policy.effective_date),
+      updated_at: toISOString(policy.updated_at)
     }
   } catch (error) {
     console.error('Error fetching policy:', error)
@@ -216,5 +217,136 @@ export async function deletePolicy(id: number) {
   } catch (error) {
     console.error('Error deleting policy:', error)
     throw new Error('Failed to delete policy')
+  }
+}
+
+export async function markPolicyAsAcknowledged(policyId: number) {
+  try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      throw new Error('User not found')
+    }
+
+    const result = await db
+      .insert(policyCompletion)
+      .values({
+        policy_id: policyId,
+        user_id: currentUser.id
+      })
+      .returning()
+
+    return result[0]
+  } catch (error) {
+    console.error('Error marking policy as read:', error)
+    throw new Error('Failed to mark policy as read')
+  }
+}
+
+export async function resetPolicyCompletion(formData: FormData) {
+  try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser || currentUser.role !== 'admin') {
+      throw new Error('Unauthorized')
+    }
+
+    const policyId = Number.parseInt(formData.get('policyId') as string, 10)
+    const userId = formData.get('userId')
+      ? Number.parseInt(formData.get('userId') as string, 10)
+      : undefined
+
+    if (userId) {
+      // Reset for specific user
+      await db
+        .delete(policyCompletion)
+        .where(
+          and(
+            eq(policyCompletion.policy_id, policyId),
+            eq(policyCompletion.user_id, userId)
+          )
+        )
+    } else {
+      // Reset for all users
+      await db
+        .delete(policyCompletion)
+        .where(eq(policyCompletion.policy_id, policyId))
+    }
+
+    revalidatePath('/admin/policies')
+    revalidatePath(`/admin/policies/${policyId}/completions`)
+  } catch (error) {
+    console.error('Error resetting policy completion:', error)
+    throw new Error('Failed to reset policy completion')
+  }
+}
+
+export async function getPolicyCompletionStatus(policyId: number) {
+  try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      return false
+    }
+
+    const result = await db
+      .select()
+      .from(policyCompletion)
+      .where(
+        and(
+          eq(policyCompletion.policy_id, policyId),
+          eq(policyCompletion.user_id, currentUser.id)
+        )
+      )
+    return result.length > 0
+  } catch (error) {
+    console.error('Error getting policy completion status:', error)
+    throw new Error('Failed to get policy completion status')
+  }
+}
+
+export async function getPolicyCompletions(policyId: number) {
+  try {
+    const result = await db
+      .select()
+      .from(policyCompletion)
+      .where(eq(policyCompletion.policy_id, policyId))
+    return result
+  } catch (error) {
+    console.error('Error getting policy completions:', error)
+    throw new Error('Failed to get policy completions')
+  }
+}
+
+export async function getPoliciesWithCompletionStatus() {
+  try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      throw new Error('User not found')
+    }
+
+    const allPolicies = await getAllPolicies()
+    const completionStatuses = await Promise.all(
+      allPolicies.map(async policy => {
+        const isCompleted = await getPolicyCompletionStatus(policy.id)
+        return {
+          id: policy.id,
+          isCompleted
+        }
+      })
+    )
+
+    const completedPolicies = completionStatuses.reduce(
+      (acc, { id, isCompleted }) => {
+        acc[id] = isCompleted
+        return acc
+      },
+      {} as Record<number, boolean>
+    )
+
+    return {
+      policies: allPolicies,
+      completedPolicies
+    }
+  } catch (error) {
+    console.error('Error fetching policies with completion status:', error)
+    throw new Error('Failed to fetch policies with completion status')
   }
 }

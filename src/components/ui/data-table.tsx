@@ -26,17 +26,21 @@ import { useState } from 'react'
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  sorting?: SortingState
+  onSortingChange?: (sorting: SortingState) => void
   rowClassName?: (row: TData) => string
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  sorting: externalSorting,
+  onSortingChange,
   rowClassName
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [globalFilter, setGlobalFilter] = useState('')
+  const [internalSorting, setInternalSorting] = useState<SortingState>([])
 
   const table = useReactTable({
     columns,
@@ -58,11 +62,11 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    onSortingChange: setSorting,
+    onSortingChange: onSortingChange || setInternalSorting,
     state: {
       columnFilters,
       globalFilter,
-      sorting
+      sorting: externalSorting || internalSorting
     }
   })
 
