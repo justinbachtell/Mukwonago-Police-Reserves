@@ -5,6 +5,8 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/ui/data-table'
 import { TrainingSignUpButton } from './TrainingSignUpButton'
+import { ArrowUpDown } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface TrainingTableProps {
   data: Training[]
@@ -26,7 +28,18 @@ export function TrainingTable({ data }: TrainingTableProps) {
           </Badge>
         )
       },
-      header: 'Type'
+      header: ({ column }) => {
+        return (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className='flex'
+          >
+            Type
+            <ArrowUpDown className='ml-2 size-4' />
+          </Button>
+        )
+      }
     },
     {
       accessorKey: 'training_date',
@@ -34,7 +47,18 @@ export function TrainingTable({ data }: TrainingTableProps) {
         const date = row.getValue('training_date') as Date
         return date.toLocaleDateString()
       },
-      header: 'Date'
+      header: ({ column }) => {
+        return (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className='flex'
+          >
+            Date
+            <ArrowUpDown className='ml-2 size-4' />
+          </Button>
+        )
+      }
     },
     {
       accessorKey: 'training_start_time',
@@ -45,7 +69,18 @@ export function TrainingTable({ data }: TrainingTableProps) {
           minute: '2-digit'
         })
       },
-      header: 'Start Time'
+      header: ({ column }) => {
+        return (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className='flex'
+          >
+            Start Time
+            <ArrowUpDown className='ml-2 size-4' />
+          </Button>
+        )
+      }
     },
     {
       accessorKey: 'training_end_time',
@@ -56,7 +91,18 @@ export function TrainingTable({ data }: TrainingTableProps) {
           minute: '2-digit'
         })
       },
-      header: 'End Time'
+      header: ({ column }) => {
+        return (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className='flex'
+          >
+            End Time
+            <ArrowUpDown className='ml-2 size-4' />
+          </Button>
+        )
+      }
     },
     {
       accessorKey: 'training_location',
@@ -64,7 +110,18 @@ export function TrainingTable({ data }: TrainingTableProps) {
     },
     {
       accessorKey: 'training_instructor',
-      header: 'Instructor',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className='flex'
+          >
+            Instructor
+            <ArrowUpDown className='ml-2 size-4' />
+          </Button>
+        )
+      },
       cell: ({ row }) => {
         const training = row.original
         return training.instructor

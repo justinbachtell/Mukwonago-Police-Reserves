@@ -16,14 +16,34 @@ Sentry.init({
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.2 : 1.0,
 
   // Add toast-specific error handling
-  beforeSend(event) {
-    // Add additional context for toast-related errors
+  beforeSend(event, hint) {
+    // Don't capture form submission events in Spotlight
+    if (
+      process.env.NODE_ENV === 'development' &&
+      hint?.originalException instanceof Error &&
+      hint.originalException.message.includes('FormData')
+    ) {
+      return null
+    }
+
+    // Handle toast-related errors
     if (event.extra?.component === 'toast') {
       event.tags = {
         ...event.tags,
         toast_action: String(event.extra.action || '')
       }
     }
+
+    // Sanitize form data to prevent parsing issues
+    if (event.extra?.formData) {
+      try {
+        event.extra.formData = '[Form Data Redacted]'
+      } catch (e) {
+        delete event.extra.formData
+        console.error('Error sanitizing form data:', e)
+      }
+    }
+
     return event
   },
 

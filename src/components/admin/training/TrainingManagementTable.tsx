@@ -13,7 +13,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 import { Pencil, Trash, Users } from 'lucide-react'
-import { TrainingForm } from './TrainingForm'
+import { TrainingForm } from '../forms/TrainingForm'
 import { deleteTraining } from '@/actions/training'
 import { deleteTrainingAssignment } from '@/actions/trainingAssignment'
 import { toast } from 'sonner'

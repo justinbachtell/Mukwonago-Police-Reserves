@@ -11,10 +11,11 @@ import {
   FilePen,
   LayoutDashboard,
   LogOut,
+  Presentation,
   Settings,
   Shield,
-  Users,
-} from "lucide-react";
+  Users
+} from 'lucide-react'
 import * as React from 'react';
 
 const sidebarItems = {
@@ -40,7 +41,7 @@ const sidebarItems = {
       url: '/admin/events'
     },
     {
-      icon: FilePen,
+      icon: Presentation,
       title: 'Training',
       url: '/admin/training'
     },

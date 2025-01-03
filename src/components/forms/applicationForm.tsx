@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import type { positionsEnum } from '@/models/Schema'
 import { availabilityEnum, priorExperienceEnum } from '@/models/Schema'
 import type { DBUser } from '@/types/user'
+import * as Sentry from '@sentry/nextjs'
 
 type PriorExperience = (typeof priorExperienceEnum.enumValues)[number]
 type Availability = (typeof availabilityEnum.enumValues)[number]
@@ -65,47 +66,84 @@ export function ApplicationForm({ user }: Props) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!selectedFile) {
-      toast.error('Please select a resume file')
-      return
-    }
 
-    const formData = new FormData(e.currentTarget)
-
-    startTransition(async () => {
-      try {
-        // Upload resume first
-        const resumePath = await uploadResume(
-          selectedFile,
-          formData.get('first_name') as string,
-          formData.get('last_name') as string
-        )
-
-        // Create application with resume path
-        await createApplication({
-          first_name: formData.get('first_name') as string,
-          last_name: formData.get('last_name') as string,
-          email: formData.get('email') as string,
-          phone: formData.get('phone') as string,
-          driver_license: formData.get('driver_license') as string,
-          street_address: formData.get('street_address') as string,
-          city: formData.get('city') as string,
-          state: formData.get('state') as string,
-          zip_code: formData.get('zip_code') as string,
-          prior_experience: formData.get('prior_experience') as PriorExperience,
-          availability: formData.get('availability') as Availability,
-          position: formData.get('position') as Position,
-          user_id: user.id,
-          resume: resumePath
-        })
-
-        toast.success('Application submitted successfully')
-        router.refresh()
-      } catch (error) {
-        console.error('Error submitting application:', error)
-        toast.error('Failed to submit application. Please try again.')
+    try {
+      if (!selectedFile) {
+        toast.error('Please select a resume file')
+        return
       }
-    })
+
+      const formData = new FormData(e.currentTarget)
+
+      startTransition(async () => {
+        try {
+          // Upload resume with timeout
+          const uploadPromise = uploadResume(
+            selectedFile,
+            formData.get('first_name') as string,
+            formData.get('last_name') as string
+          )
+          const resumePath = await Promise.race([
+            uploadPromise,
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Upload timeout')), 30000)
+            )
+          ])
+
+          // Create application with resume path
+          await createApplication({
+            first_name: formData.get('first_name') as string,
+            last_name: formData.get('last_name') as string,
+            email: formData.get('email') as string,
+            phone: formData.get('phone') as string,
+            driver_license: formData.get('driver_license') as string,
+            street_address: formData.get('street_address') as string,
+            city: formData.get('city') as string,
+            state: formData.get('state') as string,
+            zip_code: formData.get('zip_code') as string,
+            prior_experience: formData.get(
+              'prior_experience'
+            ) as PriorExperience,
+            availability: formData.get('availability') as Availability,
+            position: formData.get('position') as Position,
+            user_id: user.id,
+            resume: resumePath as string
+          })
+
+          toast.success('Application submitted successfully')
+          router.refresh()
+        } catch (error) {
+          console.error('Error submitting application:', error)
+
+          if (error instanceof Error) {
+            if (error.message === 'Upload timeout') {
+              toast.error('Resume upload timed out. Please try again.')
+            } else {
+              toast.error(`Failed to submit application: ${error.message}`)
+            }
+
+            Sentry.captureException(error, {
+              extra: {
+                context: 'ApplicationForm submission',
+                hasFile: true,
+                fileSize: selectedFile.size,
+                fileType: selectedFile.type,
+                userId: user.id
+              },
+              tags: {
+                action: 'application_submission',
+                component: 'ApplicationForm'
+              }
+            })
+          } else {
+            toast.error('An unexpected error occurred')
+          }
+        }
+      })
+    } catch (error) {
+      console.error('Form submission error:', error)
+      toast.error('Failed to process form submission')
+    }
   }
 
   return (

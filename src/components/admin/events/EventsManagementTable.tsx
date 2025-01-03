@@ -13,7 +13,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 import { Pencil, Trash, Users } from 'lucide-react'
-import { EventForm } from './EventForm'
+import { EventForm } from '../forms/EventForm'
 import { deleteEvent } from '@/actions/event'
 import { deleteEventAssignment } from '@/actions/eventAssignment'
 import { toast } from 'sonner'
