@@ -39,7 +39,7 @@ export default async function UserEquipmentPage({ params }: Props) {
   }
 
   if (currentUser.role !== 'admin') {
-    redirect('/dashboard');
+    redirect('/user/dashboard')
   }
 
   if (!targetUser) {

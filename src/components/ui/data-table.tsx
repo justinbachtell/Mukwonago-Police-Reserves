@@ -26,12 +26,17 @@ import { useState } from 'react'
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  rowClassName?: (row: TData) => string
 }
 
-export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+  rowClassName
+}: DataTableProps<TData, TValue>) {
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [globalFilter, setGlobalFilter] = useState('')
 
   const table = useReactTable({
     columns,
@@ -42,8 +47,10 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
         if (cellValue == null) {
           return false
         }
-        return String(cellValue).toLowerCase().includes(String(value).toLowerCase())
-      },
+        return String(cellValue)
+          .toLowerCase()
+          .includes(String(value).toLowerCase())
+      }
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -55,78 +62,89 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
     state: {
       columnFilters,
       globalFilter,
-      sorting,
-    },
-  });
+      sorting
+    }
+  })
 
   return (
     <div>
-      <div className="flex items-center py-4">
+      <div className='flex items-center py-4'>
         <Input
-          placeholder="Search all columns..."
+          placeholder='Search all columns...'
           value={globalFilter}
           onChange={event => setGlobalFilter(event.target.value)}
-          className="max-w-sm"
+          className='max-w-sm'
         />
       </div>
-      <div className="rounded-md border">
-        <Table className="w-full">
+      <div className='rounded-md border'>
+        <Table className='w-full'>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => {
+            {table.getHeaderGroups().map(headerGroup => {
               return (
                 <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
+                  {headerGroup.headers.map(header => {
                     return (
                       <TableHead key={header.id}>
                         {header.isPlaceholder
                           ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                       </TableHead>
-                    );
+                    )
                   })}
                 </TableRow>
-              );
+              )
             })}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length
-              ? (
-                table.getRowModel().rows.map((row) => {
-                  return (
-                    <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                      {row.getVisibleCells().map((cell) => {
-                        return (
-                          <TableCell key={cell.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  );
-                })
-              )
-              : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map(row => {
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                    className={rowClassName?.(row.original) || ''}
+                  >
+                    {row.getVisibleCells().map(cell => {
+                      return (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                )
+              })
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className='h-24 text-center'
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className='flex items-center justify-end space-x-2 py-4'>
         <Button
-          variant="outline"
-          size="sm"
+          variant='outline'
+          size='sm'
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
           Previous
         </Button>
         <Button
-          variant="outline"
-          size="sm"
+          variant='outline'
+          size='sm'
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
@@ -134,5 +152,5 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
         </Button>
       </div>
     </div>
-  );
+  )
 }

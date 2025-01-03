@@ -1,7 +1,6 @@
-import type { user } from '@/models/Schema';
-import type { Application } from './application';
-import type { AssignedEquipment } from './assignedEquipment';
-import type { UniformSizes } from './uniformSizes';
+import type { Application } from './application'
+import type { AssignedEquipment } from './assignedEquipment'
+import type { UniformSizes } from './uniformSizes'
 
 export interface DBUser {
   id: number
@@ -18,8 +17,8 @@ export interface DBUser {
   created_at: Date | string
   updated_at: Date | string
   clerk_id: string
-  role: typeof user.$inferSelect.role
-  position: typeof user.$inferSelect.position
+  role: string
+  position: string
   callsign: string | null
   radio_number: string | null
   applications?: Application | null

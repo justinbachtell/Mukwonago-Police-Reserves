@@ -8,6 +8,20 @@
       "when": 1735852237189,
       "tag": "0000_sparkling_scorpion",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1735856296438,
+      "tag": "0001_supreme_catseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1735857484535,
+      "tag": "0002_outstanding_pandemic",
+      "breakpoints": true
     }
   ]
 }

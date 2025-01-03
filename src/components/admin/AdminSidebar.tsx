@@ -21,45 +21,50 @@ const sidebarItems = {
   management: [
     {
       icon: Users,
-      title: "Users",
-      url: "/admin/users",
+      title: 'Users',
+      url: '/admin/users'
     },
     {
       icon: Boxes,
-      title: "Equipment",
-      url: "/admin/equipment",
+      title: 'Equipment',
+      url: '/admin/equipment'
     },
     {
       icon: ClipboardList,
-      title: "Applications",
-      url: "/admin/applications",
+      title: 'Applications',
+      url: '/admin/applications'
     },
     {
       icon: Calendar,
-      title: "Events",
-      url: "/admin/events",
+      title: 'Events',
+      url: '/admin/events'
     },
     {
       icon: FilePen,
-      title: "Training",
-      url: "/admin/training",
+      title: 'Training',
+      url: '/admin/training'
     },
+    {
+      icon: FilePen,
+      title: 'Policies',
+      url: '/admin/policies'
+    }
   ],
   overview: [
     {
       icon: LayoutDashboard,
-      name: "Dashboard",
-      url: "/admin/dashboard",
-    },
+      name: 'Dashboard',
+      url: '/admin/dashboard'
+    }
   ],
   settings: [
     {
       icon: Settings,
-      title: "Settings",
-      url: "/admin/settings",
-    },
-  ],
-};
+      title: 'Settings',
+      url: '/admin/settings'
+    }
+  ]
+}
 
 type AdminSidebarProps = {
   ref?: React.RefObject<HTMLDivElement>
@@ -67,25 +72,20 @@ type AdminSidebarProps = {
 
 function AdminSidebar(props: AdminSidebarProps) {
   return (
-    // @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern
-    <Sidebar {...props} className="absolute left-0 top-0 h-screen">
-      {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
-      <SidebarHeader className="border-b border-border px-2 py-4">
-        {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
+    <Sidebar {...props} className='absolute left-0 top-0 h-screen'>
+      <SidebarHeader className='border-b border-border px-2 py-4'>
         <SidebarMenu>
-          {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
           <SidebarMenuItem>
             <DropdownMenu>
-              {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
               <SidebarMenuButton
-                size="lg"
-                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                size='lg'
+                className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Shield className="size-4" />
+                <div className='flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground'>
+                  <Shield className='size-4' />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Admin Portal</span>
+                <div className='grid flex-1 text-left text-sm leading-tight'>
+                  <span className='truncate font-semibold'>Admin Portal</span>
                 </div>
               </SidebarMenuButton>
             </DropdownMenu>
@@ -93,18 +93,12 @@ function AdminSidebar(props: AdminSidebarProps) {
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
       <SidebarContent>
-        {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
-        <SidebarGroup title="Overview">
-          {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
+        <SidebarGroup title='Overview'>
           <SidebarGroupLabel>Overview</SidebarGroupLabel>
-          {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
           <SidebarMenu>
             {sidebarItems.overview.map(item => (
-              // @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern
               <SidebarMenuItem key={item.name}>
-                {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
                 <SidebarMenuButton asChild>
                   <a href={item.url}>
                     <item.icon />
@@ -116,16 +110,11 @@ function AdminSidebar(props: AdminSidebarProps) {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
-        <SidebarGroup title="Management">
-          {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
+        <SidebarGroup title='Management'>
           <SidebarGroupLabel>Management</SidebarGroupLabel>
-          {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
           <SidebarMenu>
             {sidebarItems.management.map(item => (
-              // @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern
               <SidebarMenuItem key={item.title}>
-                {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
                 <SidebarMenuButton asChild>
                   <a href={item.url}>
                     <item.icon />
@@ -138,23 +127,22 @@ function AdminSidebar(props: AdminSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* @ts-ignore - TODO: Update sidebar component to use new React 19 ref pattern */}
-      <SidebarFooter className="border-t border-border p-4">
+      <SidebarFooter className='border-t border-border p-4'>
         <SignOutButton>
           <button
-            type="button"
+            type='button'
             className={cn(
               'flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm',
-              'text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+              'text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
             )}
           >
-            <LogOut className="size-4" />
+            <LogOut className='size-4' />
             <span>Sign Out</span>
           </button>
         </SignOutButton>
       </SidebarFooter>
     </Sidebar>
-  );
+  )
 }
 
 export { AdminSidebar };

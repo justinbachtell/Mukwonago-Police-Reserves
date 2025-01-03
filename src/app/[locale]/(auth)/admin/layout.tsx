@@ -1,8 +1,8 @@
-import { getCurrentUser } from '@/actions/user';
-import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { BaseTemplate } from '@/templates/BaseTemplate';
-import { SignOutButton } from '@clerk/nextjs';
+import { getCurrentUser } from '@/actions/user'
+import { AdminSidebar } from '@/components/admin/AdminSidebar'
+import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { BaseTemplate } from '@/templates/BaseTemplate'
+import { SignOutButton } from '@clerk/nextjs'
 import {
   LayoutDashboard,
   LogOut,
@@ -14,36 +14,36 @@ import {
   Calendar,
   FilePen
 } from 'lucide-react'
-import { getTranslations, setRequestLocale } from 'next-intl/server';
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { getTranslations, setRequestLocale } from 'next-intl/server'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 
 export default async function AdminLayout(props: {
   children: React.ReactNode
   params: Promise<{ locale: string }>
 }) {
-  const { locale } = await props.params;
-  setRequestLocale(locale);
+  const { locale } = await props.params
+  setRequestLocale(locale)
   const t = await getTranslations({
     locale,
-    namespace: 'AdminLayout',
-  });
+    namespace: 'AdminLayout'
+  })
 
-  const user = await getCurrentUser();
+  const user = await getCurrentUser()
 
   if (!user) {
-    redirect('/sign-in');
+    redirect('/sign-in')
   }
 
   if (user.role !== 'admin') {
-    redirect('/dashboard');
+    redirect('/dashboard')
   }
 
   return (
     <BaseTemplate
-      leftNav={(
+      leftNav={
         <>
           <li className='flex justify-start list-none'>
             <Link
@@ -92,6 +92,15 @@ export default async function AdminLayout(props: {
           </li>
           <li className='flex justify-start list-none'>
             <Link
+              href='/policies'
+              className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+            >
+              <FilePen className='size-4' />
+              <span>{t('policies_link')}</span>
+            </Link>
+          </li>
+          <li className='flex justify-start list-none'>
+            <Link
               href='/admin/users'
               className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
             >
@@ -100,8 +109,8 @@ export default async function AdminLayout(props: {
             </Link>
           </li>
         </>
-      )}
-      rightNav={(
+      }
+      rightNav={
         <>
           <li className='flex justify-start list-none'>
             <Link
@@ -133,8 +142,8 @@ export default async function AdminLayout(props: {
             </SignOutButton>
           </li>
         </>
-      )}
-      sidebar={(
+      }
+      sidebar={
         <div className='flex'>
           <AdminSidebar />
           <SidebarInset ref={undefined}>
@@ -144,7 +153,7 @@ export default async function AdminLayout(props: {
             </div>
           </SidebarInset>
         </div>
-      )}
+      }
     >
       <div className='flex-1 transition-[padding] duration-300 ease-in-out'>
         {props.children}
