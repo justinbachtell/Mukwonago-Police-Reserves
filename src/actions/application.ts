@@ -8,17 +8,21 @@ import { eq } from 'drizzle-orm'
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
-// Create a Supabase client with the service role key for admin operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error('Supabase credentials are not configured')
+  }
+
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
-  }
-)
+  })
+}
 
 export interface CreateApplicationData {
   first_name: string
@@ -43,6 +47,7 @@ export async function uploadResume(
   lastName: string
 ): Promise<string> {
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     // Create folder name from user's first and last name
     const folderName =
       `${firstName.toLowerCase()}_${lastName.toLowerCase()}`.replace(
@@ -97,6 +102,7 @@ export async function uploadResume(
 // Add a new function to get a signed URL for admin access
 export async function getResumeUrl(filePath: string): Promise<string> {
   try {
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: urlData, error: urlError } = await supabaseAdmin.storage
       .from('resumes')
       .createSignedUrl(filePath.replace('resumes/', ''), 60 * 60) // URL expires in 1 hour
@@ -212,6 +218,7 @@ export async function deleteApplication(applicationId: number): Promise<void> {
       .where(eq(application.id, applicationId))
 
     if (applicationRecord?.resume) {
+      const supabaseAdmin = getSupabaseAdmin()
       // Delete the resume file from storage first
       const { error: deleteStorageError } = await supabaseAdmin.storage
         .from('resumes')
