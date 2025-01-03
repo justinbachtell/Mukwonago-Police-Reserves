@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function PolicyLoading() {
   return (
-    <div className='container py-8 mx-auto'>
+    <div className='container mx-auto py-8'>
       <div className='flex flex-col gap-8'>
         {/* Policy Details Skeleton */}
         <div className='flex flex-col gap-2'>
@@ -14,17 +14,17 @@ export default function PolicyLoading() {
 
         {/* PDF Viewer Skeleton */}
         <div className='h-[calc(90vh-8rem)] rounded-lg border'>
-          <div className='flex items-center justify-center gap-4 p-4 border-b'>
+          <div className='flex items-center justify-center gap-4 border-b p-4'>
             <Skeleton className='h-8 w-[100px]' />
             <Skeleton className='h-6 w-[50px]' />
             <Skeleton className='h-8 w-[100px]' />
           </div>
 
-          <div className='h-[calc(100%-8rem)] flex items-center justify-center'>
+          <div className='flex h-[calc(100%-8rem)] items-center justify-center'>
             <Skeleton className='h-full w-[600px]' />
           </div>
 
-          <div className='flex items-center justify-center gap-4 p-4 border-t'>
+          <div className='flex items-center justify-center gap-4 border-t p-4'>
             <Skeleton className='h-8 w-[40px]' />
             <Skeleton className='h-6 w-[100px]' />
             <Skeleton className='h-8 w-[40px]' />

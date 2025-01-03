@@ -157,7 +157,7 @@ export function PoliciesTable({ data }: PoliciesTableProps) {
               className='h-8'
               onClick={() => handleViewClick(policy)}
             >
-              <EyeIcon className='h-4 w-4' />
+              <EyeIcon className='size-4' />
             </Button>
 
             {user?.role === 'admin' && (
@@ -165,7 +165,7 @@ export function PoliciesTable({ data }: PoliciesTableProps) {
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant='outline' size='sm' className='h-8'>
-                      <PencilIcon className='h-4 w-4' />
+                      <PencilIcon className='size-4' />
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -255,7 +255,7 @@ export function PoliciesTable({ data }: PoliciesTableProps) {
                   className='h-8'
                   onClick={() => handleDeleteClick(policy.id)}
                 >
-                  <Trash2Icon className='h-4 w-4' />
+                  <Trash2Icon className='size-4' />
                 </Button>
               </>
             )}

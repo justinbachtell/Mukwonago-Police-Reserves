@@ -25,13 +25,13 @@ export function BaseTemplate(props: {
 
             {/* Desktop Navigation */}
             <nav className='hidden md:flex md:flex-1'>
-              <ul className='flex flex-wrap gap-x-5 text-xl list-none'>
+              <ul className='flex list-none flex-wrap gap-x-5 text-xl'>
                 {props.leftNav}
               </ul>
             </nav>
 
             <nav className='hidden md:flex'>
-              <ul className='flex flex-wrap gap-x-5 text-xl list-none'>
+              <ul className='flex list-none flex-wrap gap-x-5 text-xl'>
                 {props.rightNav}
               </ul>
             </nav>

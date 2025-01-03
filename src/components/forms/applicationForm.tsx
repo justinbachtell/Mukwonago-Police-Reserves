@@ -260,7 +260,7 @@ export function ApplicationForm({ user }: Props) {
           Position Information
         </h2>
         <div className='grid gap-6'>
-          <div className='space-y-2 hidden'>
+          <div className='hidden space-y-2'>
             <Label htmlFor='position'>Position</Label>
             <Select name='position' defaultValue='reserve' required>
               <SelectTrigger>

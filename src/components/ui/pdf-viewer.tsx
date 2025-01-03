@@ -43,13 +43,13 @@ export function PDFViewer({ url }: PDFViewerProps) {
 
   return (
     <div className='h-[calc(90vh-8rem)]'>
-      <div className='flex items-center justify-center gap-4 p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b'>
+      <div className='flex items-center justify-center gap-4 border-b bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
         <Button
           variant='outline'
           size='sm'
           onClick={() => setScale(s => Math.max(s - 0.2, 0.8))}
         >
-          <ZoomOut className='h-4 w-4 mr-2' />
+          <ZoomOut className='mr-2 size-4' />
           Zoom Out
         </Button>
         <span className='text-sm font-medium'>{Math.round(scale * 100)}%</span>
@@ -58,7 +58,7 @@ export function PDFViewer({ url }: PDFViewerProps) {
           size='sm'
           onClick={() => setScale(s => Math.min(s + 0.2, 3))}
         >
-          <ZoomIn className='h-4 w-4 mr-2' />
+          <ZoomIn className='mr-2 size-4' />
           Zoom In
         </Button>
       </div>
@@ -66,7 +66,7 @@ export function PDFViewer({ url }: PDFViewerProps) {
       <div className='h-[calc(100%-8rem)] overflow-y-auto'>
         {loading && (
           <div className='flex items-center justify-center p-4'>
-            <Loader2 className='h-6 w-6 animate-spin' />
+            <Loader2 className='size-6 animate-spin' />
           </div>
         )}
         <div className='flex justify-center'>
@@ -83,20 +83,20 @@ export function PDFViewer({ url }: PDFViewerProps) {
               renderAnnotationLayer
               loading={null}
               scale={scale}
-              className='shadow-lg mb-4'
+              className='mb-4 shadow-lg'
             />
           </Document>
         </div>
       </div>
 
-      <div className='flex items-center justify-center gap-4 p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t'>
+      <div className='flex items-center justify-center gap-4 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
         <Button
           variant='outline'
           size='sm'
           onClick={() => setPageNumber(page => Math.max(page - 1, 1))}
           disabled={pageNumber <= 1}
         >
-          <ChevronLeft className='h-4 w-4' />
+          <ChevronLeft className='size-4' />
         </Button>
         <span className='text-sm font-medium'>
           Page {pageNumber} of {numPages}
@@ -107,7 +107,7 @@ export function PDFViewer({ url }: PDFViewerProps) {
           onClick={() => setPageNumber(page => Math.min(page + 1, numPages))}
           disabled={pageNumber >= numPages}
         >
-          <ChevronRight className='h-4 w-4' />
+          <ChevronRight className='size-4' />
         </Button>
       </div>
     </div>

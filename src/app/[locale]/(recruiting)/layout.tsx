@@ -18,7 +18,7 @@ export default async function RecruitingLayout(props: {
     <BaseTemplate
       leftNav={(
         <>
-          <li className='flex justify-start list-none'>
+          <li className='flex list-none justify-start'>
             <Link
               href='/'
               className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -28,7 +28,7 @@ export default async function RecruitingLayout(props: {
               <span>{t('home_link')}</span>
             </Link>
           </li>
-          <li className='flex justify-start list-none'>
+          <li className='flex list-none justify-start'>
             <Link
               href='/about'
               className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -42,7 +42,7 @@ export default async function RecruitingLayout(props: {
       )}
       rightNav={(
         <>
-          <li className='flex justify-start list-none'>
+          <li className='flex list-none justify-start'>
             <Link
               href='/sign-up'
               className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -52,7 +52,7 @@ export default async function RecruitingLayout(props: {
               <span>{t('apply_now_link')}</span>
             </Link>
           </li>
-          <li className='flex justify-start list-none'>
+          <li className='flex list-none justify-start'>
             <Link
               href='/sign-in'
               className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'

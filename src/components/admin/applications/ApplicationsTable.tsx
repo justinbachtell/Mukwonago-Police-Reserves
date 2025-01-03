@@ -29,7 +29,7 @@ function ApplicationCell({ application }: { application: Application }) {
       <Dialog>
         <DialogTrigger asChild>
           <Button variant='outline' size='sm' className='h-8 w-fit'>
-            <EyeIcon className='h-4 w-4' />
+            <EyeIcon className='size-4' />
             View Application
           </Button>
         </DialogTrigger>
@@ -110,12 +110,12 @@ function ResumeCell({ application }: { application: Application }) {
             onClick={handleResumeView}
             className='flex items-center gap-2'
           >
-            <FileIcon className='h-4 w-4' />
+            <FileIcon className='size-4' />
             View Resume
           </Button>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className='max-h-[90vh] max-w-[90vw] w-[90vw] p-0'>
-              <DialogHeader className='px-6 py-4 border-b'>
+            <DialogContent className='max-h-[90vh] w-[90vw] max-w-[90vw] p-0'>
+              <DialogHeader className='border-b px-6 py-4'>
                 <DialogTitle>
                   Resume - {application.first_name} {application.last_name}
                 </DialogTitle>

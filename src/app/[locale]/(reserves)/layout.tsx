@@ -73,7 +73,7 @@ export default async function ReservesLayout(props: {
       <BaseTemplate
         leftNav={
           <>
-            <li className='flex justify-start list-none'>
+            <li className='flex list-none justify-start'>
               <Link
                 href='/user/dashboard'
                 className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -82,7 +82,7 @@ export default async function ReservesLayout(props: {
                 <span>{t('dashboard_link')}</span>
               </Link>
             </li>
-            <li className='flex justify-start list-none'>
+            <li className='flex list-none justify-start'>
               <Link
                 href='/contacts'
                 className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -91,7 +91,7 @@ export default async function ReservesLayout(props: {
                 <span>{t('contacts_link')}</span>
               </Link>
             </li>
-            <li className='flex justify-start list-none'>
+            <li className='flex list-none justify-start'>
               <Link
                 href='/events'
                 className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -100,7 +100,7 @@ export default async function ReservesLayout(props: {
                 <span>{t('events_link')}</span>
               </Link>
             </li>
-            <li className='flex justify-start list-none'>
+            <li className='flex list-none justify-start'>
               <Link
                 href='/training'
                 className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -109,7 +109,7 @@ export default async function ReservesLayout(props: {
                 <span>{t('training_link')}</span>
               </Link>
             </li>
-            <li className='flex justify-start list-none'>
+            <li className='flex list-none justify-start'>
               <Link
                 href='/policies'
                 className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -119,7 +119,7 @@ export default async function ReservesLayout(props: {
               </Link>
             </li>
             {user.role === 'admin' && (
-              <li className='flex justify-start list-none'>
+              <li className='flex list-none justify-start'>
                 <Link
                   href='/admin/users'
                   className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -133,7 +133,7 @@ export default async function ReservesLayout(props: {
         }
         rightNav={
           <>
-            <li className='flex justify-start list-none'>
+            <li className='flex list-none justify-start'>
               <Link
                 href='/user/profile'
                 className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -142,7 +142,7 @@ export default async function ReservesLayout(props: {
                 <span>{t('profile_link')}</span>
               </Link>
             </li>
-            <li className='flex justify-start list-none'>
+            <li className='flex list-none justify-start'>
               <Link
                 href='/user/settings'
                 className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
@@ -151,7 +151,7 @@ export default async function ReservesLayout(props: {
                 <span>{t('settings_link')}</span>
               </Link>
             </li>
-            <li className='flex justify-start list-none'>
+            <li className='flex list-none justify-start'>
               <SignOutButton>
                 <button
                   className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'

@@ -19,11 +19,11 @@ function EventsTableSkeleton() {
         <div className='p-4'>
           <div className='space-y-3'>
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className='flex justify-between items-center'>
+              <div key={i} className='flex items-center justify-between'>
                 <Skeleton className='h-4 w-[200px]' />
                 <div className='flex gap-2'>
-                  <Skeleton className='h-8 w-8' />
-                  <Skeleton className='h-8 w-8' />
+                  <Skeleton className='size-8' />
+                  <Skeleton className='size-8' />
                 </div>
               </div>
             ))}
@@ -39,12 +39,12 @@ export function EventsView({ events }: EventsViewProps) {
 
   return (
     <div className='container mx-auto px-4 py-8'>
-      <div className='mb-6 lg:mb-0 flex items-center justify-between'>
+      <div className='mb-6 flex items-center justify-between lg:mb-0'>
         <div>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>
             Events
           </h1>
-          <p className='text-gray-600 dark:text-gray-300 pr-8'>
+          <p className='pr-8 text-gray-600 dark:text-gray-300'>
             View and sign up for upcoming events.
           </p>
         </div>

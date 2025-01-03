@@ -19,7 +19,7 @@ export function LoadingShell({ className, children }: LoadingShellProps) {
 
 export function LoadingCard() {
   return (
-    <div className='rounded-lg border p-4 space-y-3'>
+    <div className='space-y-3 rounded-lg border p-4'>
       <Skeleton className='h-5 w-[200px]' />
       <Skeleton className='h-4 w-[300px]' />
     </div>
@@ -46,9 +46,9 @@ export function LoadingAuth() {
   return (
     <div className='w-full space-y-6'>
       <div className='flex flex-col space-y-2 text-center'>
-        <Skeleton className='h-12 w-12 mx-auto rounded-full' />
-        <Skeleton className='h-6 w-[200px] mx-auto' />
-        <Skeleton className='h-4 w-[250px] mx-auto' />
+        <Skeleton className='mx-auto size-12 rounded-full' />
+        <Skeleton className='mx-auto h-6 w-[200px]' />
+        <Skeleton className='mx-auto h-4 w-[250px]' />
       </div>
       <LoadingForm />
     </div>
@@ -84,7 +84,7 @@ export function LoadingProfile() {
   return (
     <div className='space-y-8'>
       <div className='flex items-center gap-6'>
-        <Skeleton className='h-24 w-24 rounded-full' />
+        <Skeleton className='size-24 rounded-full' />
         <div className='space-y-2'>
           <Skeleton className='h-8 w-[200px]' />
           <Skeleton className='h-4 w-[150px]' />
