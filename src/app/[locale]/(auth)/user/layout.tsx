@@ -91,7 +91,7 @@ export default async function UserLayout(props: {
           {user.role === 'admin' && (
             <li className='flex list-none justify-start'>
               <Link
-                href='/admin/users'
+                href='/admin/dashboard'
                 className='flex items-center justify-center space-x-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
               >
                 <Shield className='size-4' />

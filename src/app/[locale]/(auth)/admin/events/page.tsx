@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { EventForm } from '@/components/admin/events/EventForm'
+import { EventForm } from '@/components/admin/forms/EventForm'
 import { Plus } from 'lucide-react'
 
 export default async function AdminEventsPage() {

@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { TrainingForm } from "@/components/admin/training/TrainingForm";
+import { TrainingForm } from '@/components/admin/forms/TrainingForm'
 import { Plus } from "lucide-react";
 
 export default async function TrainingManagementPage() {
