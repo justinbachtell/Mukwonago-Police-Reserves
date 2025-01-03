@@ -39,9 +39,13 @@
     "home_link": "Home",
     "dashboard_link": "Dashboard",
     "contacts_link": "Contacts",
-    "application_link": "Application",
-    "sign_out_link": "Sign out",
-    "settings_link": "Settings"
+    "training_link": "Training",
+    "events_link": "Events",
+    "policies_link": "Policies",
+    "admin_link": "Admin",
+    "profile_link": "Profile",
+    "settings_link": "Settings",
+    "sign_out_link": "Sign out"
   },
   "Reserves": {
     "meta_title": "Reserves",
@@ -63,10 +67,14 @@
     "meta_title": "Settings"
   },
   "AdminLayout": {
+    "home_link": "Home",
     "dashboard_link": "Dashboard",
     "profile_link": "Profile",
     "equipment_link": "Equipment",
     "applications_link": "Application",
+    "training_link": "Training",
+    "events_link": "Events",
+    "policies_link": "Policies",
     "admin_link": "Admin",
     "contacts_link": "Contacts",
     "settings_link": "Settings",
@@ -76,7 +84,9 @@
     "dashboard_link": "Dashboard",
     "profile_link": "Profile",
     "equipment_link": "Equipment",
-    "applications_link": "Application",
+    "training_link": "Training",
+    "events_link": "Events",
+    "policies_link": "Policies",
     "admin_link": "Admin",
     "contacts_link": "Contacts",
     "settings_link": "Settings",
