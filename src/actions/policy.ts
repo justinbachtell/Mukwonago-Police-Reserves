@@ -9,9 +9,16 @@ import { revalidatePath } from 'next/cache'
 import type { Policy } from '@/types/policy'
 
 // Create a Supabase client with the service role key for admin operations
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error('Supabase URL is not configured')
+}
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('Supabase service role key is not configured')
+}
+
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
   {
     auth: {
       autoRefreshToken: false,
@@ -52,6 +59,10 @@ export async function uploadPolicy(
 
 export async function getPolicyUrl(fileName: string): Promise<string> {
   try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      throw new Error('Supabase URL is not configured')
+    }
+
     const { data: urlData, error: urlError } = await supabaseAdmin.storage
       .from('policies')
       .createSignedUrl(fileName, 60 * 60) // URL expires in 1 hour
