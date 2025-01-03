@@ -7,8 +7,8 @@ export const Env = createEnv({
     NEXT_PUBLIC_APP_URL: z.string().optional(),
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
     NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().min(1),
-    NEXT_PUBLIC_SUPABASE_URL: z.string().min(1),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1)
+    NEXT_PUBLIC_SUPABASE_URL: z.string(),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string()
   },
   // You need to destructure all the keys manually
   runtimeEnv: {
@@ -32,7 +32,7 @@ export const Env = createEnv({
     DATABASE_URL: z.string().optional(),
     EMAIL_ADDRESS: z.string().optional(),
     LOGTAIL_SOURCE_TOKEN: z.string().optional(),
-    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1)
+    SUPABASE_SERVICE_ROLE_KEY: z.string()
   },
   shared: {
     NODE_ENV: z.enum(['test', 'development', 'production']).optional()
