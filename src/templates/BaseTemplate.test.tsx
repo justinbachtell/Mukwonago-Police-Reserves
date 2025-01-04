@@ -1,41 +1,45 @@
 import messages from '@/locales/en.json';
-import { render, screen, within } from '@testing-library/react';
-import { NextIntlClientProvider } from 'next-intl';
-import { BaseTemplate } from './BaseTemplate';
+import { render, screen } from '@testing-library/react'
+import { NextIntlClientProvider } from 'next-intl'
+import { BaseTemplate } from './BaseTemplate'
+import { vi } from 'vitest'
 
-describe('base template', () => {
+// Mock needs to be before any imports that use it
+vi.mock('@/components/NavigationSidebarWrapper', () => ({
+  NavigationSidebarWrapper: () => <div data-testid='mock-sidebar'>Sidebar</div>
+}))
+
+describe('BaseTemplate', () => {
   describe('render method', () => {
-    it('should have 3 menu items', () => {
+    it('should render the navigation sidebar', () => {
       render(
-        <NextIntlClientProvider locale="en" messages={messages}>
-          <BaseTemplate
-            leftNav={(
-              <>
-                <li>link 1</li>
-                <li>link 2</li>
-                <li>link 3</li>
-              </>
-            )}
-          >
-            {null}
-          </BaseTemplate>
-        </NextIntlClientProvider>,
-      );
+        <NextIntlClientProvider locale='en' messages={messages}>
+          <BaseTemplate user={null}>{null}</BaseTemplate>
+        </NextIntlClientProvider>
+      )
 
-      const menuItemList = screen.getAllByRole('listitem');
-
-      expect(menuItemList).toHaveLength(3);
+      expect(screen.getByTestId('mock-sidebar')).toBeInTheDocument()
     })
 
-    it('should have a link to support justinbachtell.com', () => {
+    it('should render children content', () => {
+      const testContent = 'Test Content'
       render(
-        <NextIntlClientProvider locale="en" messages={messages}>
-          <BaseTemplate leftNav={<li>1</li>}>{null}</BaseTemplate>
-        </NextIntlClientProvider>,
-      );
+        <NextIntlClientProvider locale='en' messages={messages}>
+          <BaseTemplate user={null}>{testContent}</BaseTemplate>
+        </NextIntlClientProvider>
+      )
 
-      const copyrightSection = screen.getByText(/© Copyright/);
-      const copyrightLink = within(copyrightSection).getByRole('link');
+      expect(screen.getByText(testContent)).toBeInTheDocument()
+    })
+
+    it('should have a link to justinbachtell.com', () => {
+      render(
+        <NextIntlClientProvider locale='en' messages={messages}>
+          <BaseTemplate user={null}>{null}</BaseTemplate>
+        </NextIntlClientProvider>
+      )
+
+      const link = screen.getByRole('link', { name: 'Justin Bachtell' })
 
       /*
        * PLEASE READ THIS SECTION
@@ -43,7 +47,7 @@ describe('base template', () => {
        * The link doesn't need to appear on every pages, one link on one page is enough.
        * Thank you for your support it'll mean a lot for us.
        */
-      expect(copyrightLink).toHaveAttribute('href', 'https://justinbachtell.com');
+      expect(link).toHaveAttribute('href', 'https://justinbachtell.com')
     })
-  });
+  })
 })

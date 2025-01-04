@@ -1,70 +1,44 @@
-import { MobileNavigationMenu } from '@/components/MobileNavigationMenu'
-import { SidebarProvider } from '@/components/ui/sidebar'
+import { NavigationSidebarWrapper } from '@/components/NavigationSidebarWrapper'
 import { Toaster } from '@/components/ui/toaster'
 import { AppConfig } from '@/utils/AppConfig'
+import type { DBUser } from '@/types/user'
 import { useTranslations } from 'next-intl'
 
 export function BaseTemplate(props: {
-  leftNav: React.ReactNode
-  rightNav?: React.ReactNode
-  sidebar?: React.ReactNode
   children: React.ReactNode
+  user: DBUser | null
+  signOutButton?: React.ReactNode
 }) {
   const t = useTranslations('BaseTemplate')
 
-  const content = (
-    <div className='w-full text-gray-700 antialiased'>
-      <div className='mx-auto'>
-        <header className='border-b border-gray-300'>
-          <div className='flex justify-end px-4 py-2 md:justify-between lg:px-8'>
-            {/* Mobile Menu */}
-            <MobileNavigationMenu
-              leftNav={props.leftNav}
-              rightNav={props.rightNav}
-            />
+  return (
+    <div className='flex min-h-screen flex-col bg-gray-50 text-gray-700 antialiased dark:bg-gray-900'>
+      <div className='flex flex-1'>
+        <NavigationSidebarWrapper
+          user={props.user}
+          signOutButton={props.signOutButton}
+        />
+        <div className='flex w-full flex-1 flex-col'>
+          <main className='flex-1 px-4 pt-16 md:px-8 md:pt-20'>
+            {props.children}
+          </main>
 
-            {/* Desktop Navigation */}
-            <nav className='hidden md:flex md:flex-1'>
-              <ul className='flex list-none flex-wrap gap-x-5 text-xl'>
-                {props.leftNav}
-              </ul>
-            </nav>
-
-            <nav className='hidden md:flex'>
-              <ul className='flex list-none flex-wrap gap-x-5 text-xl'>
-                {props.rightNav}
-              </ul>
-            </nav>
-          </div>
-        </header>
-
-        <div className='relative flex h-full'>
-          {props.sidebar && (
-            <aside className='sticky top-0 h-full border-r'>
-              {props.sidebar}
-            </aside>
-          )}
-
-          <main className='flex-1 overflow-x-hidden'>{props.children}</main>
+          <footer className='border-t border-gray-300 px-4 py-6 text-center text-sm md:py-8'>
+            {`© Copyright ${new Date().getFullYear()} ${AppConfig.name}. `}
+            {t.rich('built_by', {
+              author: () => (
+                <a
+                  href='https://justinbachtell.com'
+                  className='text-blue-700 hover:border-b-2 hover:border-blue-700'
+                >
+                  Justin Bachtell
+                </a>
+              )
+            })}
+          </footer>
         </div>
-
-        <footer className='border-t border-gray-300 px-4 py-8 text-center text-sm'>
-          {`© Copyright ${new Date().getFullYear()} ${AppConfig.name}. `}
-          {t.rich('built_by', {
-            author: () => (
-              <a
-                href='https://justinbachtell.com'
-                className='text-blue-700 hover:border-b-2 hover:border-blue-700'
-              >
-                Justin Bachtell
-              </a>
-            )
-          })}
-        </footer>
       </div>
       <Toaster />
     </div>
   )
-
-  return props.sidebar ? <SidebarProvider defaultOpen>{content}</SidebarProvider> : content
 }
