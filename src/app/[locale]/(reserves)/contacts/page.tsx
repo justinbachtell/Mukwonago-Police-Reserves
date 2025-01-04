@@ -26,19 +26,19 @@ export default async function ContactsPage() {
   }));
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
+    <div className='container relative mx-auto min-h-screen w-full p-4 sm:px-6 lg:px-8'>
+      <div className='mb-6 space-y-1'>
+        <h1 className='text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl'>
           Department Contacts
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className='text-sm text-gray-600 dark:text-gray-300 sm:text-base'>
           Contact information for all department members.
         </p>
       </div>
-      <ContactsTable
-        data={contacts}
-        isAdmin={currentUser.role === "admin"}
-      />
+
+      <div className='relative w-full'>
+        <ContactsTable data={contacts} isAdmin={currentUser.role === 'admin'} />
+      </div>
     </div>
-  );
+  )
 }

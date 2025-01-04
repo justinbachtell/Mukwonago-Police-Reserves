@@ -10,6 +10,24 @@
     "description": "The Village of Mukwonago Police Reserves program is a community-based organization that provides law enforcement services to the Village of Mukwonago.",
     "built_by": "Built by <author></author>."
   },
+  "NavigationSidebar": {
+    "home_link": "Home",
+    "about_link": "About",
+    "dashboard_link": "Dashboard",
+    "contacts_link": "Contacts",
+    "events_link": "Events",
+    "training_link": "Training",
+    "policies_link": "Policies",
+    "admin_dashboard_link": "Dashboard",
+    "users_link": "Users",
+    "equipment_link": "Equipment",
+    "applications_link": "Applications",
+    "profile_link": "Profile",
+    "settings_link": "Settings",
+    "sign_in_link": "Sign in",
+    "apply_now_link": "Apply Now",
+    "sign_out": "Sign out"
+  },
   "Index": {
     "title": "Village of Mukwonago Police Reserves",
     "description": "Join our dedicated team of reserve officers and make a difference in your community. We're looking for committed individuals to serve and protect.",

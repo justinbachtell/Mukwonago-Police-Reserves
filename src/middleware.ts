@@ -25,11 +25,15 @@ const isProtectedRoute = createRouteMatcher([
 ])
 
 const isAuthPage = createRouteMatcher([
+  '/',
+  '/:locale/',
   '/sign-in(.*)',
   '/:locale/sign-in(.*)',
   '/sign-up(.*)',
   '/:locale/sign-up(.*)',
-]);
+  '/about(.*)',
+  '/:locale/about(.*)'
+])
 
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
   // Run Clerk middleware only when it's necessary
