@@ -4,12 +4,9 @@ import { NextIntlClientProvider } from 'next-intl'
 import { BaseTemplate } from './BaseTemplate'
 import { vi } from 'vitest'
 
-const mockNavigationSidebarWrapper = vi.fn(() => (
-  <div data-testid='mock-sidebar'>Sidebar</div>
-))
-
+// Mock needs to be before any imports that use it
 vi.mock('@/components/NavigationSidebarWrapper', () => ({
-  NavigationSidebarWrapper: mockNavigationSidebarWrapper
+  NavigationSidebarWrapper: () => <div data-testid='mock-sidebar'>Sidebar</div>
 }))
 
 describe('BaseTemplate', () => {
