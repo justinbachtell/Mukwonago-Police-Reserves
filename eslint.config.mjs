@@ -74,6 +74,7 @@ export default antfu(
       'style/multiline-ternary': 'off',
       'style/jsx-curly-newline': 'off',
       'style/jsx-wrap-multilines': 'off',
+      'style/eol-last': 'off',
 
       // Disable perfectionist rules temporarily
       'perfectionist/sort-objects': 'off',

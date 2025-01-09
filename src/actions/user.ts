@@ -1,173 +1,456 @@
 'use server';
 
-import type { DBUser } from '@/types/user';
-import { toISOString } from '@/lib/utils';
-import { db } from '@/libs/DB';
-import { application, user } from '@/models/Schema';
-import { auth, currentUser } from '@clerk/nextjs/server';
-import { desc, eq } from 'drizzle-orm';
+import type { DBUser } from '@/types/user'
+import { toISOString } from '@/lib/utils'
+import { db } from '@/libs/DB'
+import { application, user } from '@/models/Schema'
+import { desc, eq } from 'drizzle-orm'
+import { createLogger } from '@/lib/debug'
+import { createClient } from '@/lib/server'
+
+const logger = createLogger({
+  module: 'users',
+  file: 'user.ts'
+})
+
+export async function getAuthUserFromSupabase() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: userError
+  } = await supabase.auth.getUser()
+
+  if (!user || userError) {
+    logger.error(
+      'Failed to get Supabase user',
+      logger.errorWithData(userError),
+      'getUserFromSupabase'
+    )
+    return null
+  }
+
+  return user
+}
 
 export async function getCurrentUser() {
+  logger.info('Fetching current user', undefined, 'getCurrentUser')
+
+  const authUser = await getAuthUserFromSupabase()
+
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return null;
+    if (!authUser) {
+      logger.warn('No active user found', undefined, 'getCurrentUser')
+      return null
     }
 
-    // Fetch both Clerk and DB user
-    const [dbUser] = await db.select().from(user).where(eq(user.clerk_id, userId));
+    logger.time(`fetch-user-${authUser.id}`)
+    const [dbUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, authUser.id))
 
-    const clerkUser = await currentUser();
-    if (!clerkUser) {
-      throw new Error('User not found');
-    }
-
-    // If user not in DB, create new user
+    // If user not in public.user, create new user
     if (!dbUser) {
-      const now = toISOString(new Date());
+      logger.info(
+        'Creating new user in public.user',
+        { userId: authUser.id },
+        'getCurrentUser'
+      )
+      const now = toISOString(new Date())
       const [newUser] = await db
         .insert(user)
         .values({
-          clerk_id: userId,
+          id: authUser.id,
           created_at: now,
-          email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
-          first_name: clerkUser.firstName ?? '',
-          last_name: clerkUser.lastName ?? '',
+          email: authUser.email ?? '',
+          first_name: authUser.user_metadata.first_name ?? '',
+          last_name: authUser.user_metadata.last_name ?? '',
           updated_at: now,
           role: 'guest',
-          position: 'reserve'
+          position: 'reserve',
+          status: 'active'
         })
         .returning()
 
       if (!newUser) {
-        throw new Error('Failed to create user')
+        logger.error(
+          'Failed to create new user',
+          { id: authUser.id },
+          'getCurrentUser'
+        )
+        return null
       }
 
+      logger.info(
+        'New user created successfully',
+        { id: newUser.id },
+        'getCurrentUser'
+      )
+      logger.timeEnd(`fetch-user-${authUser.id}`)
+
       return {
-        ...newUser,
-        created_at: new Date(newUser.created_at),
-        updated_at: new Date(newUser.updated_at)
+        ...newUser
       } as DBUser
     }
 
-    // Check if Clerk data differs from DB data
-    if (
-      dbUser.first_name !== clerkUser.firstName
-      || dbUser.last_name !== clerkUser.lastName
-      || dbUser.email !== clerkUser.emailAddresses[0]?.emailAddress
-    ) {
+    // Check if Supabase email differs from DB
+    if (dbUser.email !== authUser.email) {
+      logger.info(
+        'Updating user with Supabase email',
+        {
+          userId: dbUser.id,
+          oldEmail: dbUser.email,
+          newEmail: authUser.email
+        },
+        'getCurrentUser'
+      )
+
       const [updatedUser] = await db
         .update(user)
         .set({
-          email: clerkUser.emailAddresses[0]?.emailAddress ?? dbUser.email,
-          first_name: clerkUser.firstName ?? dbUser.first_name,
-          last_name: clerkUser.lastName ?? dbUser.last_name,
-          updated_at: toISOString(new Date()),
+          email: authUser.email ?? '',
+          updated_at: toISOString(new Date())
         })
         .where(eq(user.id, dbUser.id))
-        .returning();
+        .returning()
 
       if (!updatedUser) {
-        throw new Error('Failed to update user');
+        logger.error(
+          'Failed to update user with Supabase email',
+          { userId: dbUser.id },
+          'getCurrentUser'
+        )
+        return null
       }
 
+      logger.info(
+        'User updated with Supabase email',
+        {
+          userId: updatedUser.id,
+          email: updatedUser.email
+        },
+        'getCurrentUser'
+      )
+      logger.timeEnd(`fetch-user-${authUser.id}`)
+
       return {
-        ...updatedUser,
-        created_at: new Date(updatedUser.created_at),
-        updated_at: new Date(updatedUser.updated_at),
-      } as DBUser;
+        ...updatedUser
+      } as DBUser
     }
 
+    logger.info(
+      'User retrieved successfully',
+      { userId: dbUser.id },
+      'getCurrentUser'
+    )
+    logger.timeEnd(`fetch-user-${authUser.id}`)
+
     return {
-      ...dbUser,
-      created_at: new Date(dbUser.created_at),
-      updated_at: new Date(dbUser.updated_at),
-    } as DBUser;
-  }
-  catch (error) {
-    console.error('Error fetching current user', error);
-    throw error;
+      ...dbUser
+    } as DBUser
+  } catch (error) {
+    logger.error(
+      'Failed to fetch current user',
+      logger.errorWithData(error),
+      'getCurrentUser'
+    )
+    return null
   }
 }
 
-export async function getUserById(id: number) {
-  const [dbUser] = await db.select().from(user).where(eq(user.id, id));
-  if (!dbUser) {
-    return null;
-  }
+export async function getUserById(userId: string) {
+  logger.info('Fetching user by ID', { userId }, 'getUserById')
 
-  return {
-    ...dbUser,
-    created_at: new Date(dbUser.created_at),
-    updated_at: new Date(dbUser.updated_at),
-  } as DBUser;
+  try {
+    logger.time(`fetch-user-${userId}`)
+    const [dbUser] = await db.select().from(user).where(eq(user.id, userId))
+
+    if (!dbUser) {
+      logger.warn('User not found', { userId }, 'getUserById')
+      return null
+    }
+
+    logger.info('User retrieved successfully', { userId }, 'getUserById')
+    logger.timeEnd(`fetch-user-${userId}`)
+
+    return {
+      ...dbUser
+    } as DBUser
+  } catch (error) {
+    logger.error(
+      'Failed to fetch user by ID',
+      logger.errorWithData(error),
+      'getUserById'
+    )
+    return null
+  }
 }
 
 export async function getAllUsers() {
-  const users = await db.select().from(user);
-  return users.map(u => ({
-    ...u,
-    created_at: new Date(u.created_at),
-    updated_at: new Date(u.updated_at),
-  })) as DBUser[];
+  logger.info('Fetching all users', undefined, 'getAllUsers')
+
+  try {
+    logger.time('fetch-all-users')
+    const users = await db.select().from(user).orderBy(desc(user.created_at))
+
+    logger.info(
+      'Users retrieved successfully',
+      { count: users.length },
+      'getAllUsers'
+    )
+    logger.timeEnd('fetch-all-users')
+
+    return users.map(u => ({
+      ...u
+    })) as DBUser[]
+  } catch (error) {
+    logger.error(
+      'Failed to fetch all users',
+      logger.errorWithData(error),
+      'getAllUsers'
+    )
+    return []
+  }
 }
 
 export async function updateUser(
-  userId: number,
-  data: Pick<
-    DBUser,
-    | 'first_name'
-    | 'last_name'
-    | 'phone'
-    | 'street_address'
-    | 'city'
-    | 'state'
-    | 'zip_code'
-    | 'driver_license'
-    | 'callsign'
-    | 'radio_number'
-  >,
+  userId: string,
+  data: Partial<
+    Pick<
+      DBUser,
+      | 'first_name'
+      | 'last_name'
+      | 'email'
+      | 'phone'
+      | 'street_address'
+      | 'city'
+      | 'state'
+      | 'zip_code'
+      | 'driver_license'
+      | 'driver_license_state'
+      | 'callsign'
+      | 'radio_number'
+      | 'status'
+    >
+  >
 ) {
+  logger.info('Updating user', { userId, updates: data }, 'updateUser')
+
   try {
+    logger.time(`update-user-${userId}`)
     const [updatedUser] = await db
       .update(user)
       .set({
         ...data,
-        updated_at: toISOString(new Date()),
+        updated_at: toISOString(new Date())
       })
       .where(eq(user.id, userId))
-      .returning();
+      .returning()
 
     if (!updatedUser) {
-      throw new Error('Failed to update user');
+      logger.error('No user returned after update', { userId }, 'updateUser')
+      return null
     }
 
+    logger.info('User updated successfully', { userId }, 'updateUser')
+    logger.timeEnd(`update-user-${userId}`)
+
     return {
-      ...updatedUser,
-      created_at: new Date(updatedUser.created_at),
-      updated_at: new Date(updatedUser.updated_at),
-    } as DBUser;
-  }
-  catch (error) {
-    console.error('Error updating user:', error);
-    throw new Error('Failed to update user');
+      ...updatedUser
+    } as DBUser
+  } catch (error) {
+    logger.error(
+      'Failed to update user',
+      logger.errorWithData(error),
+      'updateUser'
+    )
+    return null
   }
 }
 
 export async function getUserApplications() {
-  const user = await getCurrentUser();
-  if (!user) {
-    throw new Error('User not found');
+  logger.info('Fetching user applications', undefined, 'getUserApplications')
+
+  try {
+    const currentUserData = await getCurrentUser()
+    if (!currentUserData) {
+      logger.error('User not found', undefined, 'getUserApplications')
+      return null
+    }
+
+    logger.time(`fetch-applications-${currentUserData.id}`)
+    const applications = await db.query.application.findMany({
+      orderBy: [desc(application.created_at)],
+      where: eq(application.user_id, currentUserData.id)
+    })
+
+    logger.info(
+      'User applications retrieved',
+      {
+        userId: currentUserData.id,
+        count: applications.length
+      },
+      'getUserApplications'
+    )
+    logger.timeEnd(`fetch-applications-${currentUserData.id}`)
+
+    return applications.map(app => ({
+      ...app,
+      created_at: new Date(app.created_at),
+      updated_at: new Date(app.updated_at)
+    }))
+  } catch (error) {
+    logger.error(
+      'Failed to fetch user applications',
+      logger.errorWithData(error),
+      'getUserApplications'
+    )
+    return null
   }
+}
 
-  const applications = await db.query.application.findMany({
-    orderBy: [desc(application.created_at)],
-    where: eq(application.user_id, user.id),
-  });
+export async function updateUserRole(userId: string, role: DBUser['role']) {
+  logger.info('Updating user role', { userId, role }, 'updateUserRole')
 
-  return applications.map(app => ({
-    ...app,
-    created_at: new Date(app.created_at),
-    updated_at: new Date(app.updated_at),
-  }));
+  try {
+    logger.time(`update-user-role-${userId}`)
+    const [updatedUser] = await db
+      .update(user)
+      .set({
+        role,
+        updated_at: toISOString(new Date())
+      })
+      .where(eq(user.id, userId))
+      .returning()
+
+    if (!updatedUser) {
+      logger.error(
+        'No user returned after role update',
+        { userId },
+        'updateUserRole'
+      )
+      return null
+    }
+
+    logger.info(
+      'User role updated successfully',
+      { userId, role },
+      'updateUserRole'
+    )
+    logger.timeEnd(`update-user-role-${userId}`)
+
+    return {
+      ...updatedUser
+    } as DBUser
+  } catch (error) {
+    logger.error(
+      'Failed to update user role',
+      logger.errorWithData(error),
+      'updateUserRole'
+    )
+    return null
+  }
+}
+
+interface UpdateSettingsData {
+  email: string
+  currentPassword?: string
+  newPassword?: string
+}
+
+export async function updateUserSettings(
+  userId: string,
+  data: UpdateSettingsData
+) {
+  logger.info('Updating user settings', { userId }, 'updateUserSettings')
+
+  try {
+    logger.time(`update-settings-${userId}`)
+    const supabase = await createClient()
+
+    // If password change is requested
+    if (data.currentPassword && data.newPassword) {
+      logger.info('Updating password', { userId }, 'updateUserSettings')
+      const { error: passwordError } = await supabase.auth.updateUser({
+        password: data.newPassword
+      })
+
+      if (passwordError) {
+        logger.error(
+          'Failed to update password',
+          logger.errorWithData(passwordError),
+          'updateUserSettings'
+        )
+        return {
+          success: false,
+          message:
+            'Failed to update password. Please check your current password.'
+        }
+      }
+    }
+
+    // If email change is requested
+    if (data.email) {
+      logger.info('Updating email', { userId }, 'updateUserSettings')
+      const { error: emailError } = await supabase.auth.updateUser({
+        email: data.email
+      })
+
+      if (emailError) {
+        logger.error(
+          'Failed to update email',
+          logger.errorWithData(emailError),
+          'updateUserSettings'
+        )
+        return {
+          success: false,
+          message: 'Failed to update email. Please try again.'
+        }
+      }
+
+      // Update email in database
+      const [updatedUser] = await db
+        .update(user)
+        .set({
+          email: data.email,
+          updated_at: toISOString(new Date())
+        })
+        .where(eq(user.id, userId))
+        .returning()
+
+      if (!updatedUser) {
+        logger.error(
+          'Failed to update user email in database',
+          { userId },
+          'updateUserSettings'
+        )
+        return {
+          success: false,
+          message: 'Failed to update email in database.'
+        }
+      }
+    }
+
+    logger.info(
+      'Settings updated successfully',
+      { userId },
+      'updateUserSettings'
+    )
+    logger.timeEnd(`update-settings-${userId}`)
+
+    return {
+      success: true,
+      message: 'Settings updated successfully'
+    }
+  } catch (error) {
+    logger.error(
+      'Failed to update user settings',
+      logger.errorWithData(error),
+      'updateUserSettings'
+    )
+    return {
+      success: false,
+      message: 'An unexpected error occurred'
+    }
+  }
 }

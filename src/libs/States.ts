@@ -1,5 +1,4 @@
-// Generate list of United States states
-interface State {
+export interface State {
   name: string
   abbreviation: string
   capital: string
@@ -55,5 +54,5 @@ export const STATES: State[] = [
   { abbreviation: 'WA', capital: 'Olympia', name: 'Washington' },
   { abbreviation: 'WV', capital: 'Charleston', name: 'West Virginia' },
   { abbreviation: 'WI', capital: 'Madison', name: 'Wisconsin' },
-  { abbreviation: 'WY', capital: 'Cheyenne', name: 'Wyoming' },
-];
+  { abbreviation: 'WY', capital: 'Cheyenne', name: 'Wyoming' }
+]

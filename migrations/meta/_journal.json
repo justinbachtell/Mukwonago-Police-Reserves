@@ -5,36 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1735852237189,
-      "tag": "0000_sparkling_scorpion",
+      "when": 1736379390790,
+      "tag": "0000_concerned_apocalypse",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1735856296438,
-      "tag": "0001_supreme_catseye",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1735857484535,
-      "tag": "0002_outstanding_pandemic",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1735923433210,
-      "tag": "0003_common_romulus",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1735932295826,
-      "tag": "0004_narrow_zombie",
+      "when": 1736391432970,
+      "tag": "0001_yellow_iron_monger",
       "breakpoints": true
     }
   ]

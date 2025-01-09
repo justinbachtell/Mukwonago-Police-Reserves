@@ -1,44 +1,47 @@
 import withBundleAnalyzer from '@next/bundle-analyzer';
-import { withSentryConfig } from '@sentry/nextjs';
-import createNextIntlPlugin from 'next-intl/plugin';
-import './src/libs/Env';
-
-const withNextIntl = createNextIntlPlugin('./src/libs/i18n.ts');
+import { withSentryConfig } from '@sentry/nextjs'
+import './src/libs/Env'
 
 const bundleAnalyzer = withBundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-});
+  enabled: process.env.ANALYZE === 'true'
+})
 
 /** @type {import('next').NextConfig} */
 export default withSentryConfig(
-  bundleAnalyzer(
-    withNextIntl({
-      eslint: {
-        dirs: ['.']
-      },
-      poweredByHeader: false,
-      reactStrictMode: true,
-      serverExternalPackages: ['@electric-sql/pglite'],
+  bundleAnalyzer({
+    eslint: {
+      dirs: ['.']
+    },
+    poweredByHeader: false,
+    reactStrictMode: true,
+    serverExternalPackages: ['@electric-sql/pglite'],
 
-      webpack: (config, { isServer }) => {
-        if (!isServer) {
-          config.resolve.fallback = {
-            ...config.resolve.fallback,
-            punycode: false,
-            canvas: false
-          }
+    webpack: (config, { isServer }) => {
+      if (!isServer) {
+        config.resolve.fallback = {
+          ...config.resolve.fallback,
+          net: false,
+          tls: false,
+          fs: false,
+          crypto: require.resolve('crypto-browserify'),
+          stream: require.resolve('stream-browserify'),
+          path: require.resolve('path-browserify'),
+          perf_hooks: false,
+          'node:crypto': require.resolve('crypto-browserify'),
+          'node:fs': false,
+          'node:path': require.resolve('path-browserify')
         }
-
-        // Handle PDF.js worker
-        config.module.rules.push({
-          test: /pdf\.worker\.(min\.)?js/,
-          type: 'asset/resource'
-        })
-
-        return config
       }
-    })
-  ),
+
+      // Handle PDF.js worker
+      config.module.rules.push({
+        test: /pdf\.worker\.(min\.)?js/,
+        type: 'asset/resource'
+      })
+
+      return config
+    }
+  }),
   {
     automaticVercelMonitors: true,
     disableLogger: true,

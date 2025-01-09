@@ -1,4 +1,8 @@
-// Use type safe message keys with `next-intl`
-type Messages = typeof import('../locales/en.json')
+import type { DBUser } from './user'
 
-declare interface IntlMessages extends Messages {}
+declare global {
+  // Type for the currently authenticated user
+  type CurrentUser = DBUser | null | undefined
+}
+
+export {}

@@ -1,20 +1,42 @@
 import type { DBUser } from './user'
 import type { Training } from './training'
 
-export type CompletionStatus =
-  | 'completed'
-  | 'incomplete'
-  | 'excused'
-  | 'unexcused'
+// Completion status enum from Schema
+export type CompletionStatus = 'completed' | 'incomplete' | 'excused' | 'unexcused'
 
+// Main interface representing a training assignment
 export interface TrainingAssignment {
   id: number
-  user_id: number
   training_id: number
-  completion_status?: CompletionStatus
+  user_id: string
+  completion_status: CompletionStatus | null
   completion_notes: string | null
-  created_at: string | Date
-  updated_at: string | Date
-  user?: Partial<DBUser>
+  created_at: string
+  updated_at: string
+
+  // Relations
   training?: Training
+  user?: DBUser & {
+    email: string
+  }
 }
+
+// Type for creating new training assignments
+export type NewTrainingAssignment = Omit<
+  TrainingAssignment,
+  'id' | 'created_at' | 'updated_at' | 'training' | 'user'
+>
+
+// Type for updating existing training assignments
+export type UpdateTrainingAssignment = Partial<
+  Omit<
+    TrainingAssignment,
+    'id' | 'created_at' | 'updated_at' | 'training' | 'user'
+  >
+>
+
+// Required fields when creating new training assignments
+export type RequiredTrainingAssignmentFields = Pick<
+  TrainingAssignment,
+  'training_id' | 'user_id'
+>

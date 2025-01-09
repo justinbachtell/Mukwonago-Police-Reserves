@@ -9,6 +9,7 @@ import {
 } from '@/actions/trainingAssignment'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
+import { toISOString } from '@/lib/utils'
 
 interface TrainingSignUpButtonProps {
   training: Training
@@ -19,7 +20,10 @@ export function TrainingSignUpButton({ training }: TrainingSignUpButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const isTrainingPast = () => {
-    return new Date(training.training_end_time) < new Date()
+    return (
+      toISOString(new Date(training.training_end_time)) <
+      toISOString(new Date())
+    )
   }
 
   useEffect(() => {

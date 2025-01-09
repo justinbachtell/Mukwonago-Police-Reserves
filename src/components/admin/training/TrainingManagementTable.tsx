@@ -2,7 +2,7 @@
 
 import type { Training } from '@/types/training'
 import { DataTable } from '@/components/ui/data-table'
-import { columns } from '@/app/[locale]/(auth)/admin/training/columns'
+import { columns } from '@/app/(auth)/admin/training/columns'
 import { useState } from 'react'
 import type { SortingState } from '@tanstack/react-table'
 import { LoaderCircle } from 'lucide-react'

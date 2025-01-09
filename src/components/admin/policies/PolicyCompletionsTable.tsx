@@ -1,10 +1,17 @@
 'use client'
 
 import { DataTable } from '@/components/ui/data-table'
-import {
-  columns,
-  type CompletionWithUser
-} from '../../../app/[locale]/(auth)/admin/policies/[id]/completions/columns'
+import type { Policy, PolicyCompletion } from '@/types/policy'
+import type { DBUser } from '@/types/user'
+import { columns } from '@/app/(auth)/admin/policies/[id]/completions/columns'
+
+const DEBUG = process.env.NODE_ENV === 'development'
+
+// Define the CompletionWithUser type here since it's used by both table and columns
+export interface CompletionWithUser extends Omit<PolicyCompletion, 'user'> {
+  user: DBUser | null
+  policy: Policy
+}
 
 interface CompletionsTableProps {
   data: CompletionWithUser[]
@@ -12,5 +19,15 @@ interface CompletionsTableProps {
 }
 
 export function CompletionsTable({ data, policyId }: CompletionsTableProps) {
-  return <DataTable columns={columns(policyId)} data={data} />
+  DEBUG &&
+    console.log('[PolicyCompletionsTable] Rendering with data:', {
+      completionsCount: data.length,
+      policyId
+    })
+
+  return (
+    <div className='w-full'>
+      <DataTable columns={columns(policyId)} data={data} />
+    </div>
+  )
 }

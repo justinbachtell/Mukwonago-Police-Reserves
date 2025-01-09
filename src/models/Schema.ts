@@ -9,9 +9,10 @@ import {
   timestamp,
   unique,
   varchar,
-} from 'drizzle-orm/pg-core';
+  uuid
+} from 'drizzle-orm/pg-core'
 
-export const rolesEnum = pgEnum('role', ['admin', 'member', 'guest']);
+export const rolesEnum = pgEnum('role', ['admin', 'member', 'guest'])
 
 export const positionsEnum = pgEnum('position', [
   'candidate',
@@ -21,7 +22,13 @@ export const positionsEnum = pgEnum('position', [
   'staff'
 ])
 
-export const applicationStatusEnum = pgEnum('status', [
+export const userStatusEnum = pgEnum('user_status', [
+  'active',
+  'inactive',
+  'denied'
+])
+
+export const applicationStatusEnum = pgEnum('application_status', [
   'pending',
   'approved',
   'rejected'
@@ -64,37 +71,37 @@ export const completionStatusEnum = pgEnum('completion_status', [
   'unexcused'
 ])
 
-export const user = pgTable(
-  'user',
-  {
-    callsign: text('callsign'),
-    city: text('city'),
-    clerk_id: text('clerk_id').notNull(),
-    created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    driver_license: text('driver_license'),
-    driver_license_state: text('driver_license_state'),
-    email: text('email').notNull(),
-    first_name: text('first_name').notNull(),
-    id: serial('id').primaryKey(),
-    last_name: text('last_name').notNull(),
-    phone: text('phone'),
-    position: positionsEnum('position').notNull().default('reserve'),
-    radio_number: text('radio_number'),
-    role: rolesEnum('role').notNull().default('guest'),
-    state: text('state'),
-    street_address: text('street_address'),
-    updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    zip_code: text('zip_code')
-  },
-  table => [
-    unique('user_email_unique').on(table.email),
-    unique('user_clerk_id_unique').on(table.clerk_id)
-  ]
-).enableRLS()
+export const eventTypesEnum = pgEnum('event_type', [
+  'school_event',
+  'community_event',
+  'fair',
+  'other'
+])
+
+export const user = pgTable('user', {
+  id: uuid('id').primaryKey(),
+  email: text('email').notNull(),
+  first_name: text('first_name').notNull(),
+  last_name: text('last_name').notNull(),
+  phone: text('phone'),
+  position: positionsEnum('position').notNull().default('reserve'),
+  radio_number: text('radio_number'),
+  role: rolesEnum('role').notNull().default('guest'),
+  driver_license: text('driver_license'),
+  driver_license_state: text('driver_license_state'),
+  state: text('state'),
+  street_address: text('street_address'),
+  callsign: text('callsign'),
+  city: text('city'),
+  status: userStatusEnum('status').notNull().default('active'),
+  created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  zip_code: text('zip_code')
+}).enableRLS()
 
 export const emergencyContact = pgTable('emergency_contact', {
   city: text('city'),
@@ -113,7 +120,7 @@ export const emergencyContact = pgTable('emergency_contact', {
   updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull(),
-  user_id: integer('user_id')
+  user_id: uuid('user_id')
     .references(() => user.id)
     .notNull(),
   zip_code: text('zip_code')
@@ -132,7 +139,7 @@ export const uniformSizes = pgTable('uniform_sizes', {
   updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull(),
-  user_id: integer('user_id')
+  user_id: uuid('user_id')
     .references(() => user.id)
     .notNull()
 }).enableRLS()
@@ -158,14 +165,14 @@ export const application = pgTable('application', {
   updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull(),
-  user_id: integer('user_id')
+  user_id: uuid('user_id')
     .references(() => user.id)
     .notNull(),
   zip_code: text('zip_code').notNull()
 }).enableRLS()
 
 export const equipment = pgTable('equipment', {
-  assigned_to: integer('assigned_to').references(() => user.id),
+  assigned_to: uuid('assigned_to').references(() => user.id),
   created_at: timestamp('created_at', {
     mode: 'string',
     withTimezone: true
@@ -208,7 +215,7 @@ export const assignedEquipment = pgTable('assigned_equipment', {
   updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull(),
-  user_id: integer('user_id')
+  user_id: uuid('user_id')
     .references(() => user.id)
     .notNull()
 }).enableRLS()
@@ -218,7 +225,7 @@ export const events = pgTable('events', {
   event_date: timestamp('event_date', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull(),
-  event_type: text('event_type').notNull(),
+  event_type: eventTypesEnum('event_type').default('community_event').notNull(),
   event_location: text('event_location').notNull(),
   event_name: text('event_name').notNull(),
   event_start_time: timestamp('event_start_time', {
@@ -249,7 +256,7 @@ export const eventAssignments = pgTable(
     event_id: integer('event_id')
       .references(() => events.id)
       .notNull(),
-    user_id: integer('user_id')
+    user_id: uuid('user_id')
       .references(() => user.id)
       .notNull(),
     completion_status: completionStatusEnum('completion_status'),
@@ -284,7 +291,7 @@ export const training = pgTable('training', {
     .notNull(),
   training_location: text('training_location').notNull(),
   training_type: text('training_type').notNull(),
-  training_instructor: integer('training_instructor')
+  training_instructor: uuid('training_instructor')
     .references(() => user.id)
     .notNull(),
   training_start_time: timestamp('training_start_time', {
@@ -314,7 +321,7 @@ export const trainingAssignments = pgTable(
     training_id: integer('training_id')
       .references(() => training.id)
       .notNull(),
-    user_id: integer('user_id')
+    user_id: uuid('user_id')
       .references(() => user.id)
       .notNull(),
     completion_status: completionStatusEnum('completion_status'),
@@ -360,7 +367,7 @@ export const policyCompletion = pgTable('policy_completion', {
   policy_id: integer('policy_id')
     .references(() => policies.id)
     .notNull(),
-  user_id: integer('user_id')
+  user_id: uuid('user_id')
     .references(() => user.id)
     .notNull(),
   created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
@@ -369,7 +376,7 @@ export const policyCompletion = pgTable('policy_completion', {
   updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull()
-})
+}).enableRLS()
 
 export const userRelations = relations(user, ({ many, one }) => ({
   applications: many(application),

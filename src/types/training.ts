@@ -1,34 +1,47 @@
 import type { DBUser } from './user'
-import type { training } from '@/models/Schema'
+import type { TrainingAssignment } from './trainingAssignment'
 
-export type TrainingType = (typeof training.training_type.enumValues)[number]
-
+// Main interface representing a training session
 export interface Training {
   id: number
   name: string
   description: string | null
-  training_date: string | Date
+  training_date: string
   training_location: string
-  training_type: TrainingType
-  training_instructor: number
-  training_start_time: string | Date
-  training_end_time: string | Date
-  created_at: string | Date
-  updated_at: string | Date
-  assignments?: {
-    completion_status:
-      | 'completed'
-      | 'incomplete'
-      | 'excused'
-      | 'unexcused'
-      | null
-    created_at: string
-    id: number
-    updated_at: string
-    user_id: number
-    completion_notes: string | null
-    training_id: number
-    user: DBUser
-  }[]
-  instructor?: Partial<DBUser>
+  training_type: string
+  training_instructor: string
+  training_start_time: string
+  training_end_time: string
+  created_at: string
+  updated_at: string
+
+  // Relations
+  assignments?: TrainingAssignment[]
+  instructor?: DBUser
 }
+
+// Type for creating new training sessions
+export type NewTraining = Omit<
+  Training,
+  'id' | 'created_at' | 'updated_at' | 'assignments' | 'instructor'
+>
+
+// Type for updating existing training sessions
+export type UpdateTraining = Partial<
+  Omit<
+    Training,
+    'id' | 'created_at' | 'updated_at' | 'assignments' | 'instructor'
+  >
+>
+
+// Required fields when creating new training sessions
+export type RequiredTrainingFields = Pick<
+  Training,
+  | 'name'
+  | 'training_date'
+  | 'training_location'
+  | 'training_type'
+  | 'training_instructor'
+  | 'training_start_time'
+  | 'training_end_time'
+>

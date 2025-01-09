@@ -23,88 +23,88 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
     {
       accessorKey: 'first_name',
       cell: ({ row }) => (
-        <div className="flex flex-col px-4">
-          <span className="truncate">{row.getValue('first_name')}</span>
+        <div className='flex flex-col px-4'>
+          <span className='truncate'>{row.getValue('first_name')}</span>
         </div>
       ),
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant='ghost'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex"
+            className='flex'
           >
             First Name
-            <ArrowUpDown className="ml-2 size-4" />
+            <ArrowUpDown className='ml-2 size-4' />
           </Button>
         )
-      },
+      }
     },
     {
       accessorKey: 'last_name',
       cell: ({ row }) => (
-        <div className="flex flex-col px-4">
-          <span className="truncate">{row.getValue('last_name')}</span>
+        <div className='flex flex-col px-4'>
+          <span className='truncate'>{row.getValue('last_name')}</span>
         </div>
       ),
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant='ghost'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex"
+            className='flex'
           >
             Last Name
-            <ArrowUpDown className="ml-2 size-4" />
+            <ArrowUpDown className='ml-2 size-4' />
           </Button>
         )
-      },
+      }
     },
     {
       accessorKey: 'phone',
       cell: ({ row }) => (
-        <div className="flex flex-col px-4">
-          <span className="truncate">{row.getValue('phone')}</span>
+        <div className='flex flex-col px-4'>
+          <span className='truncate'>{row.getValue('phone')}</span>
         </div>
       ),
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant='ghost'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex"
+            className='flex'
           >
             Phone
-            <ArrowUpDown className="ml-2 size-4" />
+            <ArrowUpDown className='ml-2 size-4' />
           </Button>
         )
-      },
+      }
     },
     {
       accessorKey: 'email',
       cell: ({ row }) => (
-        <div className="flex flex-col px-4">
-          <span className="truncate">{row.getValue('email')}</span>
+        <div className='flex flex-col px-4'>
+          <span className='truncate'>{row.getValue('email')}</span>
         </div>
       ),
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant='ghost'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex"
+            className='flex'
           >
             Email
-            <ArrowUpDown className="ml-2 size-4" />
+            <ArrowUpDown className='ml-2 size-4' />
           </Button>
         )
-      },
+      }
     },
     {
       accessorKey: 'position',
       cell: ({ row }) => (
-        <div className="flex flex-col px-4">
-          <span className="truncate">
+        <div className='flex flex-col px-4'>
+          <span className='truncate'>
             {(row.getValue('position') as string).charAt(0).toUpperCase()}
             {(row.getValue('position') as string).slice(1)}
           </span>
@@ -113,55 +113,55 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant='ghost'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex"
+            className='flex'
           >
             Position
-            <ArrowUpDown className="ml-2 size-4" />
+            <ArrowUpDown className='ml-2 size-4' />
           </Button>
         )
-      },
+      }
     },
     {
       accessorKey: 'callsign',
       cell: ({ row }) => (
-        <div className="flex flex-col px-4">
-          <span className="truncate">{row.getValue('callsign')}</span>
+        <div className='flex flex-col px-4'>
+          <span className='truncate'>{row.getValue('callsign')}</span>
         </div>
       ),
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant='ghost'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex"
+            className='flex'
           >
             Callsign
-            <ArrowUpDown className="ml-2 size-4" />
+            <ArrowUpDown className='ml-2 size-4' />
           </Button>
         )
-      },
+      }
     },
     {
       accessorKey: 'radio_number',
       cell: ({ row }) => (
-        <div className="flex flex-col px-4">
-          <span className="truncate">{row.getValue('radio_number')}</span>
+        <div className='flex flex-col px-4'>
+          <span className='truncate'>{row.getValue('radio_number')}</span>
         </div>
       ),
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant='ghost'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="flex"
+            className='flex'
           >
             Radio Number
-            <ArrowUpDown className="ml-2 size-4" />
+            <ArrowUpDown className='ml-2 size-4' />
           </Button>
         )
-      },
+      }
     },
     {
       cell: ({ row }) => {
@@ -170,19 +170,19 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
         }
 
         return (
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="outline" size="icon" asChild>
-              <Link href={`/admin/users/${row.original.id}`} className="size-8">
-                <Pencil className="size-4" />
+          <div className='flex items-center justify-end gap-2'>
+            <Button variant='outline' size='icon' asChild>
+              <Link href={`/admin/users/${row.original.id}`} className='size-8'>
+                <Pencil className='size-4' />
               </Link>
             </Button>
           </div>
         )
       },
       header: 'Actions',
-      id: 'actions',
-    },
-  ];
+      id: 'actions'
+    }
+  ]
 
   return (
     <DataTable

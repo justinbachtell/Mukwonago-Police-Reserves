@@ -4,37 +4,47 @@ import { z } from 'zod';
 // Don't add NODE_ENV into T3 Env, it changes the tree-shaking behavior
 export const Env = createEnv({
   client: {
-    NEXT_PUBLIC_APP_URL: z.string().optional(),
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
-    NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().min(1),
-    NEXT_PUBLIC_SUPABASE_URL: z.string(),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string()
+    NEXT_PUBLIC_APP_URL: z.string().url(),
+    NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+    NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1)
   },
-  // You need to destructure all the keys manually
   runtimeEnv: {
-    ARCJET_KEY: process.env.ARCJET_KEY,
-    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-    DATABASE_URL: process.env.DATABASE_URL,
-    EMAIL_ADDRESS: process.env.EMAIL_ADDRESS,
-    LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
+    // Environment
+    ENVIRONMENT_URL: process.env.ENVIRONMENT_URL,
+    NODE_ENV: process.env.NODE_ENV,
+
+    // Public variables
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
-      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    NODE_ENV: process.env.NODE_ENV,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    // Database
+    DATABASE_URL: process.env.DATABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+
+    // Misc
+    EMAIL_ADDRESS: process.env.EMAIL_ADDRESS,
+    VERCEL_BYPASS_TOKEN: process.env.VERCEL_BYPASS_TOKEN,
+    ARCJET_KEY: process.env.ARCJET_KEY,
+    LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN
   },
   server: {
-    ARCJET_KEY: z.string().startsWith('ajkey_').optional(),
-    CLERK_SECRET_KEY: z.string().min(1),
-    DATABASE_URL: z.string().optional(),
-    EMAIL_ADDRESS: z.string().optional(),
-    LOGTAIL_SOURCE_TOKEN: z.string().optional(),
-    SUPABASE_SERVICE_ROLE_KEY: z.string()
+    // Environment
+    ENVIRONMENT_URL: z.string().url(),
+
+    // Database
+    DATABASE_URL: z.string().min(1),
+    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+
+    // Misc
+    EMAIL_ADDRESS: z.string().email(),
+    VERCEL_BYPASS_TOKEN: z.string().optional(),
+    ARCJET_KEY: z.string().startsWith('ajkey_').min(1),
+    LOGTAIL_SOURCE_TOKEN: z.string().optional()
   },
   shared: {
-    NODE_ENV: z.enum(['test', 'development', 'production']).optional()
+    NODE_ENV: z.enum(['development', 'production', 'test'])
   }
 })

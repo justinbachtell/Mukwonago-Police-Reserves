@@ -6,24 +6,28 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(input: string | number): string {
-  const date = new Date(input);
+  const date = new Date(input)
   return date.toLocaleDateString('en-US', {
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
-  });
+    year: 'numeric'
+  })
 }
 
 export function absoluteUrl(path: string) {
-  return `${process.env.NEXT_PUBLIC_APP_URL}${path}`;
+  return `${process.env.NEXT_PUBLIC_APP_URL}${path}`
 }
 
 export function toISOString(date: Date | string | null | undefined): string {
   if (!date) {
-    return new Date().toISOString();
+    throw new Error('Date is required')
   }
-  if (date instanceof Date) {
-    return date.toISOString();
+
+  const parsedDate = date instanceof Date ? date : new Date(date)
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    throw new TypeError('Invalid date format')
   }
-  return new Date(date).toISOString();
+
+  return parsedDate.toISOString()
 }
