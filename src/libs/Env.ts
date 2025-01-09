@@ -10,14 +10,6 @@ export const Env = createEnv({
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1)
   },
   runtimeEnv: {
-    // Better Auth
-    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
-    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
-    BETTER_AUTH_DATABASE_URL: process.env.BETTER_AUTH_DATABASE_URL,
-    BETTER_AUTH_REDIRECT_URL: process.env.BETTER_AUTH_REDIRECT_URL,
-    BETTER_AUTH_COOKIE_NAME: process.env.BETTER_AUTH_COOKIE_NAME,
-    BETTER_AUTH_COOKIE_DOMAIN: process.env.BETTER_AUTH_COOKIE_DOMAIN,
-
     // Environment
     ENVIRONMENT_URL: process.env.ENVIRONMENT_URL,
     NODE_ENV: process.env.NODE_ENV,
@@ -39,14 +31,6 @@ export const Env = createEnv({
     LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN
   },
   server: {
-    // Better Auth
-    BETTER_AUTH_URL: z.string().url(),
-    BETTER_AUTH_SECRET: z.string().min(1),
-    BETTER_AUTH_DATABASE_URL: z.string().min(1),
-    BETTER_AUTH_REDIRECT_URL: z.string().min(1),
-    BETTER_AUTH_COOKIE_NAME: z.string().min(1),
-    BETTER_AUTH_COOKIE_DOMAIN: z.string().min(1),
-
     // Environment
     ENVIRONMENT_URL: z.string().url(),
 
