@@ -1,36 +1,45 @@
-import type { equipmentConditionEnum } from '@/models/Schema';
+import type { DBUser } from './user'
+import type { Equipment } from './equipment'
 
-export interface CreateAssignedEquipmentData {
-  equipment_id: number
-  user_id: number
-  condition: (typeof equipmentConditionEnum.enumValues)[number]
-  notes?: string
-  checked_out_at?: string
-  expected_return_date?: string
-}
+// Equipment condition enum from Schema
+export type EquipmentCondition = 'new' | 'good' | 'fair' | 'poor' | 'damaged/broken'
 
+// Main interface representing an equipment assignment
 export interface AssignedEquipment {
   id: number
-  user_id: number
   equipment_id: number
-  condition: (typeof equipmentConditionEnum.enumValues)[number]
-  checked_out_at: Date
-  checked_in_at: Date | null
-  expected_return_date: Date | null
+  user_id: string
+  checked_out_at: string
+  checked_in_at: string | null
+  expected_return_date: string | null
+  condition: EquipmentCondition
   notes: string | null
-  created_at: Date
-  updated_at: Date
-  equipment?: {
-    id: number
-    name: string
-    description: string | null
-    serial_number: string | null
-    purchase_date: Date | null
-    notes: string | null
-    is_assigned: boolean
-    assigned_to: number | null
-    created_at: Date
-    updated_at: Date
-    is_obsolete: boolean
-  } | null
+  created_at: string
+  updated_at: string
+
+  // Relation fields
+  equipment?: Equipment
+  user?: DBUser
 }
+
+// Type for creating new equipment assignments
+// Excludes auto-generated and optional fields
+export type NewAssignedEquipment = Omit<
+  AssignedEquipment,
+  'id' | 'created_at' | 'updated_at' | 'equipment' | 'user' | 'checked_in_at'
+>
+
+// Type for updating existing equipment assignments
+// Makes all fields optional except id and timestamps
+export type UpdateAssignedEquipment = Partial<
+  Omit<
+    AssignedEquipment,
+    'id' | 'created_at' | 'updated_at' | 'equipment' | 'user'
+  >
+>
+
+// Required fields when creating a new equipment assignment
+export type RequiredAssignedEquipmentFields = Pick<
+  AssignedEquipment,
+  'equipment_id' | 'user_id' | 'condition' | 'checked_out_at'
+>

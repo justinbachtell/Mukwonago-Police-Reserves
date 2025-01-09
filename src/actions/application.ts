@@ -1,134 +1,151 @@
-'use server';
+'use server'
 
-import type { availabilityEnum, positionsEnum, priorExperienceEnum } from '@/models/Schema';
-import { toISOString } from '@/lib/utils';
-import { db } from '@/libs/DB';
+import type { CreateApplicationData } from '@/types/application'
+import { toISOString } from '@/lib/utils'
+import { db } from '@/libs/DB'
 import { application, user } from '@/models/Schema'
+import { createClient } from '@/lib/server'
+import { createLogger } from '@/lib/debug'
 import { eq } from 'drizzle-orm'
-import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !supabaseServiceRoleKey) {
-    throw new Error('Supabase credentials are not configured')
-  }
-
-  return createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
-}
-
-export interface CreateApplicationData {
-  first_name: string
-  last_name: string
-  email: string
-  phone: string
-  driver_license: string
-  street_address: string
-  city: string
-  state: string
-  zip_code: string
-  prior_experience: (typeof priorExperienceEnum.enumValues)[number]
-  availability: (typeof availabilityEnum.enumValues)[number]
-  position: (typeof positionsEnum.enumValues)[number]
-  user_id: number
-  resume?: string
-}
+const logger = createLogger({
+  module: 'applications',
+  file: 'application.ts'
+})
 
 export async function uploadResume(
   file: File,
   firstName: string,
   lastName: string
 ): Promise<string> {
+  logger.info(
+    'Starting resume upload',
+    { fileName: file.name, firstName, lastName },
+    'uploadResume'
+  )
+  logger.time('resume-upload')
+
   try {
-    const supabaseAdmin = getSupabaseAdmin()
-    // Create folder name from user's first and last name
+    const supabase = await createClient()
     const folderName =
       `${firstName.toLowerCase()}_${lastName.toLowerCase()}`.replace(
         /[^a-z0-9_]/g,
         ''
-      ) // Remove any special characters except underscores
+      )
+    const fileName = `${folderName}/${file.name}`
 
-    // Get the original filename without extension and the extension
-    const originalName = file.name.split('.').slice(0, -1).join('.')
-    const fileExt = file.name.split('.').pop()
+    logger.info(
+      'Uploading file to Supabase storage',
+      { fileName, contentType: file.type },
+      'uploadResume'
+    )
 
-    // Format the date as YYYY-MM-DD
-    const date = new Date().toISOString().split('T')[0]
-
-    // Create the new filename: originalname-YYYY-MM-DD.ext
-    const sanitizedOriginalName = originalName.replace(/[^a-z0-9-]/gi, '_')
-    const fileName = `${folderName}/${sanitizedOriginalName}-${date}.${fileExt}`
-
-    // Use the admin client for storage operations
-    const { error: uploadError } = await supabaseAdmin.storage
+    const { error: uploadError } = await supabase.storage
       .from('resumes')
       .upload(fileName, file, {
         cacheControl: '3600',
         upsert: false,
-        contentType: file.type // Explicitly set the content type
+        contentType: file.type
       })
 
     if (uploadError) {
-      console.error('Upload error details:', uploadError)
+      logger.error(
+        'Resume upload failed',
+        logger.errorWithData(uploadError),
+        'uploadResume'
+      )
       throw uploadError
     }
 
-    // Instead of returning a public URL, return a signed URL that will expire
-    const { data: signedUrlData, error: signedUrlError } =
-      await supabaseAdmin.storage
-        .from('resumes')
-        .createSignedUrl(fileName, 60 * 60) // URL expires in 1 hour
-
-    if (signedUrlError || !signedUrlData) {
-      console.error('Signed URL error:', signedUrlError)
-      throw signedUrlError || new Error('Failed to create signed URL')
-    }
-
-    // Store the file path rather than the URL
-    return `resumes/${fileName}`
+    const filePath = `resumes/${fileName}`
+    logger.info('Resume upload successful', { filePath }, 'uploadResume')
+    logger.timeEnd('resume-upload')
+    return filePath
   } catch (error) {
-    console.error('Error uploading resume:', error)
+    logger.error(
+      'Resume upload failed',
+      logger.errorWithData(error),
+      'uploadResume'
+    )
     throw new Error('Failed to upload resume')
   }
 }
 
-// Add a new function to get a signed URL for admin access
 export async function getResumeUrl(filePath: string): Promise<string> {
-  try {
-    const supabaseAdmin = getSupabaseAdmin()
-    const { data: urlData, error: urlError } = await supabaseAdmin.storage
-      .from('resumes')
-      .createSignedUrl(filePath.replace('resumes/', ''), 60 * 60) // URL expires in 1 hour
+  logger.info('Getting resume URL', { filePath }, 'getResumeUrl')
+  logger.time(`get-resume-url-${filePath}`)
 
-    if (urlError || !urlData) {
-      throw urlError || new Error('Failed to create signed URL')
+  try {
+    const supabase = await createClient()
+    const { data: urlData, error: signedUrlError } = await supabase.storage
+      .from('resumes')
+      .createSignedUrl(filePath.replace('resumes/', ''), 60 * 60)
+
+    if (signedUrlError || !urlData) {
+      logger.error(
+        'Failed to create signed URL',
+        logger.errorWithData(signedUrlError),
+        'getResumeUrl'
+      )
+      throw signedUrlError || new Error('Failed to create signed URL')
     }
 
+    logger.info('Signed URL created successfully', undefined, 'getResumeUrl')
+    logger.timeEnd(`get-resume-url-${filePath}`)
     return urlData.signedUrl
   } catch (error) {
-    console.error('Error getting resume URL:', error)
+    logger.error(
+      'Failed to get resume URL',
+      logger.errorWithData(error),
+      'getResumeUrl'
+    )
     throw new Error('Failed to get resume URL')
   }
 }
 
 export async function createApplication(data: CreateApplicationData) {
+  logger.info(
+    'Creating new application',
+    { email: data.email, position: data.position },
+    'createApplication'
+  )
+  logger.time(`create-application-${data.email}`)
+
   try {
     const now = toISOString(new Date())
-    await db.insert(application).values({
-      ...data,
-      created_at: now,
-      status: 'pending',
-      updated_at: now
-    })
+    const [newApplication] = await db
+      .insert(application)
+      .values({
+        ...data,
+        created_at: now,
+        status: 'pending',
+        updated_at: now
+      })
+      .returning()
+
+    if (!newApplication) {
+      logger.error(
+        'No application returned after creation',
+        { email: data.email },
+        'createApplication'
+      )
+      throw new Error('Failed to create application')
+    }
+
+    logger.info(
+      'Application created successfully',
+      { applicationId: newApplication.id },
+      'createApplication'
+    )
+    logger.timeEnd(`create-application-${data.email}`)
+    return newApplication
   } catch (error) {
-    console.error('Error creating application:', error)
+    logger.error(
+      'Failed to create application',
+      logger.errorWithData(error),
+      'createApplication'
+    )
     throw new Error('Failed to create application')
   }
 }
@@ -138,12 +155,16 @@ export async function getAllApplications() {
     const applications = await db.select().from(application)
     return applications
   } catch (error) {
-    console.error('Error getting all applications:', error)
+    logger.error(
+      'Error getting all applications:',
+      logger.errorWithData(error),
+      'getAllApplications'
+    )
     throw new Error('Failed to get all applications')
   }
 }
 
-export async function getUserApplications(userId: number) {
+export async function getUserApplications(userId: string) {
   try {
     const userApplications = await db
       .select()
@@ -153,7 +174,11 @@ export async function getUserApplications(userId: number) {
 
     return userApplications
   } catch (error) {
-    console.error('Error getting user applications:', error)
+    logger.error(
+      'Error getting user applications:',
+      logger.errorWithData(error),
+      'getUserApplications'
+    )
     throw new Error('Failed to get user applications')
   }
 }
@@ -162,10 +187,13 @@ export async function updateApplicationStatus(
   applicationId: number,
   status: 'pending' | 'approved' | 'rejected'
 ): Promise<void> {
+  logger.info('Updating status', { applicationId, status }, 'application')
+  logger.time(`statusUpdate-${applicationId}`)
+
   try {
-    // Start a transaction to ensure both operations succeed or fail together
     await db.transaction(async tx => {
-      // Update application status
+      logger.log('Starting transaction', { applicationId }, 'application')
+
       const [updatedApplication] = await tx
         .update(application)
         .set({ status })
@@ -173,44 +201,62 @@ export async function updateApplicationStatus(
         .returning()
 
       if (!updatedApplication) {
+        logger.error('Application not found', { applicationId }, 'application')
         throw new Error('Failed to update application status')
       }
 
-      // Update user role and position based on application status
       if (status === 'approved') {
+        logger.info(
+          'Updating user role',
+          {
+            userId: updatedApplication.user_id,
+            newRole: 'member'
+          },
+          'application'
+        )
+
         const result = await tx
           .update(user)
-          .set({
-            role: 'member',
-            position: 'candidate'
-          })
+          .set({ role: 'member', position: 'candidate' })
           .where(eq(user.id, updatedApplication.user_id))
           .returning()
 
         if (!result.length) {
-          throw new Error('Failed to update user role and position')
-        }
-      } else if (status === 'rejected') {
-        const result = await tx
-          .update(user)
-          .set({ role: 'guest' })
-          .where(eq(user.id, updatedApplication.user_id))
-          .returning()
-
-        if (!result.length) {
+          logger.error(
+            'User role update failed',
+            {
+              userId: updatedApplication.user_id
+            },
+            'application'
+          )
           throw new Error('Failed to update user role')
         }
       }
     })
 
+    logger.info(
+      'Status updated successfully',
+      { applicationId, status },
+      'application'
+    )
+    logger.timeEnd(`statusUpdate-${applicationId}`)
     revalidatePath('/admin/applications')
   } catch (error) {
-    console.error('Error updating application status:', error)
+    logger.error(
+      'Status update failed',
+      logger.errorWithData(error),
+      'application'
+    )
     throw new Error('Failed to update application status')
   }
 }
 
 export async function deleteApplication(applicationId: number): Promise<void> {
+  logger.group('Application Deletion', () => {
+    logger.info('Starting deletion', { applicationId }, 'application')
+    logger.time(`deletion-${applicationId}`)
+  })
+
   try {
     const [applicationRecord] = await db
       .select()
@@ -218,21 +264,37 @@ export async function deleteApplication(applicationId: number): Promise<void> {
       .where(eq(application.id, applicationId))
 
     if (applicationRecord?.resume) {
-      const supabaseAdmin = getSupabaseAdmin()
-      // Delete the resume file from storage first
-      const { error: deleteStorageError } = await supabaseAdmin.storage
+      logger.info(
+        'Deleting resume file',
+        {
+          resumePath: applicationRecord.resume
+        },
+        'application'
+      )
+
+      const supabase = await createClient()
+      const { error: deleteStorageError } = await supabase.storage
         .from('resumes')
         .remove([applicationRecord.resume])
 
       if (deleteStorageError) {
-        console.error('Error deleting resume file:', deleteStorageError)
+        logger.warn(
+          'Resume deletion failed',
+          {
+            error: deleteStorageError,
+            resumePath: applicationRecord.resume
+          },
+          'application'
+        )
       }
     }
 
     await db.delete(application).where(eq(application.id, applicationId))
+    logger.info('Application deleted', { applicationId }, 'application')
+    logger.timeEnd(`deletion-${applicationId}`)
     revalidatePath('/admin/applications')
   } catch (error) {
-    console.error('Error deleting application:', error)
+    logger.error('Deletion failed', logger.errorWithData(error), 'application')
     throw new Error('Failed to delete application')
   }
 }

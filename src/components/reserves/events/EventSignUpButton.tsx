@@ -9,6 +9,7 @@ import {
 import { getCurrentUser } from '@/actions/user'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
+import { toISOString } from '@/lib/utils'
 
 interface EventSignUpButtonProps {
   event: Event
@@ -19,7 +20,7 @@ export function EventSignUpButton({ event }: EventSignUpButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const isEventPast = () => {
-    return new Date(event.event_end_time) < new Date()
+    return toISOString(new Date(event.event_end_time)) < toISOString(new Date())
   }
 
   useEffect(() => {

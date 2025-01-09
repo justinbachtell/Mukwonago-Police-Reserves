@@ -1,35 +1,126 @@
 'use server';
 
-import type { EmergencyContact } from '@/types/emergencyContact';
-import type { DBUser } from '@/types/user';
-import { toISOString } from '@/lib/utils';
-import { db } from '@/libs/DB';
-import { emergencyContact } from '@/models/Schema';
-import { and, eq } from 'drizzle-orm';
-import { getCurrentUser } from './user';
+import type { EmergencyContact } from '@/types/emergencyContact'
+import type { DBUser } from '@/types/user'
+import { toISOString } from '@/lib/utils'
+import { db } from '@/libs/DB'
+import { emergencyContact } from '@/models/Schema'
+import { and, eq } from 'drizzle-orm'
+import { getCurrentUser } from './user'
+import { createLogger } from '@/lib/debug'
+import { createClient } from '@/lib/server'
 
-export async function getEmergencyContact(user_id: number) {
-  const contacts = await db
-    .select()
-    .from(emergencyContact)
-    .where(eq(emergencyContact.user_id, user_id));
-  return contacts.map(contact => ({
-    ...contact,
-    created_at: new Date(contact.created_at),
-    updated_at: new Date(contact.updated_at),
-  }));
+const logger = createLogger({
+  module: 'emergency-contact',
+  file: 'emergencyContact.ts'
+})
+
+export async function getEmergencyContact(user_id: string) {
+  logger.info(
+    'Fetching emergency contacts',
+    { userId: user_id },
+    'getEmergencyContact'
+  )
+  logger.time(`fetch-contacts-${user_id}`)
+
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser()
+
+    if (userError) {
+      logger.error(
+        'Failed to get Supabase session',
+        logger.errorWithData(userError),
+        'getEmergencyContact'
+      )
+      return null
+    }
+
+    if (!user) {
+      logger.warn('No active user found', undefined, 'getEmergencyContact')
+      return null
+    }
+
+    const contacts = await db
+      .select()
+      .from(emergencyContact)
+      .where(eq(emergencyContact.user_id, user_id))
+
+    logger.info(
+      'Emergency contacts retrieved',
+      { count: contacts.length, userId: user_id },
+      'getEmergencyContact'
+    )
+    logger.timeEnd(`fetch-contacts-${user_id}`)
+
+    return contacts.map(contact => ({
+      ...contact,
+      created_at: new Date(contact.created_at),
+      updated_at: new Date(contact.updated_at)
+    }))
+  } catch (error) {
+    logger.error(
+      'Failed to fetch emergency contacts',
+      logger.errorWithData(error),
+      'getEmergencyContact'
+    )
+    return null
+  }
 }
 
-export async function updateEmergencyContact(user_id: number, data: EmergencyContact) {
+export async function updateEmergencyContact(
+  user_id: string,
+  data: EmergencyContact
+) {
+  logger.info(
+    'Updating emergency contact',
+    { userId: user_id, contactName: `${data.first_name} ${data.last_name}` },
+    'updateEmergencyContact'
+  )
+  logger.time(`update-contact-${user_id}`)
+
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser()
+
+    if (userError) {
+      logger.error(
+        'Failed to get Supabase user',
+        logger.errorWithData(userError),
+        'updateEmergencyContact'
+      )
+      return null
+    }
+
+    if (!user) {
+      logger.warn('No active user found', undefined, 'updateEmergencyContact')
+      return null
+    }
+
     // First, set all existing emergency contacts to not current
+    logger.info(
+      'Deactivating existing contacts',
+      { userId: user_id },
+      'updateEmergencyContact'
+    )
     await db
       .update(emergencyContact)
       .set({ is_current: false })
-      .where(eq(emergencyContact.user_id, user_id));
+      .where(eq(emergencyContact.user_id, user_id))
 
-    const now = toISOString(new Date());
-    // Insert new emergency contact
+    const now = toISOString(new Date())
+    logger.info(
+      'Creating new contact record',
+      { userId: user_id },
+      'updateEmergencyContact'
+    )
+
     const [updatedEmergencyContact] = await db
       .insert(emergencyContact)
       .values({
@@ -45,47 +136,119 @@ export async function updateEmergencyContact(user_id: number, data: EmergencyCon
         street_address: data.street_address,
         updated_at: now,
         user_id: data.user_id,
-        zip_code: data.zip_code,
+        zip_code: data.zip_code
       })
-      .returning();
+      .returning()
 
     if (!updatedEmergencyContact) {
-      throw new Error('Failed to update emergency contact');
+      logger.error(
+        'No contact returned after insert',
+        { userId: user_id },
+        'updateEmergencyContact'
+      )
+      return null
     }
+
+    logger.info(
+      'Emergency contact updated successfully',
+      { contactId: updatedEmergencyContact.id, userId: user_id },
+      'updateEmergencyContact'
+    )
+    logger.timeEnd(`update-contact-${user_id}`)
 
     return {
       ...updatedEmergencyContact,
       created_at: new Date(updatedEmergencyContact.created_at),
-      updated_at: new Date(updatedEmergencyContact.updated_at),
-    };
-  }
-  catch (error) {
-    console.error('Error updating emergency contact:', error);
-    throw new Error('Failed to update emergency contact');
+      updated_at: new Date(updatedEmergencyContact.updated_at)
+    }
+  } catch (error) {
+    logger.error(
+      'Failed to update emergency contact',
+      logger.errorWithData(error),
+      'updateEmergencyContact'
+    )
+    return null
   }
 }
 
-export async function getCurrentEmergencyContact(userId: number): Promise<EmergencyContact> {
+export async function getCurrentEmergencyContact() {
+  logger.info(
+    'Fetching current emergency contact',
+    undefined,
+    'getCurrentEmergencyContact'
+  )
+  logger.time('fetch-current-contact')
+
   try {
-    // Get the user data
-    const user = await getCurrentUser();
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser()
+
+    if (userError) {
+      logger.error(
+        'Failed to get Supabase user',
+        logger.errorWithData(userError),
+        'getCurrentEmergencyContact'
+      )
+      return null
+    }
 
     if (!user) {
-      throw new Error('User not found');
+      logger.warn(
+        'No active user found',
+        undefined,
+        'getCurrentEmergencyContact'
+      )
+      return null
     }
 
-    // Then get the current emergency contact
-    const currentContact = await db.query.emergencyContact.findFirst({
-      where: and(eq(emergencyContact.user_id, userId), eq(emergencyContact.is_current, true)),
-    });
+    const dbUser = await getCurrentUser()
+    if (!dbUser) {
+      logger.error(
+        'Current user not found',
+        undefined,
+        'getCurrentEmergencyContact'
+      )
+      return null
+    }
+
+    const userId = user.id
+    logger.info(
+      'Fetching current contact for user',
+      { userId },
+      'getCurrentEmergencyContact'
+    )
+
+    const [currentContact] = await db
+      .select()
+      .from(emergencyContact)
+      .where(
+        and(
+          eq(emergencyContact.user_id, userId),
+          eq(emergencyContact.is_current, true)
+        )
+      )
 
     if (!currentContact) {
-      // If no contact exists, create default contact
-      return createDefaultEmergencyContact(user);
+      logger.info(
+        'No current contact found, creating default',
+        { userId },
+        'getCurrentEmergencyContact'
+      )
+      logger.timeEnd('fetch-current-contact')
+      return createDefaultEmergencyContact(dbUser)
     }
 
-    // Transform the result into the expected EmergencyContact type
-    const result: EmergencyContact = {
+    logger.info(
+      'Current contact retrieved',
+      { contactId: currentContact.id, userId },
+      'getCurrentEmergencyContact'
+    )
+    logger.timeEnd('fetch-current-contact')
+
+    return {
       city: currentContact.city || '',
       created_at: new Date(currentContact.created_at),
       email: currentContact.email || '',
@@ -98,22 +261,57 @@ export async function getCurrentEmergencyContact(userId: number): Promise<Emerge
       state: currentContact.state || '',
       street_address: currentContact.street_address || '',
       updated_at: new Date(currentContact.updated_at),
-      user,
+      user: dbUser,
       user_id: currentContact.user_id,
-      zip_code: currentContact.zip_code || '',
-    };
-
-    return result;
-  }
-  catch (error) {
-    console.error('Error fetching current emergency contact:', error);
-    throw new Error('Failed to fetch current emergency contact');
+      zip_code: currentContact.zip_code || ''
+    }
+  } catch (error) {
+    logger.error(
+      'Failed to fetch current emergency contact',
+      logger.errorWithData(error),
+      'getCurrentEmergencyContact'
+    )
+    logger.timeEnd('fetch-current-contact')
+    return null
   }
 }
 
-async function createDefaultEmergencyContact(dbUser: DBUser): Promise<EmergencyContact> {
+async function createDefaultEmergencyContact(
+  dbUser: DBUser
+): Promise<EmergencyContact | null> {
+  logger.info(
+    'Creating default emergency contact',
+    { userId: dbUser.id },
+    'createDefaultEmergencyContact'
+  )
+  logger.time(`create-default-contact-${dbUser.id}`)
+
   try {
-    const now = toISOString(new Date());
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser()
+
+    if (userError) {
+      logger.error(
+        'Failed to get Supabase user',
+        logger.errorWithData(userError),
+        'createDefaultEmergencyContact'
+      )
+      return null
+    }
+
+    if (!user) {
+      logger.warn(
+        'No active user found',
+        undefined,
+        'createDefaultEmergencyContact'
+      )
+      return null
+    }
+
+    const now = toISOString(new Date())
     const defaultContact = {
       created_at: now,
       email: '',
@@ -123,14 +321,35 @@ async function createDefaultEmergencyContact(dbUser: DBUser): Promise<EmergencyC
       phone: '',
       relationship: '',
       updated_at: now,
-      user_id: dbUser.id,
-    };
+      user_id: dbUser.id
+    }
 
-    const [newContact] = await db.insert(emergencyContact).values(defaultContact).returning();
+    logger.info(
+      'Inserting default contact',
+      { userId: dbUser.id },
+      'createDefaultEmergencyContact'
+    )
+
+    const [newContact] = await db
+      .insert(emergencyContact)
+      .values(defaultContact)
+      .returning()
 
     if (!newContact) {
-      throw new Error('Failed to create default emergency contact');
+      logger.error(
+        'No contact returned after insert',
+        { userId: dbUser.id },
+        'createDefaultEmergencyContact'
+      )
+      return null
     }
+
+    logger.info(
+      'Default contact created',
+      { contactId: newContact.id, userId: dbUser.id },
+      'createDefaultEmergencyContact'
+    )
+    logger.timeEnd(`create-default-contact-${dbUser.id}`)
 
     return {
       city: newContact.city || '',
@@ -147,11 +366,15 @@ async function createDefaultEmergencyContact(dbUser: DBUser): Promise<EmergencyC
       updated_at: new Date(newContact.updated_at),
       user: dbUser,
       user_id: newContact.user_id,
-      zip_code: newContact.zip_code || '',
-    };
-  }
-  catch (error) {
-    console.error('Error creating default emergency contact:', error);
-    throw new Error('Failed to create default emergency contact');
+      zip_code: newContact.zip_code || ''
+    }
+  } catch (error) {
+    logger.error(
+      'Failed to create default emergency contact',
+      logger.errorWithData(error),
+      'createDefaultEmergencyContact'
+    )
+    logger.timeEnd(`create-default-contact-${dbUser.id}`)
+    return null
   }
 }

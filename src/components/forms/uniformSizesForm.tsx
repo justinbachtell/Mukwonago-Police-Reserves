@@ -3,22 +3,31 @@
 import type { SaveResult } from '@/types/forms';
 import type { UniformSizes } from '@/types/uniformSizes';
 import type { DBUser } from '@/types/user';
-import { useCallback, useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
-import { Card } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import type { MutableRefObject } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Card } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { updateUniformSizes } from '@/actions/uniformSizes';
-import { Textarea } from '../ui/textarea';
+  SelectValue
+} from '@/components/ui/select'
+import { updateUniformSizes } from '@/actions/uniformSizes'
+import { Textarea } from '../ui/textarea'
+import { toISOString } from '@/lib/utils'
+import { createLogger } from '@/lib/debug'
+import { createClient } from '@/lib/client'
+import type { Session } from '@supabase/supabase-js'
+
+const logger = createLogger({
+  module: 'forms',
+  file: 'uniformSizesForm.tsx'
+})
 
 // Standard shirt sizes including all common variations
-const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL']
 
 // Pant sizes combining waist (28-44) and inseam (30-34) measurements
 const PANT_SIZES = [
@@ -41,8 +50,8 @@ const PANT_SIZES = [
   '34x34',
   '36x34',
   '38x34',
-  '40x34',
-];
+  '40x34'
+]
 
 // Shoe sizes from 6 to 15, including half sizes
 const SHOE_SIZES = [
@@ -61,165 +70,259 @@ const SHOE_SIZES = [
   '12',
   '13',
   '14',
-  '15',
-];
+  '15'
+]
 
 interface UniformSizesFormProps {
   user: DBUser
-  currentSizes: UniformSizes
-  saveRef: React.MutableRefObject<(() => Promise<SaveResult>) | null>
+  currentSizes: UniformSizes | null
+  saveRef: MutableRefObject<(() => Promise<SaveResult>) | null>
 }
 
-export function UniformSizesForm({ currentSizes, saveRef, user: dbUser }: UniformSizesFormProps) {
-  const { isLoaded, user: clerkUser } = useUser();
+export function UniformSizesForm({
+  currentSizes,
+  saveRef,
+  user: dbUser
+}: UniformSizesFormProps) {
+  logger.info(
+    'Rendering uniform sizes form',
+    { userId: dbUser.id },
+    'UniformSizesForm'
+  )
+  logger.time('uniform-sizes-form-render')
+
+  const [isLoading, setIsLoading] = useState(true)
+  const supabase = createClient()
+  const [session, setSession] = useState<Session | null>(null)
 
   const [uniformData, setUniformData] = useState<UniformSizes>({
-    created_at: currentSizes?.created_at || new Date(),
+    created_at: currentSizes?.created_at || toISOString(new Date()),
     id: currentSizes?.id || 0,
     is_current: true,
     notes: currentSizes?.notes || '',
     pant_size: currentSizes?.pant_size || '',
     shirt_size: currentSizes?.shirt_size || '',
     shoe_size: currentSizes?.shoe_size || '',
-    updated_at: currentSizes?.updated_at || new Date(),
+    updated_at: currentSizes?.updated_at || toISOString(new Date()),
     user: dbUser,
-    user_id: dbUser.id,
-  });
+    user_id: dbUser.id
+  })
+
+  useEffect(() => {
+    const checkSession = async () => {
+      logger.info('Checking auth session', undefined, 'checkSession')
+      const {
+        data: { session: currentSession }
+      } = await supabase.auth.getSession()
+      setSession(currentSession)
+      setIsLoading(false)
+    }
+
+    checkSession()
+  }, [supabase.auth])
 
   // Update state when props change
   useEffect(() => {
     if (currentSizes) {
+      logger.debug(
+        'Updating from new currentSizes',
+        { currentSizes },
+        'UniformSizesForm'
+      )
+
       setUniformData({
-        created_at: currentSizes.created_at || new Date(),
+        created_at: currentSizes.created_at || toISOString(new Date()),
         id: currentSizes.id,
         is_current: true,
         notes: currentSizes.notes || '',
         pant_size: currentSizes.pant_size,
         shirt_size: currentSizes.shirt_size,
         shoe_size: currentSizes.shoe_size,
-        updated_at: currentSizes.updated_at || new Date(),
+        updated_at: currentSizes.updated_at || toISOString(new Date()),
         user: dbUser,
-        user_id: dbUser.id,
-      });
+        user_id: dbUser.id
+      })
     }
-  }, [currentSizes, dbUser]);
+  }, [currentSizes, dbUser])
 
   const hasUniformSizesChanged = useCallback((): boolean => {
-    return (
-      uniformData.shirt_size !== (currentSizes?.shirt_size || '')
-      || uniformData.pant_size !== (currentSizes?.pant_size || '')
-      || uniformData.shoe_size !== (currentSizes?.shoe_size || '')
-      || uniformData.notes !== (currentSizes?.notes || '')
-    );
-  }, [uniformData, currentSizes]);
+    const changed =
+      uniformData.shirt_size !== (currentSizes?.shirt_size || '') ||
+      uniformData.pant_size !== (currentSizes?.pant_size || '') ||
+      uniformData.shoe_size !== (currentSizes?.shoe_size || '') ||
+      uniformData.notes !== (currentSizes?.notes || '')
+
+    logger.debug(
+      'Checking for changes',
+      { changed, current: currentSizes, new: uniformData },
+      'hasUniformSizesChanged'
+    )
+
+    return changed
+  }, [uniformData, currentSizes])
 
   const handleUniformChange = (name: keyof UniformSizes, value: string) => {
-    setUniformData(prev => ({ ...prev, [name]: value }));
+    logger.debug(
+      'Updating uniform field',
+      { field: name, value },
+      'handleUniformChange'
+    )
+    setUniformData(prev => ({ ...prev, [name]: value }))
   }
 
   const handleUniformSizesSaveChanges = useCallback(async () => {
+    logger.info(
+      'Saving uniform sizes',
+      { userId: dbUser.id },
+      'handleUniformSizesSaveChanges'
+    )
+    logger.time('save-uniform-sizes')
+
     try {
-      if (!isLoaded || !clerkUser) {
-        return { message: 'Not authenticated', success: false };
+      if (isLoading) {
+        logger.warn(
+          'Auth state loading',
+          undefined,
+          'handleUniformSizesSaveChanges'
+        )
+        return { message: 'Loading authentication state', success: false }
+      }
+
+      if (!session) {
+        logger.warn(
+          'Not authenticated',
+          undefined,
+          'handleUniformSizesSaveChanges'
+        )
+        return { message: 'Not authenticated', success: false }
       }
 
       if (!hasUniformSizesChanged()) {
-        return { message: 'No changes detected', success: true };
+        logger.info(
+          'No changes to save',
+          undefined,
+          'handleUniformSizesSaveChanges'
+        )
+        return { message: 'No changes detected', success: true }
       }
 
-      const updatedSizes = await updateUniformSizes(dbUser.id, uniformData);
-      return { data: updatedSizes, success: true };
+      logger.debug(
+        'Saving changes',
+        { uniformData },
+        'handleUniformSizesSaveChanges'
+      )
+      const updatedSizes = await updateUniformSizes(dbUser.id, uniformData)
+      return { data: updatedSizes, success: true }
+    } catch (error) {
+      logger.error(
+        'Error saving changes',
+        logger.errorWithData(error),
+        'handleUniformSizesSaveChanges'
+      )
+      return { message: 'Failed to update uniform sizes', success: false }
+    } finally {
+      logger.timeEnd('save-uniform-sizes')
     }
-    catch (error) {
-      console.error('Error updating uniform sizes:', error);
-      return { message: 'Failed to update uniform sizes', success: false };
-    }
-  }, [uniformData, dbUser.id, isLoaded, clerkUser, hasUniformSizesChanged]);
+  }, [uniformData, dbUser.id, isLoading, session, hasUniformSizesChanged])
 
   // Store the save function in the ref
   useEffect(() => {
-    saveRef.current = handleUniformSizesSaveChanges;
-  }, [handleUniformSizesSaveChanges, saveRef]);
+    logger.debug('Updating save ref', undefined, 'UniformSizesForm')
+    saveRef.current = handleUniformSizesSaveChanges
+  }, [handleUniformSizesSaveChanges, saveRef])
 
-  return (
-    <Card className="flex flex-col p-6 shadow-md md:col-span-3">
-      <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">Uniform Sizes</h2>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="shirt_size">Shirt Size</Label>
-          <Select
-            value={uniformData.shirt_size}
-            onValueChange={value => handleUniformChange('shirt_size', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select shirt size">
-                {uniformData.shirt_size || 'Select shirt size'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {SHIRT_SIZES.map(size => (
-                <SelectItem key={size} value={size}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+  try {
+    return (
+      <Card className='flex flex-col p-6 shadow-md md:col-span-3'>
+        <h2 className='mb-6 text-xl font-semibold text-gray-900 dark:text-white'>
+          Uniform Sizes
+        </h2>
+        <div className='space-y-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='shirt_size'>Shirt Size</Label>
+            <Select
+              value={uniformData.shirt_size}
+              onValueChange={value => handleUniformChange('shirt_size', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Select shirt size'>
+                  {uniformData.shirt_size || 'Select shirt size'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {SHIRT_SIZES.map(size => (
+                  <SelectItem key={size} value={size}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="pant_size">Pant Size</Label>
-          <Select
-            value={uniformData.pant_size}
-            onValueChange={value => handleUniformChange('pant_size', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select pant size">
-                {uniformData.pant_size || 'Select pant size'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {PANT_SIZES.map(size => (
-                <SelectItem key={size} value={size}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className='space-y-2'>
+            <Label htmlFor='pant_size'>Pant Size</Label>
+            <Select
+              value={uniformData.pant_size}
+              onValueChange={value => handleUniformChange('pant_size', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Select pant size'>
+                  {uniformData.pant_size || 'Select pant size'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {PANT_SIZES.map(size => (
+                  <SelectItem key={size} value={size}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="shoe_size">Shoe Size</Label>
-          <Select
-            value={uniformData.shoe_size}
-            onValueChange={value => handleUniformChange('shoe_size', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select shoe size">
-                {uniformData.shoe_size || 'Select shoe size'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {SHOE_SIZES.map(size => (
-                <SelectItem key={size} value={size}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className='space-y-2'>
+            <Label htmlFor='shoe_size'>Shoe Size</Label>
+            <Select
+              value={uniformData.shoe_size}
+              onValueChange={value => handleUniformChange('shoe_size', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Select shoe size'>
+                  {uniformData.shoe_size || 'Select shoe size'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {SHOE_SIZES.map(size => (
+                  <SelectItem key={size} value={size}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            value={uniformData.notes || ''}
-            onChange={e => handleUniformChange('notes', e.target.value)}
-            className="w-full"
-            placeholder="Any special sizing requirements"
-            rows={1}
-          />
+          <div className='space-y-2'>
+            <Label htmlFor='notes'>Notes</Label>
+            <Textarea
+              id='notes'
+              value={uniformData.notes || ''}
+              onChange={e => handleUniformChange('notes', e.target.value)}
+              className='w-full'
+              placeholder='Any special sizing requirements'
+              rows={1}
+            />
+          </div>
         </div>
-      </div>
-    </Card>
-  );
+      </Card>
+    )
+  } catch (error) {
+    logger.error(
+      'Error rendering uniform sizes form',
+      logger.errorWithData(error),
+      'UniformSizesForm'
+    )
+    throw error
+  } finally {
+    logger.timeEnd('uniform-sizes-form-render')
+  }
 }

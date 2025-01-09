@@ -1,15 +1,15 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import messages from '@/locales/en.json'
-import { NextIntlClientProvider } from 'next-intl'
+import type { Meta, StoryObj } from '@storybook/react'
 import { BaseTemplate } from './BaseTemplate'
+import { UserContext } from '@/components/auth/UserContext'
+import { toISOString } from '@/lib/utils'
 
 const meta = {
   component: BaseTemplate,
   decorators: [
     Story => (
-      <NextIntlClientProvider locale='en' messages={messages}>
+      <UserContext.Provider value={null}>
         <Story />
-      </NextIntlClientProvider>
+      </UserContext.Provider>
     )
   ],
   parameters: {
@@ -24,61 +24,76 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    children: <div className='p-4'>Page Content</div>,
-    user: null
+    children: <div className='p-4'>Page Content</div>
   }
 }
 
 export const WithAuthenticatedUser: Story = {
+  decorators: [
+    Story => (
+      <UserContext.Provider
+        value={{
+          id: '1',
+          email: 'user@example.com',
+          first_name: 'John',
+          last_name: 'Doe',
+          role: 'member',
+          position: 'reserve',
+          phone: null,
+          street_address: null,
+          city: null,
+          state: null,
+          zip_code: null,
+          driver_license: null,
+          driver_license_state: null,
+          callsign: null,
+          radio_number: null,
+          status: 'active',
+          created_at: toISOString(new Date()),
+          updated_at: toISOString(new Date())
+        }}
+      >
+        <Story />
+      </UserContext.Provider>
+    )
+  ],
   args: {
     children: <div className='p-4'>Authenticated User Content</div>,
-    user: {
-      id: 1,
-      email: 'user@example.com',
-      first_name: 'John',
-      last_name: 'Doe',
-      phone: null,
-      driver_license: null,
-      driver_license_state: null,
-      street_address: null,
-      city: null,
-      state: null,
-      zip_code: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      clerk_id: 'user_2NkV2OTBx9bHJtV',
-      role: 'member',
-      position: 'reserve',
-      callsign: null,
-      radio_number: null
-    },
     signOutButton: <button>Sign Out</button>
   }
 }
 
 export const WithAdminUser: Story = {
+  decorators: [
+    Story => (
+      <UserContext.Provider
+        value={{
+          id: '2',
+          email: 'admin@example.com',
+          first_name: 'Admin',
+          last_name: 'User',
+          role: 'admin',
+          position: 'admin',
+          phone: null,
+          street_address: null,
+          city: null,
+          state: null,
+          zip_code: null,
+          driver_license: null,
+          driver_license_state: null,
+          callsign: null,
+          radio_number: null,
+          status: 'active',
+          created_at: toISOString(new Date()),
+          updated_at: toISOString(new Date())
+        }}
+      >
+        <Story />
+      </UserContext.Provider>
+    )
+  ],
   args: {
     children: <div className='p-4'>Admin User Content</div>,
-    user: {
-      id: 2,
-      email: 'admin@example.com',
-      first_name: 'Admin',
-      last_name: 'User',
-      phone: null,
-      driver_license: null,
-      driver_license_state: null,
-      street_address: null,
-      city: null,
-      state: null,
-      zip_code: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      clerk_id: 'user_2NkV2OTBx9bHJtW',
-      role: 'admin',
-      position: 'admin',
-      callsign: null,
-      radio_number: null
-    },
     signOutButton: <button>Sign Out</button>
   }
 }

@@ -14,96 +14,195 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getAssignedEquipment } from '@/actions/assignedEquipment';
-import { formatDate } from '@/lib/utils';
+import { getAssignedEquipment } from '@/actions/assignedEquipment'
+import { createClient } from '@/lib/client'
+import { format } from 'date-fns'
+import type { Session } from '@supabase/supabase-js'
+import { createLogger } from '@/lib/debug'
+
+const logger = createLogger({
+  module: 'forms',
+  file: 'assignedEquipmentForm.tsx'
+})
 
 interface AssignedEquipmentFormProps {
   user: DBUser
   saveRef: React.MutableRefObject<(() => Promise<SaveResult>) | null>
 }
 
-type AssignedEquipmentWithDates = Omit<
-  AssignedEquipment,
-  | 'checked_out_at'
-  | 'checked_in_at'
-  | 'expected_return_date'
-  | 'created_at'
-  | 'updated_at'
-  | 'equipment'
-> & {
-  checked_out_at: Date
-  checked_in_at: Date | null
-  expected_return_date: Date | null
-  created_at: Date
-  updated_at: Date
-  equipment: {
-    id: number
-    name: string
-    description: string | null
-    serial_number: string | null
-    purchase_date: Date | null
-    notes: string | null
-    is_assigned: boolean
-    assigned_to: number | null
-    created_at: Date
-    updated_at: Date
-    is_obsolete: boolean
-  } | null
-}
+export function AssignedEquipmentForm({
+  saveRef,
+  user
+}: AssignedEquipmentFormProps) {
+  const [isLoading, setIsLoading] = useState(true)
+  const [session, setSession] = useState<Session | null>(null)
+  const supabase = createClient()
+  const [assignedEquipment, setAssignedEquipment] = useState<
+    AssignedEquipment[]
+  >([])
 
-export function AssignedEquipmentForm({ saveRef, user }: AssignedEquipmentFormProps) {
-  const [assignedEquipment, setAssignedEquipment] = useState<AssignedEquipmentWithDates[]>([]);
+  // Check session
+  useEffect(() => {
+    const checkSession = async () => {
+      logger.info('Checking auth session', undefined, 'checkSession')
+      try {
+        const {
+          data: { session },
+          error
+        } = await supabase.auth.getSession()
+        if (error) {
+          logger.error(
+            'Failed to get auth session',
+            logger.errorWithData(error),
+            'checkSession'
+          )
+          throw error
+        }
+        logger.info(
+          'Auth session retrieved',
+          { userId: session?.user?.id },
+          'checkSession'
+        )
+        setSession(session)
+      } catch (error) {
+        logger.error(
+          'Session check error',
+          logger.errorWithData(error),
+          'checkSession'
+        )
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    checkSession()
+
+    logger.info('Setting up auth state change listener', undefined, 'useEffect')
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      logger.info(
+        'Auth state changed',
+        { userId: session?.user?.id },
+        'onAuthStateChange'
+      )
+      setSession(session)
+      setIsLoading(false)
+    })
+
+    return () => {
+      logger.info('Cleaning up auth state listener', undefined, 'useEffect')
+      subscription.unsubscribe()
+    }
+  }, [supabase.auth])
 
   useEffect(() => {
     const loadEquipment = async () => {
-      const equipment = await getAssignedEquipment(user.id);
-      const sortedEquipment = equipment
-        .map(item => ({
+      logger.info(
+        'Loading assigned equipment',
+        { userId: user.id },
+        'loadEquipment'
+      )
+      try {
+        const equipment = await getAssignedEquipment(user.id)
+        if (!equipment) {
+          logger.warn(
+            'No equipment data returned',
+            { userId: user.id },
+            'loadEquipment'
+          )
+          return
+        }
+
+        logger.info(
+          'Processing equipment data',
+          { count: equipment.length },
+          'loadEquipment'
+        )
+
+        // Convert null equipment to undefined to match AssignedEquipment type
+        const processedEquipment = equipment.map(item => ({
           ...item,
-          checked_in_at: item.checked_in_at ? new Date(item.checked_in_at) : null,
-          checked_out_at: new Date(item.checked_out_at),
-          created_at: new Date(item.created_at),
-          equipment: item.equipment
-            ? {
-              ...item.equipment,
-              purchase_date: item.equipment.purchase_date
-                ? new Date(item.equipment.purchase_date)
-                : null,
-              created_at: new Date(item.equipment.created_at),
-              updated_at: new Date(item.equipment.updated_at),
-              is_obsolete: item.equipment.is_obsolete ?? false,
-            }
-            : null,
-          expected_return_date: item.expected_return_date
-            ? new Date(item.expected_return_date)
-            : null,
-          updated_at: new Date(item.updated_at),
+          equipment: item.equipment || undefined
         }))
-        .sort((a, b) => {
-          if (!a.checked_in_at && b.checked_in_at) {
-            return -1;
+
+        const sortedEquipment = processedEquipment.sort(
+          (a: AssignedEquipment, b: AssignedEquipment) => {
+            if (!a.checked_in_at && b.checked_in_at) {
+              return -1
+            }
+            if (a.checked_in_at && !b.checked_in_at) {
+              return 1
+            }
+            return (
+              new Date(b.checked_out_at).getTime() -
+              new Date(a.checked_out_at).getTime()
+            )
           }
-          if (a.checked_in_at && !b.checked_in_at) {
-            return 1;
-          }
-          return b.checked_out_at.getTime() - a.checked_out_at.getTime();
-        })
-      setAssignedEquipment(sortedEquipment);
+        )
+
+        logger.info(
+          'Equipment data processed and sorted',
+          {
+            total: sortedEquipment.length,
+            active: sortedEquipment.filter(e => !e.checked_in_at).length
+          },
+          'loadEquipment'
+        )
+
+        setAssignedEquipment(sortedEquipment)
+      } catch (error) {
+        logger.error(
+          'Failed to load equipment',
+          logger.errorWithData(error),
+          'loadEquipment'
+        )
+      }
     }
-    loadEquipment();
-  }, [user.id]);
+
+    if (session?.user && !isLoading) {
+      logger.info(
+        'Session active, loading equipment',
+        { userId: user.id },
+        'useEffect'
+      )
+      loadEquipment()
+    }
+  }, [user.id, session, isLoading])
 
   const handleSaveChanges = useCallback(async () => {
-    return { message: 'No changes needed', success: true };
-  }, []);
+    logger.info('Handling save changes', undefined, 'handleSaveChanges')
+    try {
+      if (isLoading) {
+        logger.warn('Auth state still loading', undefined, 'handleSaveChanges')
+        return { message: 'Loading authentication state', success: false }
+      }
+
+      if (!session?.user) {
+        logger.warn('No active session', undefined, 'handleSaveChanges')
+        return { message: 'Not authenticated', success: false }
+      }
+
+      logger.info('No changes needed', undefined, 'handleSaveChanges')
+      return { message: 'No changes needed', success: true }
+    } catch (error) {
+      logger.error(
+        'Save changes failed',
+        logger.errorWithData(error),
+        'handleSaveChanges'
+      )
+      return { message: 'Failed to save changes', success: false }
+    }
+  }, [session, isLoading])
 
   useEffect(() => {
-    saveRef.current = handleSaveChanges;
-  }, [handleSaveChanges, saveRef]);
+    logger.info('Updating save ref', undefined, 'useEffect')
+    saveRef.current = handleSaveChanges
+  }, [handleSaveChanges, saveRef])
 
   return (
-    <Card className="p-6 shadow-md md:col-span-12">
-      <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+    <Card className='p-6 shadow-md md:col-span-12'>
+      <h2 className='mb-6 text-xl font-semibold text-gray-900 dark:text-white'>
         Assigned Equipment
       </h2>
       <Table>
@@ -111,58 +210,70 @@ export function AssignedEquipmentForm({ saveRef, user }: AssignedEquipmentFormPr
           <TableRow>
             <TableHead>Equipment</TableHead>
             <TableHead>Condition</TableHead>
-            <TableHead>Checked Out</TableHead>
-            <TableHead>Expected Return</TableHead>
-            <TableHead>Returned On</TableHead>
+            <TableHead>Assigned Date</TableHead>
+            <TableHead>Return Date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Notes</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {assignedEquipment.length === 0
-            ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  No equipment assigned
+          {assignedEquipment.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={6}
+                className='text-center text-muted-foreground'
+              >
+                No equipment assigned
+              </TableCell>
+            </TableRow>
+          ) : (
+            assignedEquipment.map(item => (
+              <TableRow
+                key={item.id}
+                className={item.checked_in_at ? 'opacity-40' : ''}
+              >
+                <TableCell>{item.equipment?.name ?? 'Unknown'}</TableCell>
+                <TableCell>
+                  <Badge variant={getConditionVariant(item.condition)}>
+                    {item.condition}
+                  </Badge>
                 </TableCell>
+                <TableCell>
+                  {format(new Date(item.checked_out_at), 'PPP')}
+                </TableCell>
+                <TableCell>
+                  {item.checked_in_at
+                    ? format(new Date(item.checked_in_at), 'PPP')
+                    : 'Not returned'}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={item.checked_in_at ? 'secondary' : 'default'}>
+                    {item.checked_in_at ? 'Returned' : 'Active'}
+                  </Badge>
+                </TableCell>
+                <TableCell>{item.notes || 'No notes'}</TableCell>
               </TableRow>
-            )
-            : (
-              assignedEquipment.map(item => (
-                <TableRow key={item.id} className={item.checked_in_at ? 'opacity-40' : ''}>
-                  <TableCell>
-                    {item.equipment?.name}
-                    {item.equipment?.serial_number && (
-                      <span className="ml-1 text-sm text-muted-foreground">
-                        (
-                        {item.equipment.serial_number}
-                        )
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="capitalize">{item.condition}</TableCell>
-                  <TableCell>{formatDate(item.checked_out_at.toISOString())}</TableCell>
-                  <TableCell>
-                    {item.expected_return_date
-                      ? formatDate(item.expected_return_date.toISOString())
-                      : 'Not specified'}
-                  </TableCell>
-                  <TableCell>
-                    {item.checked_in_at
-                      ? formatDate(item.checked_in_at.toISOString())
-                      : 'Not returned'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={item.checked_in_at ? 'secondary' : 'default'}>
-                      {item.checked_in_at ? 'Returned' : 'Active'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{item.notes || 'No notes'}</TableCell>
-                </TableRow>
-              ))
-            )}
+            ))
+          )}
         </TableBody>
       </Table>
     </Card>
-  );
+  )
+}
+
+function getConditionVariant(condition: AssignedEquipment['condition']) {
+  switch (condition) {
+    case 'new':
+      return 'default'
+    case 'good':
+      return 'secondary'
+    case 'fair':
+      return 'outline'
+    case 'poor':
+      return 'destructive'
+    case 'damaged/broken':
+      return 'destructive'
+    default:
+      return 'outline'
+  }
 }

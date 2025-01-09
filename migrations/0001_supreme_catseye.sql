@@ -1,1 +1,0 @@
-ALTER TYPE "public"."position" ADD VALUE 'candidate' BEFORE 'officer';

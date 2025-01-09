@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState, useTransition } from 'react'
 import type { Training } from '@/types/training'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -34,6 +35,14 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { training } from '@/models/Schema'
+import { createLogger } from '@/lib/debug'
+import { createClient } from '@/lib/client'
+import type { Session } from '@supabase/supabase-js'
+
+const logger = createLogger({
+  module: 'forms',
+  file: 'TrainingForm.tsx'
+})
 
 const trainingSchema = z.object({
   description: z.string().nullable(),
@@ -44,7 +53,7 @@ const trainingSchema = z.object({
   training_end_time: z.date({
     required_error: 'End time is required'
   }),
-  training_instructor: z.number({
+  training_instructor: z.string({
     required_error: 'Instructor is required'
   }),
   training_location: z.string().min(1, 'Location is required'),
@@ -62,180 +71,324 @@ interface TrainingFormProps {
 }
 
 export function TrainingForm({ training, onSuccess }: TrainingFormProps) {
-  const form = useForm<FormValues>({
-    defaultValues: {
-      description: training?.description || null,
-      name: training?.name || '',
-      training_date: training ? new Date(training.training_date) : new Date(),
-      training_end_time: training
-        ? new Date(training.training_end_time)
-        : new Date(),
-      training_instructor: training?.training_instructor || 0,
-      training_location: training?.training_location || '',
-      training_start_time: training
-        ? new Date(training.training_start_time)
-        : new Date(),
-      training_type: training?.training_type || 'other'
-    },
-    resolver: zodResolver(trainingSchema)
-  })
+  logger.time('training-form-render')
+  const [isLoading, setIsLoading] = useState(true)
+  const [session, setSession] = useState<Session | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const supabase = createClient()
 
-  const onSubmit = async (values: FormValues) => {
-    try {
-      const result = training
-        ? await updateTraining(training.id, values)
-        : await createTraining(values)
-
-      if (result) {
-        toast.success(
-          `Training ${training ? 'updated' : 'created'} successfully`
+  useEffect(() => {
+    const checkSession = async () => {
+      logger.info('Checking auth session', undefined, 'checkSession')
+      try {
+        const {
+          data: { session: currentSession }
+        } = await supabase.auth.getSession()
+        setSession(currentSession)
+      } catch (error) {
+        logger.error(
+          'Failed to check auth session',
+          logger.errorWithData(error),
+          'checkSession'
         )
-        onSuccess?.(result)
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error('Error submitting training form:', error)
-      toast.error(`Failed to ${training ? 'update' : 'create'} training`)
     }
-  }
 
-  const handleTimeChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    currentDate: Date,
-    onChange: (date: Date) => void
-  ) => {
-    const timeValue = e.target.value || '00:00'
-    const [hours = '0', minutes = '0'] = timeValue.split(':')
-    const date = new Date(currentDate)
-    date.setHours(Number.parseInt(hours, 10), Number.parseInt(minutes, 10))
-    onChange(date)
-  }
+    checkSession()
+  }, [supabase.auth])
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-        <FormField
-          control={form.control}
-          name='name'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder='Training name' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+  try {
+    const form = useForm<FormValues>({
+      resolver: zodResolver(trainingSchema),
+      defaultValues: {
+        description: training?.description || null,
+        name: training?.name || '',
+        training_date: training ? new Date(training.training_date) : new Date(),
+        training_end_time: training
+          ? new Date(training.training_end_time)
+          : new Date(),
+        training_instructor: training?.training_instructor || '',
+        training_location: training?.training_location || '',
+        training_start_time: training
+          ? new Date(training.training_start_time)
+          : new Date(),
+        training_type: training?.training_type || 'other'
+      }
+    })
 
-        <FormField
-          control={form.control}
-          name='description'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder='Training description'
-                  className='min-h-[100px] resize-y'
-                  value={field.value || ''}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  name={field.name}
-                  ref={field.ref}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    const onSubmit = async (values: FormValues) => {
+      logger.info(
+        'Submitting training form',
+        { values, isEdit: !!training },
+        'onSubmit'
+      )
+      logger.time('training-submission')
 
-        <FormField
-          control={form.control}
-          name='training_type'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+      try {
+        if (!session) {
+          logger.warn(
+            'Form submission attempted without auth',
+            undefined,
+            'onSubmit'
+          )
+          toast.error('You must be logged in to submit the form')
+          return
+        }
+
+        startTransition(async () => {
+          const result = training
+            ? await updateTraining(training.id, {
+                ...values,
+                training_date: values.training_date.toISOString(),
+                training_start_time: values.training_start_time.toISOString(),
+                training_end_time: values.training_end_time.toISOString()
+              })
+            : await createTraining({
+                ...values,
+                training_date: values.training_date.toISOString(),
+                training_start_time: values.training_start_time.toISOString(),
+                training_end_time: values.training_end_time.toISOString()
+              })
+
+          if (result) {
+            logger.info(
+              'Training form submitted successfully',
+              { trainingId: result.id },
+              'onSubmit'
+            )
+            toast.success(
+              `Training ${training ? 'updated' : 'created'} successfully`
+            )
+            onSuccess?.({
+              ...result,
+              training_date: result.training_date.toISOString(),
+              training_start_time: result.training_start_time.toISOString(),
+              training_end_time: result.training_end_time.toISOString(),
+              created_at: result.created_at.toISOString(),
+              updated_at: result.updated_at.toISOString()
+            })
+            form.reset()
+          }
+        })
+      } catch (error) {
+        logger.error(
+          'Form submission failed',
+          logger.errorWithData(error),
+          'onSubmit'
+        )
+        toast.error(`Failed to ${training ? 'update' : 'create'} training`)
+      } finally {
+        logger.timeEnd('training-submission')
+      }
+    }
+
+    const handleTimeChange = (
+      e: React.ChangeEvent<HTMLInputElement>,
+      currentDate: Date,
+      onChange: (date: Date) => void
+    ) => {
+      logger.info(
+        'Handling time change',
+        { value: e.target.value },
+        'handleTimeChange'
+      )
+      try {
+        const timeValue = e.target.value || '00:00'
+        const [hours = '0', minutes = '0'] = timeValue.split(':')
+        const date = new Date(currentDate)
+        date.setHours(Number.parseInt(hours, 10), Number.parseInt(minutes, 10))
+
+        logger.debug(
+          'Time updated successfully',
+          { newDate: date.toISOString() },
+          'handleTimeChange'
+        )
+
+        onChange(date)
+      } catch (error) {
+        logger.error(
+          'Error handling time change',
+          logger.errorWithData(error),
+          'handleTimeChange'
+        )
+        toast.error('Invalid time format')
+      }
+    }
+
+    if (isLoading) {
+      return (
+        <div className='flex items-center justify-center p-4'>
+          <p>Loading...</p>
+        </div>
+      )
+    }
+
+    return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          <FormField
+            control={form.control}
+            name='name'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select training type' />
-                  </SelectTrigger>
+                  <Input placeholder='Training name' {...field} />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value='firearms'>Firearms</SelectItem>
-                  <SelectItem value='defensive_tactics'>
-                    Defensive Tactics
-                  </SelectItem>
-                  <SelectItem value='emergency_vehicle_operations'>
-                    Emergency Vehicle Operations
-                  </SelectItem>
-                  <SelectItem value='first_aid'>First Aid</SelectItem>
-                  <SelectItem value='legal_updates'>Legal Updates</SelectItem>
-                  <SelectItem value='other'>Other</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name='training_date'
-          render={({ field }) => (
-            <FormItem className='flex flex-col'>
-              <FormLabel>Date</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
+          <FormField
+            control={form.control}
+            name='description'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder='Training description'
+                    className='min-h-[100px] resize-y'
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='training_type'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Type</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
-                    <Button
-                      variant='outline'
-                      className={cn(
-                        'w-full pl-3 text-left font-normal',
-                        !field.value && 'text-muted-foreground'
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, 'PPP')
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className='ml-auto size-4 opacity-50' />
-                    </Button>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select training type' />
+                    </SelectTrigger>
                   </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className='w-auto p-0' align='start'>
-                  <Calendar
-                    mode='single'
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={date =>
-                      date < new Date(new Date().setHours(0, 0, 0, 0))
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  <SelectContent>
+                    <SelectItem value='firearms'>Firearms</SelectItem>
+                    <SelectItem value='defensive_tactics'>
+                      Defensive Tactics
+                    </SelectItem>
+                    <SelectItem value='emergency_vehicle_operations'>
+                      Emergency Vehicle Operations
+                    </SelectItem>
+                    <SelectItem value='first_aid'>First Aid</SelectItem>
+                    <SelectItem value='legal_updates'>Legal Updates</SelectItem>
+                    <SelectItem value='other'>Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <div className='grid gap-4 sm:grid-cols-2'>
           <FormField
             control={form.control}
-            name='training_start_time'
+            name='training_date'
+            render={({ field }) => (
+              <FormItem className='flex flex-col'>
+                <FormLabel>Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant='outline'
+                        className={cn(
+                          'w-full pl-3 text-left font-normal',
+                          !field.value && 'text-muted-foreground'
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, 'PPP')
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className='ml-auto size-4 opacity-50' />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className='w-auto p-0' align='start'>
+                    <Calendar
+                      mode='single'
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={date =>
+                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className='grid gap-4 sm:grid-cols-2'>
+            <FormField
+              control={form.control}
+              name='training_start_time'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Time</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='time'
+                      value={format(field.value, 'HH:mm')}
+                      onChange={e =>
+                        handleTimeChange(e, field.value, field.onChange)
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='training_end_time'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Time</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='time'
+                      value={format(field.value, 'HH:mm')}
+                      onChange={e =>
+                        handleTimeChange(e, field.value, field.onChange)
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name='training_location'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Start Time</FormLabel>
+                <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <Input
-                    type='time'
-                    value={format(field.value, 'HH:mm')}
-                    onChange={e =>
-                      handleTimeChange(e, field.value, field.onChange)
-                    }
-                  />
+                  <Input placeholder='Training location' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -244,74 +397,51 @@ export function TrainingForm({ training, onSuccess }: TrainingFormProps) {
 
           <FormField
             control={form.control}
-            name='training_end_time'
+            name='training_instructor'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>End Time</FormLabel>
-                <FormControl>
-                  <Input
-                    type='time'
-                    value={format(field.value, 'HH:mm')}
-                    onChange={e =>
-                      handleTimeChange(e, field.value, field.onChange)
-                    }
-                  />
-                </FormControl>
+                <FormLabel>Instructor</FormLabel>
+                <Select
+                  onValueChange={value =>
+                    field.onChange(Number.parseInt(value))
+                  }
+                  defaultValue={field.value.toString()}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select instructor' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value='1'>John Doe</SelectItem>
+                    <SelectItem value='2'>Jane Smith</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
-        </div>
 
-        <FormField
-          control={form.control}
-          name='training_location'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Location</FormLabel>
-              <FormControl>
-                <Input placeholder='Training location' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='training_instructor'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Instructor</FormLabel>
-              <Select
-                onValueChange={value => field.onChange(Number.parseInt(value))}
-                defaultValue={field.value.toString()}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select instructor' />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value='1'>John Doe</SelectItem>
-                  <SelectItem value='2'>Jane Smith</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className='flex justify-end'>
-          <Button type='submit' disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting
-              ? 'Saving...'
-              : training
-                ? 'Update Training'
-                : 'Create Training'}
-          </Button>
-        </div>
-      </form>
-    </Form>
-  )
+          <div className='flex justify-end'>
+            <Button type='submit' disabled={isLoading || isPending}>
+              {isPending
+                ? 'Saving...'
+                : training
+                  ? 'Update Training'
+                  : 'Create Training'}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    )
+  } catch (error) {
+    logger.error(
+      'Error rendering training form',
+      logger.errorWithData(error),
+      'render'
+    )
+    throw error
+  } finally {
+    logger.timeEnd('training-form-render')
+  }
 }

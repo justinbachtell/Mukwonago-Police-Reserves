@@ -16,6 +16,14 @@ import { ArrowUpDown, CheckCircle, EyeIcon } from 'lucide-react'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/ui/data-table'
+import { toISOString } from '@/lib/utils'
+import { format } from 'date-fns'
+import { createLogger } from '@/lib/debug'
+
+const logger = createLogger({
+  module: 'policies',
+  file: 'PoliciesTable.tsx'
+})
 
 interface PoliciesTableProps {
   data: Policy[]
@@ -25,31 +33,58 @@ interface PoliciesTableProps {
 
 function PolicyCell({
   policy,
-  isCompleted
+  isCompleted,
+  onPolicyAcknowledged
 }: {
   policy: Policy
   isCompleted: boolean
+  onPolicyAcknowledged?: (policyId: number) => void
 }) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
 
   const handlePolicyView = async () => {
+    logger.info('Viewing policy', { policyId: policy.id }, 'handlePolicyView')
     try {
       const signedUrl = await getPolicyUrl(policy.policy_url)
       setPdfUrl(signedUrl)
       setIsOpen(true)
+      logger.info(
+        'Policy URL generated',
+        { policyId: policy.id },
+        'handlePolicyView'
+      )
     } catch (error) {
-      console.error('Error viewing policy:', error)
+      logger.error(
+        'Failed to load policy',
+        logger.errorWithData(error),
+        'handlePolicyView'
+      )
       toast.error('Failed to load policy')
     }
   }
 
   const handleMarkAsAcknowledged = async () => {
+    logger.info(
+      'Marking policy as acknowledged',
+      { policyId: policy.id },
+      'handleMarkAsAcknowledged'
+    )
     try {
       await markPolicyAsAcknowledged(policy.id)
+      onPolicyAcknowledged?.(policy.id)
+      logger.info(
+        'Policy marked as read',
+        { policyId: policy.id },
+        'handleMarkAsAcknowledged'
+      )
       toast.success('Policy marked as read')
     } catch (error) {
-      console.error('Error marking policy as read:', error)
+      logger.error(
+        'Failed to mark policy as read',
+        logger.errorWithData(error),
+        'handleMarkAsAcknowledged'
+      )
       toast.error('Failed to mark policy as read')
     }
   }
@@ -95,8 +130,15 @@ function PolicyCell({
 }
 
 function getColumns(
-  completedPolicies: Record<number, boolean>
+  completedPolicies: Record<number, boolean>,
+  onPolicyAcknowledged?: (policyId: number) => void
 ): ColumnDef<Policy>[] {
+  logger.debug(
+    'Initializing columns',
+    { completedPoliciesCount: Object.keys(completedPolicies).length },
+    'getColumns'
+  )
+
   return [
     {
       accessorKey: 'policy_number',
@@ -164,66 +206,68 @@ function getColumns(
         </Button>
       ),
       cell: ({ row }) => {
-        const date = new Date(row.getValue('effective_date'))
-        return <div className='font-medium'>{date.toLocaleDateString()}</div>
-      }
-    },
-    {
-      id: 'status',
-      header: ({ column }) => (
-        <Button
-          variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className='flex'
-        >
-          Status
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const isCompleted = completedPolicies[row.original.id]
-        return isCompleted ? (
-          <Badge variant='success'>Acknowledged</Badge>
-        ) : (
-          <Badge variant='warning' className='flex text-center'>
-            Not Acknowledged
-          </Badge>
-        )
+        const date = toISOString(new Date(row.getValue('effective_date')))
+        return <div>{format(date, 'PPP')}</div>
       }
     },
     {
       id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <PolicyCell
-          policy={row.original}
-          isCompleted={!!completedPolicies[row.original.id]}
-        />
-      )
+      cell: ({ row }) => {
+        const policy = row.original
+        return (
+          <PolicyCell
+            policy={policy}
+            isCompleted={completedPolicies[policy.id] ?? false}
+            onPolicyAcknowledged={onPolicyAcknowledged}
+          />
+        )
+      }
     }
   ]
 }
 
-export function PoliciesTable({ data, completedPolicies }: PoliciesTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: 'policy_number', desc: false }
-  ])
+export function PoliciesTable({
+  data,
+  completedPolicies,
+  onPolicyAcknowledged
+}: PoliciesTableProps) {
+  logger.info(
+    'Rendering policies table',
+    { policiesCount: data.length },
+    'PoliciesTable'
+  )
+  logger.time('policies-table-render')
 
-  const columns = getColumns(completedPolicies)
+  try {
+    const [sorting, setSorting] = useState<SortingState>([])
+    const columns = getColumns(completedPolicies, onPolicyAcknowledged)
 
-  return (
-    <div className='space-y-4'>
+    logger.debug(
+      'Table state initialized',
+      {
+        sorting,
+        columnsCount: columns.length,
+        completedPoliciesCount: Object.keys(completedPolicies).length
+      },
+      'PoliciesTable'
+    )
+
+    return (
       <DataTable
         columns={columns}
         data={data}
         sorting={sorting}
         onSortingChange={setSorting}
-        rowClassName={row => {
-          return completedPolicies[row.id]
-            ? 'bg-green-50 hover:bg-green-100'
-            : ''
-        }}
       />
-    </div>
-  )
+    )
+  } catch (error) {
+    logger.error(
+      'Error rendering policies table',
+      logger.errorWithData(error),
+      'PoliciesTable'
+    )
+    throw error
+  } finally {
+    logger.timeEnd('policies-table-render')
+  }
 }
