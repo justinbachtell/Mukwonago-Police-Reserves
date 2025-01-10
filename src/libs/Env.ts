@@ -17,12 +17,24 @@ export const Env = createEnv({
     // Public variables
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_SUPABASE_URL:
+      process.env.NODE_ENV === 'test'
+        ? process.env.TEST_NEXT_PUBLIC_SUPABASE_URL
+        : process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY:
+      process.env.NODE_ENV === 'test'
+        ? process.env.TEST_NEXT_PUBLIC_SUPABASE_ANON_KEY
+        : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 
     // Database
-    DATABASE_URL: process.env.DATABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    DATABASE_URL:
+      process.env.NODE_ENV === 'test'
+        ? process.env.TEST_DATABASE_URL
+        : process.env.DATABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY:
+      process.env.NODE_ENV === 'test'
+        ? process.env.TEST_SUPABASE_SERVICE_ROLE_KEY
+        : process.env.SUPABASE_SERVICE_ROLE_KEY,
 
     // Misc
     EMAIL_ADDRESS: process.env.EMAIL_ADDRESS,

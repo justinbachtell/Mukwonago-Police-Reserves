@@ -165,7 +165,7 @@ function NavigationSidebar({
       {...props}
       className={cn(
         'h-screen border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60',
-        'fixed inset-y-0 left-0 z-50 w-[240px] md:sticky md:top-0',
+        'fixed inset-y-0 left-0 z-50 w-[240px] lg:sticky lg:top-0',
         className
       )}
     >
@@ -207,31 +207,29 @@ function NavigationSidebar({
             </SidebarMenu>
           </SidebarGroup>
 
-          {sidebarItems.auth.length > 0 && (
-            <SidebarGroup>
-              <SidebarGroupLabel className='mb-2 px-3 text-xs uppercase text-muted-foreground'>
-                Reserves
-              </SidebarGroupLabel>
-              <SidebarMenu>
-                {sidebarItems.auth.map(item => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50',
-                        pathname === item.url && 'bg-accent/50'
-                      )}
-                    >
-                      <Link href={item.url} className='flex items-center gap-3'>
-                        <item.icon className='size-4 shrink-0' />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroup>
-          )}
+          <SidebarGroup>
+            <SidebarGroupLabel className='mb-2 px-3 text-xs uppercase text-muted-foreground'>
+              {isAuthenticated && isActive ? 'Reserves' : 'Authentication'}
+            </SidebarGroupLabel>
+            <SidebarMenu>
+              {sidebarItems.auth.map(item => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50',
+                      pathname === item.url && 'bg-accent/50'
+                    )}
+                  >
+                    <Link href={item.url} className='flex items-center gap-3'>
+                      <item.icon className='size-4 shrink-0' />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
 
           {isAdmin && isActive && (
             <SidebarGroup>
@@ -259,31 +257,36 @@ function NavigationSidebar({
             </SidebarGroup>
           )}
 
-          {sidebarItems.userSettings.length > 0 && (
-            <SidebarGroup>
-              <SidebarGroupLabel className='mb-2 px-3 text-xs uppercase text-muted-foreground'>
-                Settings
-              </SidebarGroupLabel>
-              <SidebarMenu>
-                {sidebarItems.userSettings.map(item => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50',
-                        pathname === item.url && 'bg-accent/50'
-                      )}
-                    >
-                      <Link href={item.url} className='flex items-center gap-3'>
-                        <item.icon className='size-4 shrink-0' />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroup>
-          )}
+          {isAuthenticated &&
+            isActive &&
+            sidebarItems.userSettings.length > 0 && (
+              <SidebarGroup>
+                <SidebarGroupLabel className='mb-2 px-3 text-xs uppercase text-muted-foreground'>
+                  Settings
+                </SidebarGroupLabel>
+                <SidebarMenu>
+                  {sidebarItems.userSettings.map(item => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50',
+                          pathname === item.url && 'bg-accent/50'
+                        )}
+                      >
+                        <Link
+                          href={item.url}
+                          className='flex items-center gap-3'
+                        >
+                          <item.icon className='size-4 shrink-0' />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroup>
+            )}
         </div>
       </SidebarContent>
 

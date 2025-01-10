@@ -39,6 +39,12 @@ export default withSentryConfig(
         type: 'asset/resource'
       })
 
+      // Suppress Prisma and OpenTelemetry warnings from Sentry
+      config.ignoreWarnings = [
+        { message: /Critical dependency/ },
+        { message: /Can't resolve 'prisma'/ }
+      ]
+
       return config
     }
   }),

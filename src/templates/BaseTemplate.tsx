@@ -17,9 +17,7 @@ export function BaseTemplate(props: {
         signOutButton={props.signOutButton}
       />
       <div className='flex w-full flex-col overflow-x-auto'>
-        <main className='flex-1 px-4 pt-14 md:px-8 md:pt-8'>
-          {props.children}
-        </main>
+        <main className='flex-1'>{props.children}</main>
 
         <footer className='border-t border-gray-300 px-4 py-6 text-center text-sm md:py-8'>
           {`© Copyright ${new Date().getFullYear()} Village of Mukwonago Police Department. Built by `}

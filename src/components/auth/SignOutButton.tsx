@@ -2,18 +2,16 @@
 
 import { Button } from '@/components/ui/button'
 import { LogOut } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 
 const logger = createLogger({
   module: 'auth',
-  file: 'SignOutButtonWrapper.tsx'
+  file: 'SignOutButton.tsx'
 })
 
-export function SignOutButtonWrapper() {
-  const router = useRouter()
+export function SignOutButton() {
   const supabase = createClient()
 
   const handleSignOut = async () => {
@@ -21,6 +19,7 @@ export function SignOutButtonWrapper() {
     logger.time('sign-out-process')
 
     try {
+      // Sign out from Supabase with global scope
       const { error } = await supabase.auth.signOut({
         scope: 'global'
       })
@@ -33,10 +32,13 @@ export function SignOutButtonWrapper() {
           },
           'handleSignOut'
         )
-
         toast.error('Failed to sign out')
         throw error
       }
+
+      // Clear any client-side state and force a full page reload
+      // This ensures all React contexts and client state are cleared
+      window.location.href = '/'
 
       logger.info(
         'Sign out successful',
@@ -46,7 +48,6 @@ export function SignOutButtonWrapper() {
         'handleSignOut'
       )
 
-      router.push('/')
       toast.success('Successfully signed out')
     } catch (error) {
       logger.error(
@@ -62,11 +63,12 @@ export function SignOutButtonWrapper() {
 
   return (
     <Button
+      size='sm'
       variant='ghost'
-      className='w-full justify-start'
+      className='w-full justify-start gap-3 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground'
       onClick={handleSignOut}
     >
-      <LogOut className='mr-2 size-4' />
+      <LogOut className='size-4 shrink-0' />
       Sign Out
     </Button>
   )

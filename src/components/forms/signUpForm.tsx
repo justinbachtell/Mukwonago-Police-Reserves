@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useState } from 'react'
 import { Loader2, Mail, User, Lock, KeyRound } from 'lucide-react'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/client'
@@ -24,6 +24,14 @@ const logger = createLogger({
   file: 'signUpForm.tsx'
 })
 
+type FormErrors = {
+  firstName?: string
+  lastName?: string
+  email?: string
+  password?: string
+  passwordConfirmation?: string
+}
+
 export default function SignUpForm() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -31,10 +39,69 @@ export default function SignUpForm() {
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
   const router = useRouter()
+  const { toast } = useToast()
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {}
+
+    // First Name validation
+    if (!firstName.trim()) {
+      newErrors.firstName = 'First name is required'
+    } else if (firstName.length < 2) {
+      newErrors.firstName = 'First name must be at least 2 characters'
+    }
+
+    // Last Name validation
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Last name is required'
+    } else if (lastName.length < 2) {
+      newErrors.lastName = 'Last name must be at least 2 characters'
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
+    if (!email) {
+      newErrors.email = 'Email is required'
+    } else if (!emailRegex.test(email)) {
+      newErrors.email = 'Please enter a valid email address'
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = 'Password is required'
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters'
+    } else if (!/[A-Z]/.test(password)) {
+      newErrors.password = 'Password must contain at least one uppercase letter'
+    } else if (!/[a-z]/.test(password)) {
+      newErrors.password = 'Password must contain at least one lowercase letter'
+    } else if (!/\d/.test(password)) {
+      newErrors.password = 'Password must contain at least one number'
+    } else if (!/[!@#$%^&*]/.test(password)) {
+      newErrors.password =
+        'Password must contain at least one special character'
+    }
+
+    // Password confirmation validation
+    if (!passwordConfirmation) {
+      newErrors.passwordConfirmation = 'Please confirm your password'
+    } else if (password !== passwordConfirmation) {
+      newErrors.passwordConfirmation = 'Passwords do not match'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!validateForm()) {
+      return
+    }
+
     const timestamp = Date.now()
     logger.info(
       'Starting registration submission',
@@ -42,16 +109,6 @@ export default function SignUpForm() {
       'handleSubmit'
     )
     logger.time(`sign-up-${email}-${timestamp}`)
-
-    if (password !== passwordConfirmation) {
-      logger.warn(
-        'Password mismatch during registration',
-        { email },
-        'handleSubmit'
-      )
-      toast.error('Passwords do not match')
-      return
-    }
 
     setLoading(true)
 
@@ -81,7 +138,11 @@ export default function SignUpForm() {
           },
           'handleSubmit'
         )
-        toast.error(error.message || 'Failed to create account')
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to create account',
+          variant: 'destructive'
+        })
         return
       }
 
@@ -94,7 +155,10 @@ export default function SignUpForm() {
           },
           'handleSubmit'
         )
-        toast.success('Please check your email to confirm your account')
+        toast({
+          title: 'Success',
+          description: 'Please check your email to confirm your account'
+        })
         router.push('/sign-in')
       }
     } catch (error) {
@@ -103,7 +167,11 @@ export default function SignUpForm() {
         logger.errorWithData(error),
         'handleSubmit'
       )
-      toast.error('An unexpected error occurred')
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive'
+      })
     } finally {
       setLoading(false)
       logger.timeEnd(`sign-up-${email}-${timestamp}`)
@@ -111,7 +179,7 @@ export default function SignUpForm() {
   }
 
   return (
-    <Card className='w-full max-w-md shadow-lg'>
+    <Card className='mt-16 w-full max-w-md shadow-lg dark:bg-gray-950 dark:shadow-2xl dark:shadow-blue-900/20'>
       <CardHeader className='space-y-3 pb-8'>
         <CardTitle className='text-center text-2xl font-bold'>
           Create Account
@@ -134,10 +202,18 @@ export default function SignUpForm() {
                     id='firstName'
                     placeholder='John'
                     required
-                    className='pl-10'
-                    onChange={e => setFirstName(e.target.value)}
+                    className={`pl-10 ${errors.firstName ? 'border-red-500' : ''}`}
+                    onChange={e => {
+                      setFirstName(e.target.value)
+                      setErrors(prev => ({ ...prev, firstName: undefined }))
+                    }}
                     value={firstName}
                   />
+                  {errors.firstName && (
+                    <p className='mt-1 text-xs text-red-500'>
+                      {errors.firstName}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -151,10 +227,18 @@ export default function SignUpForm() {
                     id='lastName'
                     placeholder='Doe'
                     required
-                    className='pl-10'
-                    onChange={e => setLastName(e.target.value)}
+                    className={`pl-10 ${errors.lastName ? 'border-red-500' : ''}`}
+                    onChange={e => {
+                      setLastName(e.target.value)
+                      setErrors(prev => ({ ...prev, lastName: undefined }))
+                    }}
                     value={lastName}
                   />
+                  {errors.lastName && (
+                    <p className='mt-1 text-xs text-red-500'>
+                      {errors.lastName}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -170,10 +254,16 @@ export default function SignUpForm() {
                   type='email'
                   placeholder='john@example.com'
                   required
-                  className='pl-10'
-                  onChange={e => setEmail(e.target.value)}
+                  className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
+                  onChange={e => {
+                    setEmail(e.target.value)
+                    setErrors(prev => ({ ...prev, email: undefined }))
+                  }}
                   value={email}
                 />
+                {errors.email && (
+                  <p className='mt-1 text-xs text-red-500'>{errors.email}</p>
+                )}
               </div>
             </div>
 
@@ -188,10 +278,16 @@ export default function SignUpForm() {
                   type='password'
                   placeholder='••••••••'
                   required
-                  className='pl-10'
-                  onChange={e => setPassword(e.target.value)}
+                  className={`pl-10 ${errors.password ? 'border-red-500' : ''}`}
+                  onChange={e => {
+                    setPassword(e.target.value)
+                    setErrors(prev => ({ ...prev, password: undefined }))
+                  }}
                   value={password}
                 />
+                {errors.password && (
+                  <p className='mt-1 text-xs text-red-500'>{errors.password}</p>
+                )}
               </div>
             </div>
 
@@ -209,10 +305,23 @@ export default function SignUpForm() {
                   type='password'
                   placeholder='••••••••'
                   required
-                  className='pl-10'
-                  onChange={e => setPasswordConfirmation(e.target.value)}
+                  className={`pl-10 ${
+                    errors.passwordConfirmation ? 'border-red-500' : ''
+                  }`}
+                  onChange={e => {
+                    setPasswordConfirmation(e.target.value)
+                    setErrors(prev => ({
+                      ...prev,
+                      passwordConfirmation: undefined
+                    }))
+                  }}
                   value={passwordConfirmation}
                 />
+                {errors.passwordConfirmation && (
+                  <p className='mt-1 text-xs text-red-500'>
+                    {errors.passwordConfirmation}
+                  </p>
+                )}
               </div>
             </div>
           </div>

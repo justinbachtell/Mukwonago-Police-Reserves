@@ -17,7 +17,11 @@ export default async function SignUpPage() {
 
   try {
     logger.info('Rendering registration form', undefined, 'SignUpPage')
-    return <SignUpForm />
+    return (
+      <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+        <SignUpForm />
+      </div>
+    )
   } catch (error) {
     logger.error(
       'Error in registration page',
@@ -27,7 +31,11 @@ export default async function SignUpPage() {
 
     // Show the sign-up form for other types of errors
     logger.info('Rendering sign-up form due to error', undefined, 'SignUpPage')
-    return <SignUpForm />
+    return (
+      <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+        <SignUpForm />
+      </div>
+    )
   } finally {
     logger.info('Registration page loaded', undefined, 'SignUpPage')
     logger.timeEnd('register-page-load')

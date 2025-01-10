@@ -16,7 +16,6 @@ import {
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
-import { createClient } from '@/lib/server'
 import { getCurrentUser } from '@/actions/user'
 import { createLogger } from '@/lib/debug'
 
@@ -41,45 +40,13 @@ export default async function DashboardPage() {
   logger.time('dashboard-page-load')
 
   try {
-    const supabase = await createClient()
-
-    // Verify session
-    logger.time('fetch-session')
-    const {
-      data: { session },
-      error: sessionError
-    } = await supabase.auth.getSession()
-    logger.timeEnd('fetch-session')
-
-    if (sessionError) {
-      logger.error(
-        'Failed to get session',
-        logger.errorWithData(sessionError),
-        'DashboardPage'
-      )
-      return redirect('/sign-in')
-    }
-
-    if (!session?.user) {
-      logger.info(
-        'No active session, redirecting to sign-in',
-        undefined,
-        'DashboardPage'
-      )
-      return redirect('/sign-in')
-    }
-
-    // Get user data
+    // Get user data - this will handle auth checks and redirects
     logger.time('fetch-user')
     const user = await getCurrentUser()
     logger.timeEnd('fetch-user')
 
     if (!user) {
-      logger.warn(
-        'No user data found',
-        { userId: session.user.id },
-        'DashboardPage'
-      )
+      logger.warn('No user data found', undefined, 'DashboardPage')
       return redirect('/sign-in')
     }
 
@@ -135,7 +102,7 @@ export default async function DashboardPage() {
     logger.timeEnd('dashboard-page-load')
 
     return (
-      <div className='container mx-auto space-y-6 py-6'>
+      <div className='container mx-auto space-y-6 px-4 py-6 md:px-8'>
         <div className='space-y-2'>
           <h1 className='text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl'>
             Welcome back, {user.first_name}!

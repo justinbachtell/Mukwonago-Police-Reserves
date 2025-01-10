@@ -81,7 +81,7 @@ export default function ResetPasswordForm() {
   }
 
   return (
-    <Card className='max-w-md'>
+    <Card className='mt-16 w-full max-w-md justify-center shadow-lg dark:bg-gray-950 dark:shadow-2xl dark:shadow-blue-900/20'>
       <CardHeader>
         <CardTitle className='text-lg md:text-xl'>Reset Password</CardTitle>
         <CardDescription className='text-xs md:text-sm'>

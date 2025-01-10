@@ -1,32 +1,64 @@
-import { BaseTemplate } from '@/templates/BaseTemplate'
+'use client'
+
+import { createClient } from '@/lib/client'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createLogger } from '@/lib/debug'
+import { getCurrentUser } from '@/actions/user'
+import { BaseTemplate } from '@/templates/BaseTemplate'
 
 const logger = createLogger({
   module: 'auth',
   file: 'layout.tsx'
 })
 
-export default async function AuthLayout({
-  children
-}: {
+interface AuthLayoutProps {
   children: React.ReactNode
-}) {
-  logger.info('Rendering auth layout', undefined, 'AuthLayout')
-  logger.time('auth-layout-render')
-  try {
-    return (
-      <BaseTemplate>
-        <div className='[&_p]:my-6'>{children}</div>
-      </BaseTemplate>
-    )
-  } catch (error) {
-    logger.error(
-      'Error in auth layout',
-      logger.errorWithData(error),
-      'AuthLayout'
-    )
-    throw error
-  } finally {
-    logger.timeEnd('auth-layout-render')
+}
+
+export default function AuthLayout({ children }: AuthLayoutProps) {
+  const [isLoading, setIsLoading] = useState(true)
+  const [_user, setUser] =
+    useState<Awaited<ReturnType<typeof getCurrentUser>>>(null)
+  const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      logger.info(
+        'Auth state changed',
+        { event, userId: session?.user?.id },
+        'onAuthStateChange'
+      )
+
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setTimeout(() => {
+          router.push('/')
+        }, 100)
+      } else if (event === 'SIGNED_IN') {
+        const userData = await getCurrentUser()
+        setUser(userData)
+        router.push('/user/dashboard')
+      }
+    })
+
+    // Initial user fetch
+    getCurrentUser().then(userData => {
+      setUser(userData)
+      setIsLoading(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [router, supabase.auth])
+
+  if (isLoading) {
+    return <div>Loading...</div>
   }
+
+  return <BaseTemplate>{children}</BaseTemplate>
 }
