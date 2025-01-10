@@ -66,21 +66,12 @@ export default async function RootLayout({
     const user = await getCurrentUser()
     logger.timeEnd('auth-session-check')
 
-    if (!user) {
-      logger.error(
-        'Failed to get auth user',
-        logger.errorWithData(user),
-        'RootLayout'
-      )
-      return null
-    }
-
-    // Log authentication status
+    // Log authentication status even if no user
     logger.info(
       'Auth user status',
       {
         isAuthenticated: !!user,
-        userId: user.id
+        userId: user?.id
       },
       'RootLayout'
     )
@@ -120,7 +111,15 @@ export default async function RootLayout({
       logger.errorWithData(error),
       'RootLayout'
     )
-    throw error
+
+    // Return basic layout even on error
+    return (
+      <html lang='en'>
+        <body suppressHydrationWarning className='overflow-x-hidden'>
+          {children}
+        </body>
+      </html>
+    )
   } finally {
     logger.timeEnd('root-layout-render')
   }

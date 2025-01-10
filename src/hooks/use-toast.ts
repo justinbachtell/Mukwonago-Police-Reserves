@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as Sentry from '@sentry/nextjs'
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 5000
+const TOAST_REMOVE_DELAY = process.env.NODE_ENV === 'test' ? 30000 : 5000
 
 type ToasterToast = {
   id: string

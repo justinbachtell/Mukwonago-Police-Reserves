@@ -20,6 +20,11 @@ export async function getAuthUserFromSupabase() {
     error: userError
   } = await supabase.auth.getUser()
 
+  if (userError?.message === 'Auth session missing!') {
+    logger.info('No auth session found', undefined, 'getUserFromSupabase')
+    return null
+  }
+
   if (!user || userError) {
     logger.error(
       'Failed to get Supabase user',

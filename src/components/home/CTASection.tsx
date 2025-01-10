@@ -9,35 +9,29 @@ interface CTASectionProps {
 
 export function CTASection({ isAuthenticated }: CTASectionProps) {
   return (
-    <div className='container mx-auto px-4 pb-20'>
-      <Card className='rounded-2xl bg-blue-700 p-12 text-center dark:bg-blue-800'>
-        <h2 className='mb-4 text-3xl font-bold text-white'>
-          Ready to Make a Difference?
-        </h2>
-        <p className='mx-auto mb-8 max-w-2xl text-blue-100'>
-          Join our team of dedicated reserve officers and help serve the
-          Mukwonago community
-        </p>
-        <div className='flex justify-center gap-4'>
-          <Button
-            asChild
-            variant='secondary'
-            className='rounded-lg bg-white px-8 py-6 text-lg text-blue-700 hover:bg-gray-100'
-          >
-            <Link href={isAuthenticated ? '/application' : '/sign-up'}>
-              {isAuthenticated ? 'Apply Now' : 'Sign Up'}
-              <ArrowRight className='ml-2' />
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant='secondary'
-            className='rounded-lg bg-white px-8 py-6 text-lg text-blue-700 hover:bg-gray-100'
-          >
-            <Link href='tel:2623632400'>Contact Us</Link>
-          </Button>
+    <section className='container relative mx-auto px-4 py-24 sm:px-8 sm:py-32'>
+      <Card className='group relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-white p-8 shadow-lg dark:bg-gray-950 sm:p-12'>
+        <div className='mx-auto max-w-4xl text-center'>
+          <h2 className='mb-4 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-4xl font-bold text-transparent dark:from-blue-400 dark:to-blue-600 sm:text-5xl'>
+            Ready to Make a Difference?
+          </h2>
+          <p className='mx-auto mb-12 max-w-2xl text-lg leading-relaxed text-gray-600 dark:text-gray-300 sm:text-xl'>
+            Join our team of dedicated reserve officers and help serve the
+            Mukwonago community
+          </p>
+          <div className='flex flex-col items-center gap-4 sm:flex-row sm:justify-center'>
+            <Button asChild size='default' variant='default'>
+              <Link href={isAuthenticated ? '/application' : '/sign-up'}>
+                Apply Now
+                <ArrowRight className='ml-2 transition-transform group-hover:translate-x-0.5' />
+              </Link>
+            </Button>
+            <Button asChild size='default' variant='outline'>
+              <Link href='tel:2623632400'>Contact Us</Link>
+            </Button>
+          </div>
         </div>
       </Card>
-    </div>
+    </section>
   )
 }

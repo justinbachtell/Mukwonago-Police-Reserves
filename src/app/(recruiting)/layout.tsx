@@ -16,7 +16,7 @@ export default async function RecruitingLayout({
   try {
     return (
       <BaseTemplate>
-        <div className='[&_p]:my-6'>{children}</div>
+        <div>{children}</div>
       </BaseTemplate>
     )
   } catch (error) {

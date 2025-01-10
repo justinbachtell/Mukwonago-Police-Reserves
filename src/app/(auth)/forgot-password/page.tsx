@@ -59,7 +59,11 @@ export default async function ForgotPasswordPage() {
       'ForgotPasswordPage'
     )
     logger.timeEnd('forgot-password-page-load')
-    return <ForgotPasswordForm />
+    return (
+      <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+        <ForgotPasswordForm />
+      </div>
+    )
   } catch (error) {
     logger.error(
       'Error in forgot password page',

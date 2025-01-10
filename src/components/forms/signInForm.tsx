@@ -18,7 +18,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/client'
 import { createLogger } from '@/lib/debug'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import type { Factor } from '@supabase/supabase-js'
 
 const logger = createLogger({
@@ -26,15 +26,49 @@ const logger = createLogger({
   file: 'signInForm.tsx'
 })
 
+type FormErrors = {
+  email?: string
+  password?: string
+}
+
 export default function SignInForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
   const router = useRouter()
+  const { toast } = useToast()
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {}
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/
+    if (!email) {
+      newErrors.email = 'Email is required'
+    } else if (!emailRegex.test(email)) {
+      newErrors.email = 'Please enter a valid email address'
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = 'Password is required'
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!validateForm()) {
+      return
+    }
+
     const signInLabel = `sign-in-${email}`
     logger.info('Initiating sign in process', { email }, 'handleSubmit')
     logger.time(signInLabel)
@@ -61,7 +95,11 @@ export default function SignInForm() {
           },
           'handleSubmit'
         )
-        toast.error(error.message || 'Failed to sign in')
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to sign in',
+          variant: 'destructive'
+        })
         return
       }
 
@@ -71,7 +109,11 @@ export default function SignInForm() {
           { email },
           'handleSubmit'
         )
-        toast.error('Failed to sign in')
+        toast({
+          title: 'Error',
+          description: 'Failed to sign in',
+          variant: 'destructive'
+        })
         return
       }
 
@@ -88,7 +130,11 @@ export default function SignInForm() {
           },
           'handleSubmit'
         )
-        toast.error('Failed to check MFA status')
+        toast({
+          title: 'Error',
+          description: 'Failed to check MFA status',
+          variant: 'destructive'
+        })
         return
       }
 
@@ -119,6 +165,12 @@ export default function SignInForm() {
         'handleSubmit'
       )
 
+      // Show success toast
+      toast({
+        title: 'Success',
+        description: 'Successfully signed in'
+      })
+
       // Refresh to ensure server state is updated
       router.refresh()
       router.push('/user/dashboard')
@@ -128,7 +180,11 @@ export default function SignInForm() {
         logger.errorWithData(error),
         'handleSubmit'
       )
-      toast.error('An unexpected error occurred')
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive'
+      })
     } finally {
       setLoading(false)
       logger.timeEnd(signInLabel)
@@ -136,7 +192,7 @@ export default function SignInForm() {
   }
 
   return (
-    <Card className='w-full max-w-md shadow-lg'>
+    <Card className='mt-16 w-full max-w-md justify-center shadow-lg dark:bg-gray-950 dark:shadow-2xl dark:shadow-blue-900/20'>
       <CardHeader className='space-y-3 pb-8'>
         <CardTitle className='text-center text-2xl font-bold'>
           Welcome Back
@@ -159,10 +215,16 @@ export default function SignInForm() {
                   type='email'
                   placeholder='name@example.com'
                   required
-                  className='pl-10'
-                  onChange={e => setEmail(e.target.value)}
+                  className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
+                  onChange={e => {
+                    setEmail(e.target.value)
+                    setErrors(prev => ({ ...prev, email: undefined }))
+                  }}
                   value={email}
                 />
+                {errors.email && (
+                  <p className='mt-1 text-xs text-red-500'>{errors.email}</p>
+                )}
               </div>
             </div>
 
@@ -185,10 +247,16 @@ export default function SignInForm() {
                   type='password'
                   placeholder='••••••••'
                   required
-                  className='pl-10'
+                  className={`pl-10 ${errors.password ? 'border-red-500' : ''}`}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => {
+                    setPassword(e.target.value)
+                    setErrors(prev => ({ ...prev, password: undefined }))
+                  }}
                 />
+                {errors.password && (
+                  <p className='mt-1 text-xs text-red-500'>{errors.password}</p>
+                )}
               </div>
             </div>
 
