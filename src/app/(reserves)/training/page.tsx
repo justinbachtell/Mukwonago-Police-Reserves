@@ -23,7 +23,11 @@ export default async function TrainingPage() {
     logger.info('Fetching trainings', undefined, 'TrainingPage')
     const trainings = await getTrainings()
     logger.info('Trainings fetched', { trainings }, 'TrainingPage')
-    return <TrainingView training={trainings ?? []} />
+    return (
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
+        <TrainingView training={trainings ?? []} />
+      </div>
+    )
   } catch (error) {
     logger.error(
       'Error fetching trainings',

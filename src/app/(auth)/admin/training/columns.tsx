@@ -1,199 +1,180 @@
 'use client'
 
-import type { Training } from '@/types/training'
-import { Button } from '@/components/ui/button'
-import { format } from 'date-fns'
 import type { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, Users, Pencil, Trash } from 'lucide-react'
+import type { Training } from '@/types/training'
+import type { DBUser } from '@/types/user'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import { MoreHorizontal, Pencil, Trash } from 'lucide-react'
+import { toast } from 'sonner'
+import { deleteTraining } from '@/actions/training'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
+  DialogHeader,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { ParticipantsDialog } from '@/components/admin/training/ParticipantsDialog'
-import { TrainingForm } from '@/components/admin/forms/TrainingForm'
-import { deleteTraining } from '@/actions/training'
-import { toast } from 'sonner'
+import { TrainingForm } from '@/components/admin/training/TrainingForm'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createLogger } from '@/lib/debug'
 
-type TrainingWithCounts = Training & {
-  participants: number
-  total_participants: number
+const logger = createLogger({
+  module: 'admin',
+  file: 'columns.tsx'
+})
+
+function TrainingActions({
+  training,
+  availableUsers
+}: {
+  training: Training
+  availableUsers: DBUser[]
+}) {
+  const [open, setOpen] = useState(false)
+  const router = useRouter()
+
+  const handleDelete = async () => {
+    try {
+      const result = await deleteTraining(training.id)
+      if (result) {
+        toast.success('Training deleted successfully')
+        router.refresh()
+      } else {
+        toast.error('Failed to delete training')
+      }
+    } catch (error) {
+      logger.error(
+        'Error deleting training',
+        logger.errorWithData(error),
+        'columns'
+      )
+      toast.error('Failed to delete training')
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant='ghost' className='size-8 p-0'>
+            <span className='sr-only'>Open menu</span>
+            <MoreHorizontal className='size-4' />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='end'>
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DialogTrigger asChild>
+            <DropdownMenuItem>
+              <Pencil className='mr-2 size-4' />
+              Edit
+            </DropdownMenuItem>
+          </DialogTrigger>
+          <DropdownMenuItem onClick={handleDelete}>
+            <Trash className='mr-2 size-4' />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-[600px]'>
+        <DialogHeader>
+          <DialogTitle>Edit Training</DialogTitle>
+        </DialogHeader>
+        <TrainingForm
+          training={training}
+          availableUsers={availableUsers}
+          onSuccess={() => {
+            setOpen(false)
+            router.refresh()
+          }}
+        />
+      </DialogContent>
+    </Dialog>
+  )
 }
 
-export const columns: ColumnDef<TrainingWithCounts>[] = [
+export const createColumns = (
+  availableUsers: DBUser[]
+): ColumnDef<Training>[] => [
   {
     accessorKey: 'name',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Name
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      )
-    },
-    cell: ({ row }) => {
-      return (
-        <div className='flex flex-col px-4'>
-          <span className='truncate'>{row.original.name}</span>
-        </div>
-      )
-    }
+    header: 'Training Name'
   },
   {
     accessorKey: 'training_type',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Type
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      )
-    },
+    header: 'Type',
     cell: ({ row }) => {
+      const type = row.getValue('training_type') as string
       return (
-        <div className='flex flex-col px-4'>
-          <span className='truncate'>
-            {row.original.training_type.charAt(0).toUpperCase() +
-              row.original.training_type.slice(1)}
-          </span>
-        </div>
+        <Badge variant='outline' className='capitalize'>
+          {type.replace(/_/g, ' ')}
+        </Badge>
       )
     }
   },
   {
     accessorKey: 'training_date',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Date
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      )
-    },
+    header: 'Date',
     cell: ({ row }) => {
-      return (
-        <div className='flex flex-col px-4'>
-          <span className='truncate'>
-            {format(new Date(row.getValue('training_date')), 'PPP')}
-          </span>
-        </div>
-      )
+      const date = row.getValue('training_date') as string
+      return new Date(date).toLocaleDateString()
     }
   },
   {
-    accessorKey: 'training_location',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Location
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      )
-    },
+    accessorKey: 'training_start_time',
+    header: 'Start Time',
     cell: ({ row }) => {
-      return (
-        <div className='flex flex-col px-4'>
-          <span className='truncate'>{row.original.training_location}</span>
-        </div>
-      )
+      const time = row.getValue('training_start_time') as string
+      return new Date(time).toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit'
+      })
     }
   },
   {
-    accessorKey: 'participants',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Participants
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      )
-    },
+    accessorKey: 'training_end_time',
+    header: 'End Time',
     cell: ({ row }) => {
-      const training = row.original
-      return (
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant='ghost' className='flex items-center gap-2'>
-              <Users className='size-4' />
-              <span>{training.assignments?.length || 0}</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-[600px]'>
-            <DialogHeader>
-              <DialogTitle>Training Participants</DialogTitle>
-              <DialogDescription>
-                View and manage training participants
-              </DialogDescription>
-            </DialogHeader>
-            <ParticipantsDialog training={training} />
-          </DialogContent>
-        </Dialog>
+      const time = row.getValue('training_end_time') as string
+      return new Date(time).toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit'
+      })
+    }
+  },
+  {
+    accessorKey: 'instructor',
+    header: 'Instructor',
+    cell: ({ row }) => {
+      const instructor = row.original.instructor
+      return instructor ? (
+        <Badge variant='outline'>
+          {instructor.first_name} {instructor.last_name}
+        </Badge>
+      ) : (
+        <Badge variant='outline' className='opacity-50'>
+          No instructor
+        </Badge>
       )
     }
   },
   {
     id: 'actions',
-    cell: ({ row }) => {
-      const training = row.original
-
-      const handleDelete = async () => {
-        try {
-          await deleteTraining(training.id)
-          toast.success('Training deleted successfully')
-          // Note: You'll need to refresh the data after deletion
-        } catch (error) {
-          console.error('Error deleting training:', error)
-          toast.error('Failed to delete training')
-        }
-      }
-
-      return (
-        <div className='flex items-center gap-2'>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant='ghost' size='icon'>
-                <Pencil className='size-4' />
-                <span className='sr-only'>Edit training</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-[600px]'>
-              <DialogHeader>
-                <DialogTitle>Edit Training</DialogTitle>
-              </DialogHeader>
-              <TrainingForm
-                training={training}
-                onSuccess={() => {
-                  toast.success('Training updated successfully')
-                  // Note: You'll need to refresh the data after update
-                }}
-              />
-            </DialogContent>
-          </Dialog>
-
-          <Button variant='ghost' size='icon' onClick={handleDelete}>
-            <Trash className='size-4' />
-            <span className='sr-only'>Delete training</span>
-          </Button>
-        </div>
-      )
-    }
+    cell: ({ row }) => (
+      <TrainingActions
+        training={row.original}
+        availableUsers={availableUsers}
+      />
+    )
   }
 ]

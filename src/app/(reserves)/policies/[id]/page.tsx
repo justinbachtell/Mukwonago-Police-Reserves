@@ -61,7 +61,7 @@ export default async function PolicyPage({ params }: Props) {
     const { policy, url } = policyData
 
     return (
-      <div className='container mx-auto py-6'>
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
         <div className='flex flex-col gap-8'>
           <div className='flex flex-col gap-2'>
             <h1 className='text-2xl font-bold'>{policy.name}</h1>

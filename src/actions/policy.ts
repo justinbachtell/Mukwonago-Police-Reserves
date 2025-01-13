@@ -273,17 +273,33 @@ export async function getAllPolicies(): Promise<Policy[]> {
   logger.time('fetch-all-policies')
 
   try {
-    const policyRecords = await db.select().from(policies)
+    const policyRecords = await db.query.policies.findMany({
+      with: {
+        completions: {
+          with: {
+            user: true
+          }
+        }
+      }
+    })
 
     logger.info(
       'Policies retrieved',
-      { count: policyRecords.length },
+      {
+        count: policyRecords.length,
+        withCompletions: policyRecords.filter(
+          p => p.completions && p.completions.length > 0
+        ).length,
+        firstPolicy: policyRecords[0]?.name,
+        lastPolicy: policyRecords[policyRecords.length - 1]?.name
+      },
       'getAllPolicies'
     )
     logger.timeEnd('fetch-all-policies')
 
     return policyRecords.map(policy => ({
       ...policy,
+      completions: policy.completions || [],
       effective_date: toISOString(policy.effective_date),
       created_at: toISOString(policy.created_at),
       updated_at: toISOString(policy.updated_at)

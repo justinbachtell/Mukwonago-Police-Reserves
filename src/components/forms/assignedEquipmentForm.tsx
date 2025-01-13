@@ -123,7 +123,7 @@ export function AssignedEquipmentForm({
         // Convert null equipment to undefined to match AssignedEquipment type
         const processedEquipment = equipment.map(item => ({
           ...item,
-          equipment: item.equipment || undefined
+          equipment: item.equipment || null
         }))
 
         const sortedEquipment = processedEquipment.sort(

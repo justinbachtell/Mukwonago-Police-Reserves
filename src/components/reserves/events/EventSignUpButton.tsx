@@ -9,7 +9,7 @@ import {
 import { getCurrentUser } from '@/actions/user'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
-import { toISOString } from '@/lib/utils'
+import { Loader2 } from 'lucide-react'
 
 interface EventSignUpButtonProps {
   event: Event
@@ -20,7 +20,20 @@ export function EventSignUpButton({ event }: EventSignUpButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const isEventPast = () => {
-    return toISOString(new Date(event.event_end_time)) < toISOString(new Date())
+    try {
+      const eventDate = new Date(event.event_date)
+      const now = new Date()
+      return eventDate < now
+    } catch (error) {
+      console.error('Error comparing dates:', error)
+      return false
+    }
+  }
+
+  const isEventFull = () => {
+    const currentParticipants = event.assignments?.length || 0
+    const maxParticipants = event.max_participants || 0
+    return currentParticipants >= maxParticipants
   }
 
   useEffect(() => {
@@ -30,7 +43,6 @@ export function EventSignUpButton({ event }: EventSignUpButtonProps) {
         return
       }
 
-      // Check if user is already signed up for this event
       const assignments = event.assignments || []
       const isUserSignedUp = assignments.some(
         assignment => assignment.user_id === user.id
@@ -39,7 +51,7 @@ export function EventSignUpButton({ event }: EventSignUpButtonProps) {
     }
 
     checkSignUpStatus()
-  }, [event])
+  }, [event.id, event.event_date, event.assignments])
 
   const handleSignUp = async () => {
     try {
@@ -71,22 +83,53 @@ export function EventSignUpButton({ event }: EventSignUpButtonProps) {
   }
 
   const isPast = isEventPast()
+  const isFull = isEventFull()
 
   if (isPast) {
     return (
-      <Button variant='outline' disabled>
+      <Button
+        variant='ghost'
+        size='sm'
+        className='w-[140px] bg-gray-100 text-gray-500 dark:bg-gray-800'
+        disabled
+      >
         Event Ended
+      </Button>
+    )
+  }
+
+  if (isFull && !isSignedUp) {
+    return (
+      <Button
+        variant='ghost'
+        size='sm'
+        className='w-[140px] bg-yellow-50 text-yellow-600 dark:bg-yellow-950/50 dark:text-yellow-400'
+        disabled
+      >
+        Event Full
       </Button>
     )
   }
 
   return (
     <Button
+      key={`${event.id}-${event.event_date}`}
       variant={isSignedUp ? 'destructive' : 'default'}
+      size='sm'
       onClick={handleSignUp}
       disabled={isLoading}
+      className='w-[140px]'
     >
-      {isLoading ? 'Processing...' : isSignedUp ? 'Leave Event' : 'Sign Up'}
+      {isLoading ? (
+        <>
+          <Loader2 className='mr-1 size-4 animate-spin' />
+          Processing
+        </>
+      ) : isSignedUp ? (
+        'Leave Event'
+      ) : (
+        'Sign Up'
+      )}
     </Button>
   )
 }

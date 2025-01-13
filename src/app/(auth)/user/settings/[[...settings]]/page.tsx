@@ -2,6 +2,7 @@ import { UserSettingsForm } from '@/components/forms/userSettingsForm'
 import { Loader2 } from 'lucide-react'
 import { getCurrentUser } from '@/actions/user'
 import { createLogger } from '@/lib/debug'
+import { Toaster } from '@/components/ui/toaster'
 
 const logger = createLogger({
   module: 'settings',
@@ -19,13 +20,14 @@ export default async function SettingsPage() {
   try {
     const user = await getCurrentUser()
     return (
-      <div className='container mx-auto py-6'>
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
         <h1 className='mb-8 text-2xl font-bold'>Account Settings</h1>
         {user ? (
           <UserSettingsForm user={user} />
         ) : (
           <Loader2 className='size-4 animate-spin' />
         )}
+        <Toaster />
       </div>
     )
   } catch (error) {

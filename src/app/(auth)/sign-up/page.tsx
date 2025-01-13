@@ -18,8 +18,10 @@ export default async function SignUpPage() {
   try {
     logger.info('Rendering registration form', undefined, 'SignUpPage')
     return (
-      <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
-        <SignUpForm />
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
+        <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+          <SignUpForm />
+        </div>
       </div>
     )
   } catch (error) {

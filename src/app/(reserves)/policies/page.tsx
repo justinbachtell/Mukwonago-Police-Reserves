@@ -37,7 +37,7 @@ export default async function PoliciesPage() {
     const { policies, completedPolicies } = data
 
     return (
-      <div className='container mx-auto py-6'>
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
         <h1 className='mb-6 text-2xl font-bold'>Policies</h1>
         <div className='flex flex-col gap-6'>
           <PoliciesTable

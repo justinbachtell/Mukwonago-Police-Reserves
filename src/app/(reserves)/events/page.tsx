@@ -60,7 +60,11 @@ export default async function EventsPage() {
 
     logger.info('Events fetched successfully', { metadata }, 'EventsPage')
 
-    return <EventsView events={events} />
+    return (
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
+        <EventsView events={events} />
+      </div>
+    )
   } catch (error) {
     logger.error(
       'Error in events page',

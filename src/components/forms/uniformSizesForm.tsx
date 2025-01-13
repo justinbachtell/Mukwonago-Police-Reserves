@@ -233,7 +233,7 @@ export function UniformSizesForm({
 
   try {
     return (
-      <Card className='flex flex-col p-6 shadow-md md:col-span-3'>
+      <Card className='flex w-full flex-col p-6 shadow-md xl:max-w-[450px]'>
         <h2 className='mb-6 text-xl font-semibold text-gray-900 dark:text-white'>
           Uniform Sizes
         </h2>

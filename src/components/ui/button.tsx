@@ -13,11 +13,12 @@ const buttonVariants = cva(
     variants: {
       size: {
         default:
-          'h-[60px] w-full rounded-[20px] px-8 text-xl font-medium sm:w-auto',
+          'h-10 w-full rounded-[20px] px-4 text-base font-medium sm:w-auto',
         icon: 'size-10',
         sidebar: 'size-16',
         lg: 'h-11 rounded-md px-8',
-        sm: 'h-9 rounded-md px-3'
+        sm: 'h-9 rounded-md px-3',
+        tableColumn: 'w-fit rounded-md px-4 py-2 text-base font-medium'
       },
       variant: {
         default:

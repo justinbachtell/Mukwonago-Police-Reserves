@@ -206,7 +206,7 @@ export default function ProfilePage() {
   logger.info('Rendering profile page', undefined, 'ProfilePage')
 
   return (
-    <div className='container mx-auto space-y-6 py-6'>
+    <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
       <Suspense
         fallback={
           <LoadingShell className='flex items-center gap-6'>

@@ -5,24 +5,42 @@ import type { CompletionWithUser } from '@/components/admin/policies/PolicyCompl
 import { Button } from '@/components/ui/button'
 import { resetPolicyCompletion } from '@/actions/policy'
 import { format } from 'date-fns'
+import { createLogger } from '@/lib/debug'
 
-const DEBUG = process.env.NODE_ENV === 'development'
+const logger = createLogger({
+  module: 'admin',
+  file: 'columns.tsx'
+})
 
 async function handleReset(formData: FormData) {
-  DEBUG &&
-    console.log('[PolicyCompletionsColumns] Resetting completion:', {
-      policyId: formData.get('policyId'),
-      userId: formData.get('userId')
-    })
-  await resetPolicyCompletion(formData)
+  const policyId = formData.get('policyId')
+  const userId = formData.get('userId')
+
+  logger.info(
+    'Resetting policy completion',
+    { policyId, userId },
+    'handleReset'
+  )
+
+  try {
+    await resetPolicyCompletion(formData)
+    logger.info(
+      'Successfully reset policy completion',
+      { policyId, userId },
+      'handleReset'
+    )
+  } catch (error) {
+    logger.error(
+      'Failed to reset policy completion',
+      logger.errorWithData(error),
+      'handleReset'
+    )
+    throw error
+  }
 }
 
 export const columns = (policyId: number): ColumnDef<CompletionWithUser>[] => {
-  DEBUG &&
-    console.log(
-      '[PolicyCompletionsColumns] Initializing columns for policy:',
-      policyId
-    )
+  logger.info('Initializing completion columns', { policyId }, 'columns')
 
   return [
     {
@@ -30,22 +48,43 @@ export const columns = (policyId: number): ColumnDef<CompletionWithUser>[] => {
         const userName = row.user
           ? `${row.user.first_name} ${row.user.last_name}`
           : 'Unknown User'
-        DEBUG &&
-          console.log(
-            '[PolicyCompletionsColumns] Formatting user name:',
-            userName
-          )
+        logger.debug(
+          'Formatting user name',
+          { userName, userId: row.user?.id },
+          'accessorFn'
+        )
         return userName
       },
       header: 'User'
     },
     {
       accessorKey: 'created_at',
-      header: 'Completion Date',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant='ghost'
+            size='tableColumn'
+            onClick={() => {
+              logger.debug(
+                'Toggling completion date sort',
+                { currentSort: column.getIsSorted() },
+                'header'
+              )
+              column.toggleSorting(column.getIsSorted() === 'asc')
+            }}
+            className='flex'
+          >
+            Completion Date
+          </Button>
+        )
+      },
       cell: ({ row }) => {
         const date = format(new Date(row.getValue('created_at')), 'MM/dd/yyyy')
-        DEBUG &&
-          console.log('[PolicyCompletionsColumns] Formatting date:', date)
+        logger.debug(
+          'Formatting completion date',
+          { date, rowId: row.id },
+          'cell'
+        )
         return date
       }
     },

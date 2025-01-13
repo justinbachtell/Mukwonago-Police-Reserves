@@ -71,7 +71,11 @@ export default async function VerifyMFAPage({ searchParams }: PageProps) {
       'VerifyMFAPage'
     )
     logger.timeEnd('verify-mfa-page-load')
-    return <VerifyMFA factorId={factorId} />
+    return (
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
+        <VerifyMFA factorId={factorId} />
+      </div>
+    )
   } catch (error) {
     logger.error(
       'Error in MFA verification page',

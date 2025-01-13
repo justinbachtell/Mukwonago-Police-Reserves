@@ -9,16 +9,16 @@ import { updateUser } from '@/actions/user';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Form } from '@/components/ui/form'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
-import { STATES } from '@/libs/States';
+  SelectValue
+} from '@/components/ui/select'
+import { toast } from '@/hooks/use-toast'
+import { STATES } from '@/libs/States'
 import { createClient } from '@/lib/client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AssignedEquipmentForm } from './assignedEquipmentForm'
@@ -26,6 +26,8 @@ import { EmergencyContactForm } from './emergencyContactForm'
 import { UniformSizesForm } from './uniformSizesForm'
 import { createLogger } from '@/lib/debug'
 import type { Session } from '@supabase/supabase-js'
+import { useForm } from 'react-hook-form'
+import { Label } from '@/components/ui/label'
 
 const logger = createLogger({
   module: 'forms',
@@ -102,6 +104,21 @@ export function ProfileForm({
   const [user, setUser] = useState(initialUser)
   const [currentSizes, setCurrentSizes] = useState(initialSizes)
   const [assignedEquipment, setAssignedEquipment] = useState(currentEquipment)
+  const [formData, setFormData] = useState({
+    city: user.city || '',
+    driver_license: user.driver_license || '',
+    driver_license_state: user.driver_license_state || '',
+    first_name: user.first_name || '',
+    last_name: user.last_name || '',
+    phone: user.phone || '',
+    state: user.state || '',
+    street_address: user.street_address || '',
+    zip_code: user.zip_code || ''
+  })
+
+  const form = useForm({
+    defaultValues: formData
+  })
 
   // Create refs for child form save functions
   const uniformSizesSaveRef = useRef<(() => Promise<SaveResult>) | null>(null)
@@ -166,18 +183,6 @@ export function ProfileForm({
       subscription.unsubscribe()
     }
   }, [supabase.auth])
-
-  const [formData, setFormData] = useState({
-    city: user.city || '',
-    driver_license: user.driver_license || '',
-    driver_license_state: user.driver_license_state || '',
-    first_name: user.first_name || '',
-    last_name: user.last_name || '',
-    phone: user.phone || '',
-    state: user.state || '',
-    street_address: user.street_address || '',
-    zip_code: user.zip_code || ''
-  })
 
   const hasFormChanged = useCallback((): boolean => {
     logger.debug(
@@ -402,208 +407,254 @@ export function ProfileForm({
   }
 
   return (
-    <div className='flex flex-col gap-8 md:grid md:grid-cols-12'>
-      {/* Personal Information */}
-      <Card className='flex flex-col p-6 shadow-md md:col-span-8'>
-        <h2 className='mb-6 text-xl font-semibold text-gray-900 dark:text-white'>
-          Personal Information
-        </h2>
-        <div className='space-y-4'>
-          <div className='flex flex-col gap-4 md:grid md:grid-cols-12'>
-            <div className='flex flex-col space-y-2 md:col-span-6'>
-              <Label htmlFor='first_name'>First Name</Label>
-              <Input
-                id='first_name'
-                name='first_name'
-                value={formData.first_name}
-                onChange={handleChange}
-                className='w-full'
-              />
+    <Form {...form}>
+      <form className='mx-auto max-w-5xl space-y-6 py-10'>
+        <div className='flex flex-row flex-wrap gap-6'>
+          {/* Personal Information */}
+          <Card className='w-full shadow-sm xl:max-w-[450px]'>
+            <div className='border-b border-b-muted/20 bg-muted/5 px-7 py-4'>
+              <h2 className='font-semibold tracking-tight'>
+                Personal Information
+              </h2>
             </div>
-            <div className='flex flex-col space-y-2 md:col-span-6'>
-              <Label htmlFor='last_name'>Last Name</Label>
-              <Input
-                id='last_name'
-                name='last_name'
-                value={formData.last_name}
-                onChange={handleChange}
-                className='w-full'
-              />
-            </div>
-          </div>
+            <div className='p-7'>
+              <div className='grid gap-8'>
+                <div className='grid gap-6 sm:grid-cols-2'>
+                  <div>
+                    <Label htmlFor='first_name' className='text-sm font-medium'>
+                      First Name
+                    </Label>
+                    <Input
+                      id='first_name'
+                      name='first_name'
+                      value={formData.first_name}
+                      onChange={handleChange}
+                      className='mt-2'
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor='last_name' className='text-sm font-medium'>
+                      Last Name
+                    </Label>
+                    <Input
+                      id='last_name'
+                      name='last_name'
+                      value={formData.last_name}
+                      onChange={handleChange}
+                      className='mt-2'
+                    />
+                  </div>
+                </div>
 
-          <div className='flex flex-col gap-4 md:grid md:grid-cols-12'>
-            <div className='flex flex-col space-y-2 md:col-span-6'>
-              <Label htmlFor='email'>Email</Label>
-              <Input
-                id='email'
-                name='email'
-                type='email'
-                value={session?.user?.email ?? ''}
-                className='w-full'
-                disabled
-              />
-            </div>
+                <div className='grid gap-6 sm:grid-cols-2'>
+                  <div>
+                    <Label htmlFor='email' className='text-sm font-medium'>
+                      Email
+                    </Label>
+                    <Input
+                      id='email'
+                      name='email'
+                      type='email'
+                      value={session?.user?.email ?? ''}
+                      disabled
+                      className='mt-2 bg-muted'
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor='phone' className='text-sm font-medium'>
+                      Phone Number
+                    </Label>
+                    <Input
+                      id='phone'
+                      name='phone'
+                      type='tel'
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder='(123) 456-7890'
+                      maxLength={14}
+                      className='mt-2'
+                    />
+                  </div>
+                </div>
 
-            <div className='flex flex-col space-y-2 md:col-span-6'>
-              <Label htmlFor='phone'>Phone Number</Label>
-              <Input
-                id='phone'
-                name='phone'
-                type='tel'
-                value={formData.phone}
-                onChange={handleChange}
-                className='w-full'
-                placeholder='(123) 456-7890'
-                maxLength={14}
-              />
-            </div>
-          </div>
-
-          <div className='flex flex-col gap-4 md:grid md:grid-cols-12'>
-            <div className='flex flex-col space-y-2 md:col-span-8'>
-              <Label htmlFor='driver_license'>Driver's License Number</Label>
-              <Input
-                id='driver_license'
-                name='driver_license'
-                value={formData.driver_license}
-                onChange={handleChange}
-                className='w-full'
-              />
-            </div>
-            <div className='flex flex-col space-y-2 md:col-span-4'>
-              <Label htmlFor='driver_license_state'>
-                Driver's License State
-              </Label>
-              <Select
-                value={formData.driver_license_state}
-                onValueChange={value => {
-                  logger.debug(
-                    'Driver license state changed',
-                    { value },
-                    'onValueChange'
-                  )
-                  setFormData(prev => ({
-                    ...prev,
-                    driver_license_state: value
-                  }))
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Select state' />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATES.map(state => (
-                    <SelectItem
-                      key={state.abbreviation}
-                      value={state.abbreviation}
+                <div className='grid gap-6 sm:grid-cols-2'>
+                  <div>
+                    <Label
+                      htmlFor='driver_license'
+                      className='text-sm font-medium'
                     >
-                      {state.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      Driver's License Number
+                    </Label>
+                    <Input
+                      id='driver_license'
+                      name='driver_license'
+                      value={formData.driver_license}
+                      onChange={handleChange}
+                      className='mt-2'
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor='driver_license_state'
+                      className='text-sm font-medium'
+                    >
+                      Driver's License State
+                    </Label>
+                    <Select
+                      value={formData.driver_license_state}
+                      onValueChange={value => {
+                        setFormData(prev => ({
+                          ...prev,
+                          driver_license_state: value
+                        }))
+                      }}
+                    >
+                      <SelectTrigger className='mt-2'>
+                        <SelectValue placeholder='Select state' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATES.map(state => (
+                          <SelectItem
+                            key={state.abbreviation}
+                            value={state.abbreviation}
+                          >
+                            {state.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </Card>
-      {/* Address Information */};
-      <Card className='flex flex-col p-6 shadow-md md:col-span-4'>
-        <h2 className='mb-6 text-xl font-semibold text-gray-900 dark:text-white'>
-          Address Information
-        </h2>
-        <div className='space-y-4'>
-          <div className='flex flex-col space-y-2 md:col-span-12'>
-            <Label htmlFor='street_address'>Street Address</Label>
-            <Input
-              id='street_address'
-              name='street_address'
-              value={formData.street_address}
-              onChange={handleChange}
-              className='w-full'
+          </Card>
+
+          {/* Address Information */}
+          <Card className='w-full shadow-sm xl:max-w-[450px]'>
+            <div className='border-b border-b-muted/20 bg-muted/5 px-7 py-4'>
+              <h2 className='font-semibold tracking-tight'>
+                Address Information
+              </h2>
+            </div>
+            <div className='p-7'>
+              <div className='grid gap-8'>
+                <div>
+                  <Label
+                    htmlFor='street_address'
+                    className='text-sm font-medium'
+                  >
+                    Street Address
+                  </Label>
+                  <Input
+                    id='street_address'
+                    name='street_address'
+                    value={formData.street_address}
+                    onChange={handleChange}
+                    className='mt-2'
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor='city' className='text-sm font-medium'>
+                    City
+                  </Label>
+                  <Input
+                    id='city'
+                    name='city'
+                    value={formData.city}
+                    onChange={handleChange}
+                    className='mt-2'
+                  />
+                </div>
+
+                <div className='grid gap-6 sm:grid-cols-2'>
+                  <div>
+                    <Label htmlFor='state' className='text-sm font-medium'>
+                      State
+                    </Label>
+                    <Select
+                      value={formData.state}
+                      onValueChange={value => {
+                        setFormData(prev => ({ ...prev, state: value }))
+                      }}
+                    >
+                      <SelectTrigger className='mt-2'>
+                        <SelectValue placeholder='Select state' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATES.map(state => (
+                          <SelectItem
+                            key={state.abbreviation}
+                            value={state.abbreviation}
+                          >
+                            {state.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor='zip_code' className='text-sm font-medium'>
+                      ZIP Code
+                    </Label>
+                    <Input
+                      id='zip_code'
+                      name='zip_code'
+                      value={formData.zip_code}
+                      onChange={handleChange}
+                      maxLength={5}
+                      placeholder='12345'
+                      className='mt-2'
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Uniform Sizes */}
+          <UniformSizesForm
+            user={user}
+            currentSizes={currentSizes}
+            saveRef={uniformSizesSaveRef}
+          />
+
+          {/* Emergency Contact */}
+          <EmergencyContactForm
+            user={user}
+            currentContact={currentEmergencyContact}
+            saveRef={emergencyContactSaveRef}
+          />
+
+          {/* Equipment */}
+          {assignedEquipment && (
+            <AssignedEquipmentForm
+              user={user}
+              saveRef={assignedEquipmentSaveRef}
             />
-          </div>
-
-          <div className='flex flex-col gap-4 md:grid md:grid-cols-12'>
-            <div className='flex flex-col space-y-2 md:col-span-12'>
-              <Label htmlFor='city'>City</Label>
-              <Input
-                id='city'
-                name='city'
-                value={formData.city}
-                onChange={handleChange}
-                className='w-full'
-              />
-            </div>
-          </div>
-
-          <div className='flex flex-col gap-4 md:grid md:grid-cols-12'>
-            <div className='flex flex-col space-y-2 md:col-span-6'>
-              <Label htmlFor='state'>State</Label>
-              <Select
-                value={formData.state}
-                onValueChange={value => {
-                  logger.debug('State changed', { value }, 'onValueChange')
-                  setFormData(prev => ({ ...prev, state: value }))
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Select state' />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATES.map(state => (
-                    <SelectItem
-                      key={state.abbreviation}
-                      value={state.abbreviation}
-                    >
-                      {state.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='flex flex-col space-y-2 md:col-span-6'>
-              <Label htmlFor='zip_code'>ZIP Code</Label>
-              <Input
-                id='zip_code'
-                name='zip_code'
-                value={formData.zip_code}
-                onChange={handleChange}
-                className='w-full'
-                maxLength={5}
-                placeholder='12345'
-              />
-            </div>
-          </div>
+          )}
         </div>
-      </Card>
-      {/* Uniform Sizes */}
-      <UniformSizesForm
-        user={user}
-        currentSizes={currentSizes}
-        saveRef={uniformSizesSaveRef}
-      />
-      {/* Emergency Contact */}
-      <EmergencyContactForm
-        user={user}
-        currentContact={currentEmergencyContact}
-        saveRef={emergencyContactSaveRef}
-      />
-      {/* Assigned Equipment */}
-      {assignedEquipment && (
-        <AssignedEquipmentForm user={user} saveRef={assignedEquipmentSaveRef} />
-      )}
-      {/* Save Button */}
-      <div className='flex flex-col items-end justify-center md:col-span-12'>
-        <Button
-          type='button'
-          className='rounded-lg bg-blue-700 px-8 py-2 text-white shadow-md hover:bg-blue-800 md:max-w-fit'
-          onClick={handleSaveAll}
-          disabled={isSaving || isLoading}
-        >
-          {isSaving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
-    </div>
+
+        {/* Save Button */}
+        <div className='mx-auto flex max-w-5xl justify-end'>
+          <Button
+            type='button'
+            size='lg'
+            onClick={handleSaveAll}
+            disabled={isSaving || isLoading}
+            className='min-w-[150px]'
+          >
+            {isSaving ? (
+              <>
+                <span className='mr-2 size-4 animate-spin rounded-full border-2 border-gray-300 border-t-white'></span>
+                Saving...
+              </>
+            ) : (
+              'Save Changes'
+            )}
+          </Button>
+        </div>
+      </form>
+    </Form>
   )
 }

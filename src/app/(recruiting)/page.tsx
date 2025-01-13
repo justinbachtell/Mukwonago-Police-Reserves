@@ -24,7 +24,7 @@ export const metadata = {
 // Hero section component - No async operations, renders immediately
 function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
-    <div className='relative overflow-hidden bg-white dark:bg-gray-950'>
+    <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
       {/* Subtle gradient background */}
       <div className='absolute inset-0 bg-gradient-to-b from-blue-50 to-transparent dark:from-blue-950/30 dark:to-transparent' />
 
@@ -43,6 +43,9 @@ function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
                 Apply Now
                 <ArrowRight className='ml-2 transition-transform group-hover:translate-x-0.5' />
               </Link>
+            </Button>
+            <Button asChild size='default' variant='outline'>
+              <Link href='/about'>Learn More</Link>
             </Button>
           </div>
         </div>

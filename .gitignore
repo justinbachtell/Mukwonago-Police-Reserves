@@ -7,6 +7,7 @@
 
 # Database
 *.db
+supabase/
 
 # testing
 /coverage

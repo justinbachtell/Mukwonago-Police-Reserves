@@ -11,6 +11,8 @@ export interface Event {
   event_start_time: string
   event_end_time: string
   notes: string | null
+  min_participants: number
+  max_participants: number
   created_at: string
   updated_at: string
 
@@ -28,6 +30,8 @@ export type NewEvent = {
   event_start_time: Date
   event_end_time: Date
   notes: string | null
+  min_participants: number
+  max_participants: number
 }
 
 // Type for updating existing events
@@ -39,6 +43,8 @@ export type UpdateEvent = Partial<{
   event_start_time: Date
   event_end_time: Date
   notes: string | null
+  min_participants: number
+  max_participants: number
 }>
 
 // Required fields when creating new events
@@ -50,4 +56,6 @@ export type RequiredEventFields = Pick<
   | 'event_name'
   | 'event_start_time'
   | 'event_end_time'
+  | 'min_participants'
+  | 'max_participants'
 >

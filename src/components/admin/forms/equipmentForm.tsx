@@ -46,9 +46,14 @@ type FormValues = z.infer<typeof formSchema>
 interface EquipmentFormProps {
   equipment?: Equipment
   onSuccess?: (equipment: Equipment) => void
+  closeDialog?: () => void
 }
 
-export function EquipmentForm({ equipment, onSuccess }: EquipmentFormProps) {
+export function EquipmentForm({
+  equipment,
+  onSuccess,
+  closeDialog
+}: EquipmentFormProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [session, setSession] = useState<Session | null>(null)
   const supabase = createClient()
@@ -176,6 +181,7 @@ export function EquipmentForm({ equipment, onSuccess }: EquipmentFormProps) {
           `Equipment ${equipment ? 'updated' : 'created'} successfully`
         )
         onSuccess?.(result as Equipment)
+        closeDialog?.()
         form.reset()
       }
     } catch (error) {

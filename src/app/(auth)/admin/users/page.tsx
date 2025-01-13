@@ -1,96 +1,66 @@
-import type { DBUser } from '@/types/user'
-import { getAllApplications } from '@/actions/application'
+import { UserManagementTable } from '@/components/admin/users/UserManagementTable'
 import { getAllUsers } from '@/actions/user'
-import { DataTable } from '@/components/ui/data-table'
-import { columns } from './columns'
+import { getAllApplications } from '@/actions/application'
 import { createLogger } from '@/lib/debug'
+import type { UserWithApplication } from './columns'
 
 const logger = createLogger({
   module: 'admin',
   file: 'users/page.tsx'
 })
 
-type UserWithApplication = DBUser & {
-  application_status: 'pending' | 'approved' | 'rejected' | null
-}
-
-export default async function UserManagementPage() {
-  logger.info('Rendering user management page', undefined, 'UserManagementPage')
-  logger.time('users-page-load')
+export default async function UsersPage() {
+  logger.info('Rendering users page', {}, 'UsersPage')
+  logger.time('users-page-render')
 
   try {
-    logger.info(
-      'Fetching users and applications',
-      undefined,
-      'UserManagementPage'
-    )
+    // Fetch users and applications in parallel
     const [users, applications] = await Promise.all([
       getAllUsers(),
       getAllApplications()
     ])
 
-    logger.info(
-      'Processing user data',
+    logger.debug(
+      'Fetched data',
       {
-        userCount: users?.length,
-        applicationCount: applications?.length
+        userCount: users.length,
+        applicationCount: applications.length
       },
-      'UserManagementPage'
+      'UsersPage'
     )
 
-    const usersWithApplications: UserWithApplication[] = (users ?? []).map(
-      user => {
-        const application = (applications ?? []).find(
-          app => app.user_id === user.id
-        )
-        logger.debug(
-          'Processing user application status',
-          {
-            userId: user.id,
-            applicationStatus: application?.status ?? null
-          },
-          'UserManagementPage'
-        )
-
-        return {
-          ...user,
-          application_status: application?.status ?? null,
-          created_at: user.created_at,
-          updated_at: user.updated_at
-        }
+    // Combine user data with application status
+    const usersWithApplications: UserWithApplication[] = users.map(user => {
+      const application = applications.find(app => app.user_id === user.id)
+      return {
+        ...user,
+        application_status: application?.status ?? null
       }
-    )
-
-    logger.info(
-      'User data processed successfully',
-      { totalUsers: usersWithApplications.length },
-      'UserManagementPage'
-    )
+    })
 
     return (
-      <div className='container mx-auto py-6'>
-        <div className='mb-4'>
-          <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>
-            User Management
-          </h1>
-          <p className='text-gray-600 dark:text-gray-300'>
-            Manage users, their roles, and equipment assignments.
-          </p>
-        </div>
-
-        <div className='w-full space-y-4 overflow-x-auto'>
-          <DataTable columns={columns} data={usersWithApplications} />
+      <div className='container mx-auto py-10'>
+        <div className='flex flex-col gap-4'>
+          <div>
+            <h1 className='text-3xl font-bold tracking-tight'>
+              User Management
+            </h1>
+            <p className='text-muted-foreground'>
+              Manage users, their roles, and equipment assignments.
+            </p>
+          </div>
+          <UserManagementTable data={usersWithApplications} />
         </div>
       </div>
     )
   } catch (error) {
     logger.error(
-      'Error in user management page',
+      'Error rendering users page',
       logger.errorWithData(error),
-      'UserManagementPage'
+      'UsersPage'
     )
     throw error
   } finally {
-    logger.timeEnd('users-page-load')
+    logger.timeEnd('users-page-render')
   }
 }

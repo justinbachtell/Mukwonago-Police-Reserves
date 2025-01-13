@@ -183,6 +183,7 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <Button
           variant='ghost'
+          size='tableColumn'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           First Name
@@ -209,6 +210,7 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <Button
           variant='ghost'
+          size='tableColumn'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Last Name
@@ -230,6 +232,7 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <Button
           variant='ghost'
+          size='tableColumn'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Email
@@ -251,6 +254,7 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <Button
           variant='ghost'
+          size='tableColumn'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Phone
@@ -284,6 +288,7 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <Button
           variant='ghost'
+          size='tableColumn'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Position
@@ -317,6 +322,7 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <Button
           variant='ghost'
+          size='tableColumn'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Status
@@ -335,6 +341,7 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <Button
           variant='ghost'
+          size='tableColumn'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Application
@@ -354,9 +361,32 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <Button
           variant='ghost'
+          size='tableColumn'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Resume
+          <ArrowUpDown className='ml-2 size-4' />
+        </Button>
+      )
+    }
+  },
+  {
+    accessorKey: 'created_at',
+    cell: ({ row }) => {
+      const createdAt = toISOString(new Date(row.getValue('created_at')))
+      return (
+        <div className='flex flex-col px-4'>
+          <span>{createdAt}</span>
+        </div>
+      )
+    },
+    header: ({ column }) => {
+      return (
+        <Button
+          variant='ghost'
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Applied On
           <ArrowUpDown className='ml-2 size-4' />
         </Button>
       )
@@ -414,29 +444,6 @@ export const columns: ColumnDef<Application>[] = [
         </div>
       )
     },
-    header: 'Actions',
     id: 'actions'
-  },
-  {
-    accessorKey: 'created_at',
-    cell: ({ row }) => {
-      const createdAt = toISOString(new Date(row.getValue('created_at')))
-      return (
-        <div className='flex flex-col px-4'>
-          <span>{createdAt}</span>
-        </div>
-      )
-    },
-    header: ({ column }) => {
-      return (
-        <Button
-          variant='ghost'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Applied On
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      )
-    }
   }
 ]

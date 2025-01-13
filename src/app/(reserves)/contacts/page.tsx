@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/actions/user';
-import { ContactsTable } from '@/components/reserves/ContactsTable';
+import { ContactsTable } from '@/components/reserves/contacts/ContactsTable'
 import { db } from '@/libs/DB'
 import { eq, or } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
@@ -64,7 +64,7 @@ export default async function ContactsPage() {
     )
 
     return (
-      <div className='container mx-auto py-6'>
+      <div className='container mx-auto'>
         <div className='mb-6 space-y-1'>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl'>
             Department Contacts

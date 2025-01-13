@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/client'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { createLogger } from '@/lib/debug'
 import { getCurrentUser } from '@/actions/user'
 import { BaseTemplate } from '@/templates/BaseTemplate'
@@ -21,6 +21,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const [_user, setUser] =
     useState<Awaited<ReturnType<typeof getCurrentUser>>>(null)
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
 
   useEffect(() => {
@@ -41,7 +42,10 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       } else if (event === 'SIGNED_IN') {
         const userData = await getCurrentUser()
         setUser(userData)
-        router.push('/user/dashboard')
+        // Only redirect to dashboard if we're on an auth page
+        if (pathname === '/sign-in' || pathname === '/sign-up') {
+          router.push('/user/dashboard')
+        }
       }
     })
 
@@ -54,7 +58,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [router, supabase.auth])
+  }, [router, supabase.auth, pathname])
 
   if (isLoading) {
     return <div>Loading...</div>

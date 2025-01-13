@@ -43,7 +43,12 @@ export const metadata: Metadata = {
 
 const aj = arcjet.withRule(
   detectBot({
-    allow: ['CATEGORY:SEARCH_ENGINE', 'CATEGORY:PREVIEW', 'CATEGORY:MONITOR'],
+    allow: [
+      'CATEGORY:SEARCH_ENGINE',
+      'CATEGORY:PREVIEW',
+      'CATEGORY:MONITOR',
+      'CATEGORY:TOOL'
+    ],
     mode: process.env.NODE_ENV === 'production' ? 'LIVE' : 'DRY_RUN'
   })
 )
@@ -81,15 +86,30 @@ export default async function RootLayout({
       logger.time('arcjet-verification')
       logger.info('Verifying request with Arcjet', undefined, 'RootLayout')
 
-      const req = await request()
-      const decision = await aj.protect(req)
+      try {
+        const decision = await aj.protect(await request())
 
-      if (decision.isDenied()) {
-        const error = decision.reason.isBot()
-          ? 'Bot access denied'
-          : 'Access denied by security rules'
-        logger.warn(error, { decision }, 'RootLayout')
-        throw new Error(error)
+        if (decision.conclusion === 'DENY') {
+          if (process.env.NODE_ENV === 'development') {
+            logger.warn('Arcjet would deny access in production', {
+              decision,
+              reason: decision.reason
+            })
+            // Continue in development
+          } else {
+            throw new Error('Access denied by security rules')
+          }
+        }
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          logger.error('Arcjet error (continuing in development)', {
+            error,
+            context: 'RootLayout'
+          })
+          // Continue in development
+        } else {
+          throw error
+        }
       }
 
       logger.info('Request verified successfully', undefined, 'RootLayout')

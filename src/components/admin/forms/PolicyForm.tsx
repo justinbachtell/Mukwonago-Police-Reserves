@@ -1,6 +1,7 @@
 'use client'
 
 import { createPolicy, uploadPolicy } from '@/actions/policy'
+import type { Policy } from '@/types/policy'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,10 +19,16 @@ const logger = createLogger({
 })
 
 interface PolicyFormProps {
+  policy?: Policy
   onSuccess?: () => void
+  closeDialog: () => void
 }
 
-export function PolicyForm({ onSuccess }: PolicyFormProps) {
+export function PolicyForm({
+  policy,
+  onSuccess,
+  closeDialog
+}: PolicyFormProps) {
   logger.time('policy-form-render')
 
   try {
@@ -145,6 +152,7 @@ export function PolicyForm({ onSuccess }: PolicyFormProps) {
             toast.success('Policy created successfully')
             router.refresh()
             onSuccess?.()
+            closeDialog()
           } catch (error) {
             logger.error(
               'Policy submission failed',
@@ -192,23 +200,37 @@ export function PolicyForm({ onSuccess }: PolicyFormProps) {
       <form onSubmit={handleSubmit} className='space-y-4'>
         <div className='space-y-2'>
           <Label htmlFor='name'>Policy Name</Label>
-          <Input id='name' name='name' required />
+          <Input id='name' name='name' defaultValue={policy?.name} required />
         </div>
 
         <div className='grid grid-cols-2 gap-4'>
           <div className='space-y-2'>
             <Label htmlFor='policy_number'>Policy Number</Label>
-            <Input id='policy_number' name='policy_number' required />
+            <Input
+              id='policy_number'
+              name='policy_number'
+              defaultValue={policy?.policy_number}
+              required
+            />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='policy_type'>Policy Type</Label>
-            <Input id='policy_type' name='policy_type' required />
+            <Input
+              id='policy_type'
+              name='policy_type'
+              defaultValue={policy?.policy_type}
+              required
+            />
           </div>
         </div>
 
         <div className='space-y-2'>
           <Label htmlFor='description'>Description</Label>
-          <Textarea id='description' name='description' />
+          <Textarea
+            id='description'
+            name='description'
+            defaultValue={policy?.description || ''}
+          />
         </div>
 
         <div className='space-y-2'>
@@ -217,6 +239,11 @@ export function PolicyForm({ onSuccess }: PolicyFormProps) {
             id='effective_date'
             name='effective_date'
             type='date'
+            defaultValue={
+              policy?.effective_date
+                ? new Date(policy.effective_date).toISOString().split('T')[0]
+                : undefined
+            }
             required
           />
         </div>
@@ -229,7 +256,7 @@ export function PolicyForm({ onSuccess }: PolicyFormProps) {
             type='file'
             accept='.pdf,.doc,.docx'
             onChange={handleFileChange}
-            required
+            required={!policy}
           />
           <p className='text-sm text-gray-500'>
             Accepted formats: PDF, DOC, DOCX (max 5MB)
@@ -237,7 +264,13 @@ export function PolicyForm({ onSuccess }: PolicyFormProps) {
         </div>
 
         <Button type='submit' disabled={isPending} className='w-full'>
-          {isPending ? 'Creating...' : 'Create Policy'}
+          {isPending
+            ? policy
+              ? 'Updating...'
+              : 'Creating...'
+            : policy
+              ? 'Update Policy'
+              : 'Create Policy'}
         </Button>
       </form>
     )

@@ -22,7 +22,13 @@ export default async function ResetPasswordPage() {
   try {
     logger.info('Rendering reset password form', undefined, 'ResetPasswordPage')
     logger.timeEnd('reset-password-page-load')
-    return <ResetPasswordForm />
+    return (
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
+        <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+          <ResetPasswordForm />
+        </div>
+      </div>
+    )
   } catch (error) {
     logger.error(
       'Error in reset password page',
