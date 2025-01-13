@@ -295,7 +295,7 @@ export function EmergencyContactForm({
     return (
       <>
         {/* Personal Information */}
-        <Card className='flex flex-col p-6 shadow-md md:col-span-9'>
+        <Card className='flex w-full flex-col p-6 shadow-md xl:max-w-[450px]'>
           <h2 className='mb-6 text-xl font-semibold text-gray-900 dark:text-white'>
             Emergency Contact
           </h2>

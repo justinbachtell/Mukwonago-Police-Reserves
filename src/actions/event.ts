@@ -40,6 +40,8 @@ export async function getAllEvents() {
       event_date: new Date(event.event_date),
       event_end_time: new Date(event.event_end_time),
       event_start_time: new Date(event.event_start_time),
+      min_participants: event.min_participants,
+      max_participants: event.max_participants,
       updated_at: new Date(event.updated_at)
     }))
   } catch (error) {
@@ -71,6 +73,8 @@ export async function getEventById(id: number) {
       event_date: new Date(event.event_date),
       event_end_time: new Date(event.event_end_time),
       event_start_time: new Date(event.event_start_time),
+      min_participants: event.min_participants,
+      max_participants: event.max_participants,
       updated_at: new Date(event.updated_at)
     }
   } catch (error) {
@@ -107,6 +111,8 @@ export async function createEvent(data: NewEvent) {
         event_date: toISOString(data.event_date),
         event_end_time: toISOString(data.event_end_time),
         event_start_time: toISOString(data.event_start_time),
+        min_participants: data.min_participants,
+        max_participants: data.max_participants,
         updated_at: now
       })
       .returning()
@@ -140,6 +146,8 @@ export async function createEvent(data: NewEvent) {
       event_date: new Date(newEvent.event_date),
       event_end_time: new Date(newEvent.event_end_time),
       event_start_time: new Date(newEvent.event_start_time),
+      min_participants: newEvent.min_participants,
+      max_participants: newEvent.max_participants,
       updated_at: new Date(newEvent.updated_at)
     }
   } catch (error) {
@@ -177,7 +185,9 @@ export async function updateEvent(id: number, data: UpdateEvent) {
         event_start_time: data.event_start_time
           ? toISOString(data.event_start_time)
           : undefined,
-        updated_at: toISOString(new Date())
+        updated_at: toISOString(new Date()),
+        min_participants: data.min_participants,
+        max_participants: data.max_participants
       })
       .where(eq(events.id, id))
       .returning()
@@ -209,6 +219,8 @@ export async function updateEvent(id: number, data: UpdateEvent) {
       event_date: new Date(updatedEvent.event_date),
       event_end_time: new Date(updatedEvent.event_end_time),
       event_start_time: new Date(updatedEvent.event_start_time),
+      min_participants: updatedEvent.min_participants,
+      max_participants: updatedEvent.max_participants,
       updated_at: new Date(updatedEvent.updated_at)
     }
   } catch (error) {

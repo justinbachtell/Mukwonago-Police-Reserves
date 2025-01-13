@@ -78,6 +78,15 @@ export const eventTypesEnum = pgEnum('event_type', [
   'other'
 ])
 
+export const trainingTypeEnum = pgEnum('training_type', [
+  'firearms',
+  'defensive_tactics',
+  'emergency_vehicle_operations',
+  'first_aid',
+  'legal_updates',
+  'other'
+])
+
 export const user = pgTable('user', {
   id: uuid('id').primaryKey(),
   email: text('email').notNull(),
@@ -240,10 +249,12 @@ export const events = pgTable('events', {
   })
     .defaultNow()
     .notNull(),
+  notes: text('notes'),
+  min_participants: integer('min_participants').notNull().default(1),
+  max_participants: integer('max_participants').notNull().default(2),
   created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull(),
-  notes: text('notes'),
   updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull()
@@ -290,10 +301,8 @@ export const training = pgTable('training', {
     .defaultNow()
     .notNull(),
   training_location: text('training_location').notNull(),
-  training_type: text('training_type').notNull(),
-  training_instructor: uuid('training_instructor')
-    .references(() => user.id)
-    .notNull(),
+  training_type: trainingTypeEnum('training_type').notNull(),
+  training_instructor: uuid('training_instructor').references(() => user.id),
   training_start_time: timestamp('training_start_time', {
     mode: 'string',
     withTimezone: true
@@ -306,6 +315,7 @@ export const training = pgTable('training', {
   })
     .defaultNow()
     .notNull(),
+  is_locked: boolean('is_locked').notNull().default(false),
   created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -495,3 +505,7 @@ export const policyCompletionRelations = relations(
     })
   })
 )
+
+export const policyRelations = relations(policies, ({ many }) => ({
+  completions: many(policyCompletion)
+}))

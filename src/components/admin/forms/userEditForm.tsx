@@ -96,6 +96,26 @@ export function UserEditForm({ user, onSuccess }: UserEditFormProps) {
       )
       logger.time('user-update-submission')
 
+      // Check if any changes were made by comparing original user data with current form data
+      const hasChanges = Object.entries(userData).some(([key, value]) => {
+        const originalValue = user[key as keyof typeof user]
+        return value !== originalValue
+      })
+
+      if (!hasChanges) {
+        logger.info(
+          'No changes detected in form data',
+          { userId: user.id },
+          'handleSubmit'
+        )
+        toast({
+          description: "No changes were made to the user\'s information.",
+          title: 'No Changes',
+          variant: 'default'
+        })
+        return
+      }
+
       try {
         startTransition(async () => {
           const updatedUser = await updateUser(user.id, userData)
@@ -107,7 +127,7 @@ export function UserEditForm({ user, onSuccess }: UserEditFormProps) {
               'handleSubmit'
             )
             toast({
-              description: 'The user information has been updated.',
+              description: "The user\'s information has been updated.",
               title: 'User updated successfully'
             })
             onSuccess?.()
@@ -123,7 +143,7 @@ export function UserEditForm({ user, onSuccess }: UserEditFormProps) {
           'handleSubmit'
         )
         toast({
-          description: 'There was an error updating the user information.',
+          description: "There was an error updating the user's information.",
           title: 'Failed to update user',
           variant: 'destructive'
         })
@@ -288,13 +308,14 @@ export function UserEditForm({ user, onSuccess }: UserEditFormProps) {
           <div className='flex justify-end space-x-4'>
             <Button
               type='button'
+              size='sm'
               variant='outline'
               onClick={() => router.back()}
               disabled={isPending}
             >
               Cancel
             </Button>
-            <Button type='submit' disabled={isPending}>
+            <Button type='submit' size='sm' disabled={isPending}>
               {isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>

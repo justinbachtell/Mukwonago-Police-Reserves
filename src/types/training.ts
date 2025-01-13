@@ -1,5 +1,6 @@
 import type { DBUser } from './user'
 import type { TrainingAssignment } from './trainingAssignment'
+import type { trainingTypeEnum } from '@/models/Schema'
 
 // Main interface representing a training session
 export interface Training {
@@ -8,16 +9,17 @@ export interface Training {
   description: string | null
   training_date: string
   training_location: string
-  training_type: string
-  training_instructor: string
+  training_type: (typeof trainingTypeEnum.enumValues)[number]
+  training_instructor: string | null
   training_start_time: string
   training_end_time: string
+  is_locked: boolean
   created_at: string
   updated_at: string
 
   // Relations
   assignments?: TrainingAssignment[]
-  instructor?: DBUser
+  instructor?: DBUser | null
 }
 
 // Type for creating new training sessions
@@ -44,4 +46,5 @@ export type RequiredTrainingFields = Pick<
   | 'training_instructor'
   | 'training_start_time'
   | 'training_end_time'
+  | 'is_locked'
 >

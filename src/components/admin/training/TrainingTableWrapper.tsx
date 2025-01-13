@@ -1,12 +1,14 @@
 'use client'
 
 import type { Training } from '@/types/training'
-import { DataTable } from '@/components/ui/data-table'
-import { columns } from '@/app/(auth)/admin/training/columns'
-import { useState } from 'react'
+import type { DBUser } from '@/types/user'
 import type { SortingState } from '@tanstack/react-table'
+import { DataTable } from '@/components/ui/data-table'
+import { createColumns } from '@/app/(auth)/admin/training/columns'
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import { createLogger } from '@/lib/debug'
 import {
   Dialog,
   DialogContent,
@@ -14,24 +16,34 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { TrainingForm } from '@/components/admin/forms/TrainingForm'
+import { TrainingForm } from '@/components/admin/training/TrainingForm'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
+const logger = createLogger({
+  module: 'admin',
+  file: 'TrainingTableWrapper.tsx'
+})
+
 interface TrainingTableWrapperProps {
   initialData: Training[]
+  availableUsers: DBUser[]
 }
 
 export function TrainingTableWrapper({
-  initialData
+  initialData,
+  availableUsers
 }: TrainingTableWrapperProps) {
+  const [open, setOpen] = useState(false)
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'training_date', desc: true }
   ])
+  const [trainings, setTrainings] = useState<Training[]>(initialData)
   const router = useRouter()
+  const columns = useMemo(() => createColumns(availableUsers), [availableUsers])
 
   // Transform the data to include participant count
-  const data = initialData.map((training: Training) => ({
+  const data = trainings.map((training: Training) => ({
     ...training,
     participants: training.assignments?.length || 0,
     total_participants:
@@ -43,9 +55,22 @@ export function TrainingTableWrapper({
       }, 0) || 0
   }))
 
-  const handleSuccess = () => {
+  const fetchTrainings = async () => {
+    try {
+      logger.debug('Fetching trainings...')
+      router.refresh()
+      setTrainings(initialData)
+      logger.debug('Trainings fetched successfully')
+    } catch (error) {
+      logger.error('Error fetching trainings', { error })
+      toast.error('Failed to fetch trainings')
+    }
+  }
+
+  const handleSuccess = async () => {
     toast.success('Training updated successfully')
-    router.refresh()
+    setOpen(false)
+    await fetchTrainings()
   }
 
   return (
@@ -60,7 +85,7 @@ export function TrainingTableWrapper({
           </p>
         </div>
 
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className='mr-2 size-4' />
@@ -71,7 +96,10 @@ export function TrainingTableWrapper({
             <DialogHeader>
               <DialogTitle>Create New Training</DialogTitle>
             </DialogHeader>
-            <TrainingForm onSuccess={handleSuccess} />
+            <TrainingForm
+              onSuccess={handleSuccess}
+              closeDialog={() => setOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>

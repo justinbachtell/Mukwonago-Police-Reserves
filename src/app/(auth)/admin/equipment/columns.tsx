@@ -6,9 +6,21 @@ import { ReturnEquipmentForm } from '@/components/admin/forms/returnEquipmentFor
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
-import { ArrowUpDown, Trash } from 'lucide-react'
+import { ArrowUpDown, Plus, Trash } from 'lucide-react'
 import type { EquipmentCondition } from '@/types/assignedEquipment'
 import { createLogger } from '@/lib/debug'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
+import { AssignEquipmentForm } from '@/components/admin/forms/assignEquipmentForm'
+import { getAllUsers } from '@/actions/user'
+import { useState } from 'react'
+import type { DBUser } from '@/types/user'
 
 const logger = createLogger({
   module: 'admin',
@@ -31,6 +43,95 @@ export interface EquipmentWithUser {
   is_obsolete: boolean
 }
 
+function AssignDialog({ equipment }: { equipment: EquipmentWithUser }) {
+  const [open, setOpen] = useState(false)
+  const [users, setUsers] = useState<DBUser[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleOpen = async (isOpen: boolean) => {
+    if (isOpen) {
+      try {
+        setIsLoading(true)
+        logger.info('Fetching users for dialog', { equipmentId: equipment.id })
+        const allUsers = await getAllUsers()
+        if (allUsers) {
+          const eligibleUsers = allUsers.filter(
+            user => user.role === 'member' || user.role === 'admin'
+          )
+          setUsers(eligibleUsers)
+        }
+      } catch (error) {
+        logger.error(
+          'Error fetching users',
+          logger.errorWithData(error),
+          'handleOpen'
+        )
+        toast({
+          title: 'Error',
+          description: 'Failed to load users',
+          variant: 'destructive'
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    setOpen(isOpen)
+  }
+
+  const handleSuccess = () => {
+    setOpen(false)
+    window.location.reload()
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant='outline'
+          size='sm'
+          className='gap-2'
+          title='Assign to User'
+        >
+          <Plus className='size-4' />
+          Assign
+        </Button>
+      </DialogTrigger>
+      <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-[600px]'>
+        <DialogHeader>
+          <DialogTitle>Assign Equipment</DialogTitle>
+          <DialogDescription>
+            Assign {equipment.name} to a user
+          </DialogDescription>
+        </DialogHeader>
+        <div className='mt-4'>
+          {isLoading ? (
+            <div className='flex items-center justify-center py-8'>
+              <div className='text-center'>
+                <div className='mb-2 size-6 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500'></div>
+                <p className='text-sm text-muted-foreground'>
+                  Loading users...
+                </p>
+              </div>
+            </div>
+          ) : (
+            <AssignEquipmentForm
+              availableEquipment={[
+                {
+                  ...equipment,
+                  assignments: [],
+                  assignedTo: undefined
+                }
+              ]}
+              users={users}
+              onSuccess={handleSuccess}
+            />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export const columns: ColumnDef<EquipmentWithUser>[] = [
   {
     accessorKey: 'name',
@@ -39,6 +140,7 @@ export const columns: ColumnDef<EquipmentWithUser>[] = [
       return (
         <Button
           variant='ghost'
+          size='tableColumn'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Name
@@ -65,27 +167,49 @@ export const columns: ColumnDef<EquipmentWithUser>[] = [
     accessorKey: 'description',
     cell: ({ row }) => (
       <div
-        className={`flex flex-col ${row.original.is_obsolete ? 'opacity-40' : ''}`}
+        className={`flex flex-col px-4 ${row.original.is_obsolete ? 'opacity-40' : ''}`}
       >
         <span className='truncate'>
           {row.getValue('description') || 'No description'}
         </span>
       </div>
     ),
-    header: 'Description'
+    header: ({ column }) => {
+      return (
+        <Button
+          variant='ghost'
+          size='tableColumn'
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Description
+          <ArrowUpDown className='ml-2 size-4' />
+        </Button>
+      )
+    }
   },
   {
     accessorKey: 'serial_number',
     cell: ({ row }) => (
       <div
-        className={`flex flex-col ${row.original.is_obsolete ? 'opacity-40' : ''}`}
+        className={`flex flex-col px-4 ${row.original.is_obsolete ? 'opacity-40' : ''}`}
       >
         <span className='truncate'>
           {row.getValue('serial_number') || 'N/A'}
         </span>
       </div>
     ),
-    header: 'Serial Number'
+    header: ({ column }) => {
+      return (
+        <Button
+          variant='ghost'
+          size='tableColumn'
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Serial Number
+          <ArrowUpDown className='ml-2 size-4' />
+        </Button>
+      )
+    }
   },
   {
     accessorKey: 'purchase_date',
@@ -110,6 +234,7 @@ export const columns: ColumnDef<EquipmentWithUser>[] = [
     header: ({ column }) => (
       <Button
         variant='ghost'
+        size='tableColumn'
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
         Purchase Date
@@ -124,6 +249,7 @@ export const columns: ColumnDef<EquipmentWithUser>[] = [
       return (
         <Button
           variant='ghost'
+          size='tableColumn'
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Status
@@ -197,19 +323,28 @@ export const columns: ColumnDef<EquipmentWithUser>[] = [
       const assignedUserName = row.original.assignedUserName
       return (
         <div
-          className={`flex flex-col ${row.original.is_obsolete ? 'opacity-40' : ''}`}
+          className={`flex flex-col px-4 ${row.original.is_obsolete ? 'opacity-40' : ''}`}
         >
           <span className='truncate'>{assignedUserName || 'Unassigned'}</span>
         </div>
       )
     },
-    header: 'Assigned To'
+    header: ({ column }) => (
+      <Button
+        variant='ghost'
+        size='tableColumn'
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      >
+        Assigned To
+        <ArrowUpDown className='ml-2 size-4' />
+      </Button>
+    )
   },
   {
     accessorKey: 'notes',
     cell: ({ row }) => (
       <div
-        className={`flex flex-col ${row.original.is_obsolete ? 'opacity-40' : ''}`}
+        className={`flex flex-col pr-4 ${row.original.is_obsolete ? 'opacity-40' : ''}`}
       >
         <span className='truncate'>{row.getValue('notes') || 'No notes'}</span>
       </div>
@@ -261,6 +396,9 @@ export const columns: ColumnDef<EquipmentWithUser>[] = [
 
       return (
         <div className='flex gap-2'>
+          {!equipment.is_assigned && !equipment.is_obsolete && (
+            <AssignDialog equipment={equipment} />
+          )}
           {equipment.is_assigned && (
             <ReturnEquipmentForm
               assignmentId={equipment.id}

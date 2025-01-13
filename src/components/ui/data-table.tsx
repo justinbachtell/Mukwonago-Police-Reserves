@@ -29,6 +29,7 @@ interface DataTableProps<TData, TValue> {
   sorting?: SortingState
   onSortingChange?: (sorting: SortingState) => void
   rowClassName?: (row: TData) => string
+  meta?: Record<string, unknown>
 }
 
 export function DataTable<TData, TValue>({
@@ -36,7 +37,8 @@ export function DataTable<TData, TValue>({
   data,
   sorting: externalSorting,
   onSortingChange,
-  rowClassName
+  rowClassName,
+  meta
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [globalFilter, setGlobalFilter] = useState('')
@@ -67,7 +69,8 @@ export function DataTable<TData, TValue>({
       columnFilters,
       globalFilter,
       sorting: externalSorting || internalSorting
-    }
+    },
+    meta
   })
 
   return (

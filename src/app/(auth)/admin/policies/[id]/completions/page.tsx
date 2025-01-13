@@ -100,7 +100,7 @@ export default async function PolicyCompletionsPage({ params }: Props) {
     )
 
     return (
-      <div className='container mx-auto py-6'>
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
         <div className='mb-4'>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>
             Policy Completions

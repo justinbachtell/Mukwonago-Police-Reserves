@@ -1,3 +1,5 @@
+'use client'
+
 import { getAllEvents } from '@/actions/event'
 import { EventsManagementTable } from '@/components/admin/events/EventsManagementTable'
 import type { Event } from '@/types/event'
@@ -12,29 +14,40 @@ import {
 import { EventForm } from '@/components/admin/forms/EventForm'
 import { Plus } from 'lucide-react'
 import { toISOString } from '@/lib/utils'
+import { useState, useEffect } from 'react'
 
-export default async function AdminEventsPage() {
-  const rawEvents = await getAllEvents()
+export default function AdminEventsPage() {
+  const [open, setOpen] = useState(false)
+  const [events, setEvents] = useState<Event[]>([])
 
-  const events: Event[] = (rawEvents ?? []).map(event => ({
-    ...event,
-    created_at: toISOString(new Date(event.created_at)),
-    event_date: toISOString(new Date(event.event_date)),
-    event_end_time: toISOString(new Date(event.event_end_time)),
-    event_start_time: toISOString(new Date(event.event_start_time)),
-    updated_at: toISOString(new Date(event.updated_at)),
-    event_type: event.event_type as Event['event_type'],
-    assignments: event.assignments?.map(assignment => ({
-      ...assignment,
-      status: assignment.completion_status || undefined,
-      notes: assignment.completion_notes || null,
-      created_at: toISOString(new Date(assignment.created_at)),
-      updated_at: toISOString(new Date(assignment.updated_at))
+  const fetchEvents = async () => {
+    const rawEvents = await getAllEvents()
+    const formattedEvents: Event[] = (rawEvents ?? []).map(event => ({
+      ...event,
+      created_at: toISOString(new Date(event.created_at)),
+      event_date: toISOString(new Date(event.event_date)),
+      event_end_time: toISOString(new Date(event.event_end_time)),
+      event_start_time: toISOString(new Date(event.event_start_time)),
+      updated_at: toISOString(new Date(event.updated_at)),
+      event_type: event.event_type as Event['event_type'],
+      assignments: event.assignments?.map(assignment => ({
+        ...assignment,
+        status: assignment.completion_status || undefined,
+        notes: assignment.completion_notes || null,
+        created_at: toISOString(new Date(assignment.created_at)),
+        updated_at: toISOString(new Date(assignment.updated_at))
+      }))
     }))
-  }))
+    setEvents(formattedEvents)
+  }
+
+  // Fetch events on mount
+  useEffect(() => {
+    fetchEvents()
+  }, [])
 
   return (
-    <div className='container mx-auto py-6'>
+    <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
       <div className='mb-6 flex items-center justify-between'>
         <div>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>
@@ -45,7 +58,7 @@ export default async function AdminEventsPage() {
           </p>
         </div>
 
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className='mr-2 size-4' />
@@ -56,7 +69,14 @@ export default async function AdminEventsPage() {
             <DialogHeader>
               <DialogTitle>Create New Event</DialogTitle>
             </DialogHeader>
-            <EventForm />
+            <EventForm
+              closeDialog={() => setOpen(false)}
+              onSuccess={() => {
+                setOpen(false)
+                // Refetch events after successful creation
+                fetchEvents()
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>

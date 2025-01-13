@@ -51,7 +51,13 @@ export default async function MagicLinkPage() {
 
     logger.info('Rendering magic link form', undefined, 'MagicLinkPage')
     logger.timeEnd('magic-link-page-load')
-    return <MagicLinkForm />
+    return (
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
+        <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+          <MagicLinkForm />
+        </div>
+      </div>
+    )
   } catch (error) {
     logger.error(
       'Error in magic link page',

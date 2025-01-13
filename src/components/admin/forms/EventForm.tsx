@@ -38,6 +38,7 @@ import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation'
 
 const logger = createLogger({
   module: 'admin',
@@ -50,12 +51,8 @@ const formSchema = z.object({
   event_date: z.date({
     required_error: 'Event date is required'
   }),
-  event_start_time: z.date({
-    required_error: 'Start time is required'
-  }),
-  event_end_time: z.date({
-    required_error: 'End time is required'
-  }),
+  event_start_time: z.string().min(1, 'Start time is required'),
+  event_end_time: z.string().min(1, 'End time is required'),
   event_location: z.string().min(1, 'Location is required'),
   notes: z.string().nullable()
 })
@@ -65,12 +62,15 @@ type FormValues = z.infer<typeof formSchema>
 interface EventFormProps {
   event?: Event
   onSuccess?: (event: Event) => void
+  closeDialog?: () => void
 }
 
-export function EventForm({ event, onSuccess }: EventFormProps) {
+export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [session, setSession] = useState<Session | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
+  const router = useRouter()
 
   logger.time('event-form-render')
 
@@ -93,8 +93,12 @@ export function EventForm({ event, onSuccess }: EventFormProps) {
       event_name: event?.event_name || '',
       event_type: event?.event_type || 'community_event',
       event_date: event ? new Date(event.event_date) : new Date(),
-      event_start_time: event ? new Date(event.event_start_time) : new Date(),
-      event_end_time: event ? new Date(event.event_end_time) : new Date(),
+      event_start_time: event?.event_start_time
+        ? format(new Date(event.event_start_time), 'HH:mm')
+        : '',
+      event_end_time: event?.event_end_time
+        ? format(new Date(event.event_end_time), 'HH:mm')
+        : '',
       event_location: event?.event_location || '',
       notes: event?.notes || null
     }
@@ -107,6 +111,7 @@ export function EventForm({ event, onSuccess }: EventFormProps) {
       'onSubmit'
     )
     logger.time('form-submission')
+    setIsSubmitting(true)
 
     try {
       if (!session) {
@@ -119,9 +124,32 @@ export function EventForm({ event, onSuccess }: EventFormProps) {
         return
       }
 
+      // Combine date and time values
+      const eventDate = new Date(values.event_date)
+      const [startHours, startMinutes] = values.event_start_time.split(':')
+      const [endHours, endMinutes] = values.event_end_time.split(':')
+
+      const startTime = new Date(eventDate)
+      startTime.setHours(
+        Number.parseInt(startHours || '0'),
+        Number.parseInt(startMinutes || '0')
+      )
+
+      const endTime = new Date(eventDate)
+      endTime.setHours(
+        Number.parseInt(endHours || '0'),
+        Number.parseInt(endMinutes || '0')
+      )
+
+      const eventData = {
+        ...values,
+        event_start_time: startTime,
+        event_end_time: endTime
+      }
+
       const result = event
-        ? await updateEvent(event.id, values as UpdateEvent)
-        : await createEvent(values as NewEvent)
+        ? await updateEvent(event.id, eventData as UpdateEvent)
+        : await createEvent(eventData as NewEvent)
 
       if (result) {
         const eventWithStringDates: Event = {
@@ -139,8 +167,20 @@ export function EventForm({ event, onSuccess }: EventFormProps) {
           'onSubmit'
         )
         toast.success(`Event ${event ? 'updated' : 'created'} successfully`)
+
+        // Call onSuccess if provided
         onSuccess?.(eventWithStringDates)
+
+        // Close dialog if in one
+        if (closeDialog) {
+          closeDialog()
+        }
+
+        // Reset form
         form.reset()
+
+        // Refresh the page data
+        router.refresh()
       }
     } catch (error) {
       logger.error(
@@ -150,6 +190,7 @@ export function EventForm({ event, onSuccess }: EventFormProps) {
       )
       toast.error(`Failed to ${event ? 'update' : 'create'} event`)
     } finally {
+      setIsSubmitting(false)
       logger.timeEnd('form-submission')
     }
   }
@@ -259,11 +300,7 @@ export function EventForm({ event, onSuccess }: EventFormProps) {
                 <FormItem>
                   <FormLabel>Start Time</FormLabel>
                   <FormControl>
-                    <Input
-                      type='time'
-                      {...field}
-                      value={field.value ? format(field.value, 'HH:mm') : ''}
-                    />
+                    <Input type='time' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -277,11 +314,7 @@ export function EventForm({ event, onSuccess }: EventFormProps) {
                 <FormItem>
                   <FormLabel>End Time</FormLabel>
                   <FormControl>
-                    <Input
-                      type='time'
-                      {...field}
-                      value={field.value ? format(field.value, 'HH:mm') : ''}
-                    />
+                    <Input type='time' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -317,8 +350,16 @@ export function EventForm({ event, onSuccess }: EventFormProps) {
             )}
           />
 
-          <Button type='submit' className='w-full' disabled={isLoading}>
-            {event ? 'Update Event' : 'Create Event'}
+          <Button
+            type='submit'
+            className='w-full'
+            disabled={isLoading || isSubmitting}
+          >
+            {isSubmitting
+              ? 'Submitting...'
+              : event
+                ? 'Update Event'
+                : 'Create Event'}
           </Button>
         </form>
       </Form>

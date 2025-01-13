@@ -1,51 +1,85 @@
+'use client'
+
 import { getAllPolicies } from '@/actions/policy'
 import { PoliciesClient } from '@/components/admin/policies/PoliciesClient'
 import { getCurrentUser } from '@/actions/user'
 import { redirect } from 'next/navigation'
 import { createLogger } from '@/lib/debug'
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
+import { PolicyForm } from '@/components/admin/forms/PolicyForm'
+import type { Policy } from '@/types/policy'
 
 const logger = createLogger({
   module: 'admin',
   file: 'policies/page.tsx'
 })
 
-export default async function AdminPoliciesPage() {
-  logger.info('Rendering policies page', undefined, 'AdminPoliciesPage')
-  logger.time('policies-page-load')
+export default function AdminPoliciesPage() {
+  const [open, setOpen] = useState(false)
+  const [policies, setPolicies] = useState<Policy[]>([])
+  const [loading, setLoading] = useState(true)
 
-  try {
-    const [currentUser, policies] = await Promise.all([
-      getCurrentUser(),
-      getAllPolicies()
-    ])
+  const fetchPolicies = async () => {
+    try {
+      const [currentUser, fetchedPolicies] = await Promise.all([
+        getCurrentUser(),
+        getAllPolicies()
+      ])
 
-    if (!currentUser) {
-      logger.warn(
-        'No user found, redirecting to sign-in',
-        undefined,
+      if (!currentUser) {
+        logger.warn(
+          'No user found, redirecting to sign-in',
+          undefined,
+          'AdminPoliciesPage'
+        )
+        redirect('/sign-in')
+      }
+
+      if (currentUser.role !== 'admin') {
+        logger.warn(
+          'Non-admin user access attempt',
+          { userId: currentUser.id },
+          'AdminPoliciesPage'
+        )
+        redirect('/user/dashboard')
+      }
+
+      setPolicies(fetchedPolicies ?? [])
+      logger.info(
+        'Policies loaded successfully',
+        { count: fetchedPolicies?.length },
         'AdminPoliciesPage'
       )
-      redirect('/sign-in')
-    }
-
-    if (currentUser.role !== 'admin') {
-      logger.warn(
-        'Non-admin user access attempt',
-        { userId: currentUser.id },
+    } catch (error) {
+      logger.error(
+        'Error fetching policies',
+        logger.errorWithData(error),
         'AdminPoliciesPage'
       )
-      redirect('/user/dashboard')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    logger.info(
-      'Policies loaded successfully',
-      { count: policies?.length },
-      'AdminPoliciesPage'
-    )
+  useEffect(() => {
+    fetchPolicies()
+  }, [])
 
-    return (
-      <div className='container mx-auto py-6'>
-        <div className='mb-4'>
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  return (
+    <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
+      <div className='mb-4 flex items-center justify-between'>
+        <div>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>
             Policy Management
           </h1>
@@ -53,20 +87,27 @@ export default async function AdminPoliciesPage() {
             Create and manage policies for reserve officers.
           </p>
         </div>
-
-        <div className='w-full space-y-4 overflow-x-auto'>
-          <PoliciesClient data={policies ?? []} />
-        </div>
+        <Button onClick={() => setOpen(true)}>Create Policy</Button>
       </div>
-    )
-  } catch (error) {
-    logger.error(
-      'Error in policies page',
-      logger.errorWithData(error),
-      'AdminPoliciesPage'
-    )
-    throw error
-  } finally {
-    logger.timeEnd('policies-page-load')
-  }
+
+      <div className='w-full space-y-4 overflow-x-auto'>
+        <PoliciesClient data={policies} />
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Policy</DialogTitle>
+          </DialogHeader>
+          <PolicyForm
+            closeDialog={() => setOpen(false)}
+            onSuccess={() => {
+              setOpen(false)
+              fetchPolicies()
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
 }

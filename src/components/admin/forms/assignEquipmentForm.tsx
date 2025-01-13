@@ -34,6 +34,7 @@ const logger = createLogger({
 
 const formSchema = z.object({
   equipment_id: z.number(),
+  user_id: z.string(),
   condition: z.enum(['new', 'good', 'fair', 'poor', 'damaged/broken']),
   assigned_date: z.date(),
   notes: z.string().nullable()
@@ -42,38 +43,70 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 interface AssignEquipmentFormProps {
-  user: DBUser
+  users?: DBUser[]
+  targetUserId?: string
   availableEquipment: Equipment[]
   onSuccess?: () => void
 }
 
+const DEFAULT_USERS: DBUser[] = []
+const DEFAULT_EQUIPMENT: Equipment[] = []
+
 export function AssignEquipmentForm({
-  user,
-  availableEquipment,
+  users = DEFAULT_USERS,
+  targetUserId,
+  availableEquipment = DEFAULT_EQUIPMENT,
   onSuccess
 }: AssignEquipmentFormProps) {
   logger.info(
     'Rendering assign equipment form',
     {
-      userId: user.id,
-      availableEquipmentCount: availableEquipment.length
+      userCount: users?.length ?? 0,
+      targetUserId,
+      availableEquipmentCount: availableEquipment?.length ?? 0
     },
     'AssignEquipmentForm'
   )
   logger.time('assign-equipment-form-render')
 
-  try {
-    const form = useForm<FormValues>({
-      resolver: zodResolver(formSchema),
-      defaultValues: {
-        assigned_date: new Date(),
-        notes: null
-      }
-    })
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      assigned_date: new Date(),
+      notes: null,
+      user_id: targetUserId // Set initial user if provided
+    }
+  })
 
+  // Validation checks after hooks
+  if (!Array.isArray(availableEquipment)) {
+    logger.error(
+      'Invalid props provided to AssignEquipmentForm',
+      {
+        availableEquipment: typeof availableEquipment
+      },
+      'AssignEquipmentForm'
+    )
+    return (
+      <div className='p-4 text-center text-sm text-muted-foreground'>
+        Error loading form data. Please try again.
+      </div>
+    )
+  }
+
+  // Check for empty arrays after validation
+  if (availableEquipment.length === 0) {
+    return (
+      <div className='p-4 text-center text-sm text-muted-foreground'>
+        No equipment available for assignment.
+      </div>
+    )
+  }
+
+  try {
     logger.debug(
       'Form initialized',
-      { defaultValues: form.getValues() },
+      { defaultValues: form.getValues(), targetUserId },
       'AssignEquipmentForm'
     )
 
@@ -84,7 +117,6 @@ export function AssignEquipmentForm({
       try {
         const result = await createAssignedEquipment({
           ...values,
-          user_id: user.id,
           notes: values.notes || undefined,
           checked_out_at: values.assigned_date.toISOString(),
           condition: values.condition,
@@ -114,7 +146,7 @@ export function AssignEquipmentForm({
 
     logger.debug(
       'Rendering form',
-      { availableEquipment },
+      { availableEquipment, users, targetUserId },
       'AssignEquipmentForm'
     )
 
@@ -148,6 +180,33 @@ export function AssignEquipmentForm({
               </FormItem>
             )}
           />
+
+          {!targetUserId && (
+            <FormField
+              control={form.control}
+              name='user_id'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assign To</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select user' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {users.map(user => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.first_name} {user.last_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}
@@ -224,7 +283,11 @@ export function AssignEquipmentForm({
       logger.errorWithData(error),
       'AssignEquipmentForm'
     )
-    throw error
+    return (
+      <div className='p-4 text-center text-sm text-muted-foreground'>
+        An error occurred while loading the form. Please try again.
+      </div>
+    )
   } finally {
     logger.timeEnd('assign-equipment-form-render')
   }

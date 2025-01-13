@@ -331,7 +331,7 @@ export async function deleteTraining(id: number) {
 
     if (!deletedTraining) {
       logger.error(
-        'No training returned after deletion',
+        'No training returned after delete',
         { trainingId: id },
         'deleteTraining'
       )

@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
+import { toast } from '@/hooks/use-toast'
 import type { DBUser } from '@/types/user'
-import { updateUserSettings } from '@/actions/user'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import type { Session } from '@supabase/supabase-js'
@@ -78,7 +77,22 @@ export function UserSettingsForm({ user }: UserSettingsFormProps) {
           undefined,
           'handleSubmit'
         )
-        toast.error('You must be logged in to update settings')
+        toast({
+          variant: 'destructive',
+          title: 'Authentication Error',
+          description: 'You must be logged in to update settings'
+        })
+        return
+      }
+
+      // Check if anything has changed
+      if (!formData.newPassword && formData.email === user.email) {
+        logger.info('No changes detected', undefined, 'handleSubmit')
+        toast({
+          variant: 'default',
+          title: 'No Changes',
+          description: 'No changes to save'
+        })
         return
       }
 
@@ -88,77 +102,131 @@ export function UserSettingsForm({ user }: UserSettingsFormProps) {
 
         if (formData.newPassword.length < 8) {
           logger.warn('Password too short', undefined, 'handleSubmit')
-          toast.error('New password must be at least 8 characters long')
+          toast({
+            variant: 'destructive',
+            title: 'Invalid Password',
+            description: 'New password must be at least 8 characters long'
+          })
           return
         }
 
         if (formData.newPassword !== formData.confirmPassword) {
           logger.warn('Passwords do not match', undefined, 'handleSubmit')
-          toast.error('New passwords do not match')
+          toast({
+            variant: 'destructive',
+            title: 'Password Mismatch',
+            description: 'New passwords do not match'
+          })
           return
         }
 
         if (!formData.currentPassword) {
           logger.warn('Current password missing', undefined, 'handleSubmit')
-          toast.error('Current password is required to set a new password')
+          toast({
+            variant: 'destructive',
+            title: 'Current Password Required',
+            description: 'Current password is required to set a new password'
+          })
           return
         }
+
+        // Update password using Supabase
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: formData.newPassword
+        })
+
+        if (passwordError) {
+          logger.error(
+            'Failed to update password',
+            { message: passwordError.message },
+            'handleSubmit'
+          )
+          toast({
+            variant: 'destructive',
+            title: 'Password Update Failed',
+            description: passwordError.message || 'Failed to update password'
+          })
+          return
+        }
+
+        logger.info('Password updated successfully', undefined, 'handleSubmit')
+        toast({
+          variant: 'default',
+          title: 'Success',
+          description: 'Password updated successfully'
+        })
       }
 
       // Validate email format
       if (
         formData.email &&
+        formData.email !== user.email &&
         !/^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/.test(formData.email)
       ) {
         logger.warn('Invalid email format', undefined, 'handleSubmit')
-        toast.error('Please enter a valid email address')
+        toast({
+          variant: 'destructive',
+          title: 'Invalid Email',
+          description: 'Please enter a valid email address'
+        })
         return
       }
 
-      logger.info(
-        'Submitting settings update',
-        {
-          userId: user.id,
-          hasPasswordChange: !!formData.newPassword,
-          emailChanged: formData.email !== user.email
-        },
-        'handleSubmit'
-      )
+      // Only update email if it has changed
+      if (formData.email && formData.email !== user.email) {
+        logger.info(
+          'Submitting email update',
+          {
+            userId: user.id,
+            emailChanged: true
+          },
+          'handleSubmit'
+        )
 
-      const updateData = {
-        email: formData.email,
-        ...(formData.newPassword && {
-          currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: formData.email
+        })
+
+        if (emailError) {
+          logger.error(
+            'Failed to update email',
+            { message: emailError.message },
+            'handleSubmit'
+          )
+          toast({
+            variant: 'destructive',
+            title: 'Email Update Failed',
+            description: emailError.message || 'Failed to update email'
+          })
+          return
+        }
+
+        logger.info('Email update initiated', undefined, 'handleSubmit')
+        toast({
+          variant: 'default',
+          title: 'Email Verification Required',
+          description: 'Email verification sent. Please check your inbox.'
         })
       }
 
-      const result = await updateUserSettings(user.id, updateData)
-
-      if (result.success) {
-        logger.info('Settings updated successfully', undefined, 'handleSubmit')
-        toast.success('Settings updated successfully')
-        setFormData(prev => ({
-          ...prev,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        }))
-      } else {
-        logger.error(
-          'Failed to update settings',
-          { message: result.message },
-          'handleSubmit'
-        )
-        toast.error(result.message || 'Failed to update settings')
-      }
+      // Clear sensitive form data
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }))
     } catch (error) {
       logger.error(
         'Error updating settings',
         logger.errorWithData(error),
         'handleSubmit'
       )
-      toast.error('An unexpected error occurred')
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'An unexpected error occurred'
+      })
     } finally {
       setIsSaving(false)
       logger.timeEnd('settings-update')
@@ -171,7 +239,10 @@ export function UserSettingsForm({ user }: UserSettingsFormProps) {
     }
 
     return (
-      <form onSubmit={handleSubmit} className='space-y-8'>
+      <form
+        onSubmit={handleSubmit}
+        className='mx-auto space-y-8 xl:max-w-[450px]'
+      >
         <Card className='p-6'>
           <h2 className='mb-6 text-xl font-semibold text-gray-900 dark:text-white'>
             Account Settings

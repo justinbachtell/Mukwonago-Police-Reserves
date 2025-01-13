@@ -1,6 +1,6 @@
-'use client';
+'use client'
 
-import type { DBUser } from '@/types/user';
+import type { DBUser } from '@/types/user'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { useState } from 'react'
 
@@ -31,6 +31,7 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
         return (
           <Button
             variant='ghost'
+            size='tableColumn'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className='flex'
           >
@@ -51,6 +52,7 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
         return (
           <Button
             variant='ghost'
+            size='tableColumn'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className='flex'
           >
@@ -71,6 +73,7 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
         return (
           <Button
             variant='ghost'
+            size='tableColumn'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className='flex'
           >
@@ -84,13 +87,19 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
       accessorKey: 'email',
       cell: ({ row }) => (
         <div className='flex flex-col px-4'>
-          <span className='truncate'>{row.getValue('email')}</span>
+          <Link
+            href={`mailto:${row.getValue('email')}`}
+            className='truncate text-primary hover:underline'
+          >
+            {row.getValue('email')}
+          </Link>
         </div>
       ),
       header: ({ column }) => {
         return (
           <Button
             variant='ghost'
+            size='tableColumn'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className='flex'
           >
@@ -114,6 +123,7 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
         return (
           <Button
             variant='ghost'
+            size='tableColumn'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className='flex'
           >
@@ -134,6 +144,7 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
         return (
           <Button
             variant='ghost'
+            size='tableColumn'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className='flex'
           >
@@ -154,6 +165,7 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
         return (
           <Button
             variant='ghost'
+            size='tableColumn'
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className='flex'
           >

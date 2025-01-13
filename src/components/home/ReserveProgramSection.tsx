@@ -19,10 +19,14 @@ export function ReserveProgramSection() {
         <Card className='group relative overflow-hidden p-6 transition-all duration-300 hover:shadow-xl dark:hover:shadow-2xl dark:hover:shadow-blue-900/20 sm:p-8'>
           <div className='absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-blue-950/50' />
           <Star className='mb-4 size-10 text-blue-600 transition-transform duration-300 group-hover:scale-110 dark:text-blue-400 sm:mb-6 sm:size-12' />
-          <h3 className='mb-3 text-xl font-semibold text-gray-900 dark:text-white sm:mb-4 sm:text-2xl'>
-            Duties & Responsibilities
+          <h3 className='mb-3 text-lg font-semibold text-gray-900 dark:text-white sm:mb-4 sm:text-xl lg:text-2xl'>
+            <span className='hidden md:block xl:hidden'>Duties</span>
+            <span className='block md:hidden xl:inline'>
+              Duties &amp;&nbsp;
+            </span>
+            <span className='block md:hidden xl:inline'>Responsibilities</span>
           </h3>
-          <ul className='space-y-2 text-base text-gray-600 dark:text-gray-300 sm:space-y-3 sm:text-lg'>
+          <ul className='space-y-2 text-sm text-gray-600 dark:text-gray-300 sm:space-y-3 sm:text-base'>
             <li className='flex items-center gap-2'>
               <div className='size-1.5 rounded-full bg-blue-600 dark:bg-blue-400' />
               Patrol support
@@ -49,10 +53,10 @@ export function ReserveProgramSection() {
         <Card className='group relative overflow-hidden p-6 transition-all duration-300 hover:shadow-xl dark:hover:shadow-2xl dark:hover:shadow-blue-900/20 sm:p-8'>
           <div className='absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-blue-950/50' />
           <Shield className='mb-4 size-10 text-blue-600 transition-transform duration-300 group-hover:scale-110 dark:text-blue-400 sm:mb-6 sm:size-12' />
-          <h3 className='mb-3 text-xl font-semibold text-gray-900 dark:text-white sm:mb-4 sm:text-2xl'>
+          <h3 className='mb-3 text-lg font-semibold text-gray-900 dark:text-white sm:mb-4 sm:text-xl lg:text-2xl'>
             Requirements
           </h3>
-          <ul className='space-y-2 text-base text-gray-600 dark:text-gray-300 sm:space-y-3 sm:text-lg'>
+          <ul className='space-y-2 text-sm text-gray-600 dark:text-gray-300 sm:space-y-3 sm:text-base'>
             <li className='flex items-center gap-2'>
               <div className='size-1.5 rounded-full bg-blue-600 dark:bg-blue-400' />
               18 years or older
@@ -79,10 +83,10 @@ export function ReserveProgramSection() {
         <Card className='group relative overflow-hidden p-6 transition-all duration-300 hover:shadow-xl dark:hover:shadow-2xl dark:hover:shadow-blue-900/20 sm:p-8'>
           <div className='absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:from-blue-950/50' />
           <Award className='mb-4 size-10 text-blue-600 transition-transform duration-300 group-hover:scale-110 dark:text-blue-400 sm:mb-6 sm:size-12' />
-          <h3 className='mb-3 text-xl font-semibold text-gray-900 dark:text-white sm:mb-4 sm:text-2xl'>
+          <h3 className='mb-3 text-lg font-semibold text-gray-900 dark:text-white sm:mb-4 sm:text-xl lg:text-2xl'>
             Benefits
           </h3>
-          <ul className='space-y-2 text-base text-gray-600 dark:text-gray-300 sm:space-y-3 sm:text-lg'>
+          <ul className='space-y-2 text-sm text-gray-600 dark:text-gray-300 sm:space-y-3 sm:text-base'>
             <li className='flex items-center gap-2'>
               <div className='size-1.5 rounded-full bg-blue-600 dark:bg-blue-400' />
               Professional training

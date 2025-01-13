@@ -18,8 +18,10 @@ export default async function SignInPage() {
   try {
     logger.info('Rendering sign-in form', undefined, 'SignInPage')
     return (
-      <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
-        <SignInForm />
+      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
+        <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+          <SignInForm />
+        </div>
       </div>
     )
   } catch (error) {
