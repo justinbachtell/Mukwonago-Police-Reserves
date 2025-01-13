@@ -9,13 +9,13 @@ const logger = createLogger({
 })
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function EditUserPage({ params }: PageProps) {
-  const { id } = params
+  const { id } = await params
 
   logger.info('Initializing edit user page', { userId: id }, 'EditUserPage')
   logger.time('edit-user-page-load')

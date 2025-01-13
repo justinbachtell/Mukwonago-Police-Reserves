@@ -25,13 +25,9 @@ interface PageProps {
   params: Promise<{
     id: string
   }>
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-export default async function UserProfilePage({
-  params,
-  searchParams: _searchParams
-}: PageProps) {
+export default async function UserProfilePage({ params }: PageProps) {
   logger.info('Initializing user profile page', undefined, 'UserProfilePage')
   logger.time('user-profile-page-load')
 
