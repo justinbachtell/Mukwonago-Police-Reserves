@@ -11,13 +11,14 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Loader2, Mail, User, Lock, KeyRound } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/client'
 import { createLogger } from '@/lib/debug'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 
 const logger = createLogger({
   module: 'auth',
@@ -42,6 +43,8 @@ export default function SignUpForm() {
   const [errors, setErrors] = useState<FormErrors>({})
   const router = useRouter()
   const { toast } = useToast()
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const captcha = useRef<HCaptcha | null>(null)
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
@@ -124,7 +127,8 @@ export default function SignUpForm() {
           data: {
             first_name: firstName,
             last_name: lastName
-          }
+          },
+          captchaToken: captchaToken || undefined
         }
       })
       logger.timeEnd(`supabase-auth-call-${timestamp}`)
@@ -175,6 +179,9 @@ export default function SignUpForm() {
     } finally {
       setLoading(false)
       logger.timeEnd(`sign-up-${email}-${timestamp}`)
+      if (captcha.current) {
+        captcha.current.resetCaptcha()
+      }
     }
   }
 
@@ -325,6 +332,14 @@ export default function SignUpForm() {
               </div>
             </div>
           </div>
+
+          <HCaptcha
+            ref={captcha}
+            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
+            onVerify={token => {
+              setCaptchaToken(token)
+            }}
+          />
 
           <Button
             type='submit'

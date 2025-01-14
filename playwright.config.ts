@@ -11,16 +11,18 @@ const PORT = process.env.PORT || 3000
 // Set webServer.url and use.baseURL with the location of the WebServer respecting the correct set port
 const baseURL = `http://localhost:${PORT}`
 
-// Ensure environment variables are string type
+// Ensure environment variables are string type with default values
 const env = {
-  ...process.env,
   NODE_ENV: 'test',
-  NEXT_PUBLIC_SUPABASE_URL: process.env.TEST_NEXT_PUBLIC_SUPABASE_URL || '',
+  NEXT_PUBLIC_SUPABASE_URL:
+    process.env.TEST_NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321',
   NEXT_PUBLIC_SUPABASE_ANON_KEY:
     process.env.TEST_NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
   SUPABASE_SERVICE_ROLE_KEY: process.env.TEST_SUPABASE_SERVICE_ROLE_KEY || '',
-  DATABASE_URL: process.env.TEST_DATABASE_URL || ''
-}
+  DATABASE_URL:
+    process.env.TEST_DATABASE_URL ||
+    'postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+} as const // This ensures all values are strings
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -208,6 +210,6 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 2 minutes
     url: baseURL,
-    env
+    env // Now TypeScript knows all values are strings
   }
 })

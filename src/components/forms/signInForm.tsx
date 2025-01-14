@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Loader2, Mail, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/client'
@@ -20,6 +20,7 @@ import { createLogger } from '@/lib/debug'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import type { Factor } from '@supabase/supabase-js'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 
 const logger = createLogger({
   module: 'auth',
@@ -37,6 +38,9 @@ export default function SignInForm() {
   const [loading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const captcha = useRef<HCaptcha | null>(null)
+
   const router = useRouter()
   const { toast } = useToast()
 
@@ -82,7 +86,8 @@ export default function SignInForm() {
       logger.time(authLabel)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
+        options: { captchaToken: captchaToken || undefined }
       })
       logger.timeEnd(authLabel)
 
@@ -186,6 +191,10 @@ export default function SignInForm() {
         variant: 'destructive'
       })
     } finally {
+      if (captcha.current) {
+        captcha.current.resetCaptcha()
+      }
+
       setLoading(false)
       logger.timeEnd(signInLabel)
     }
@@ -291,6 +300,14 @@ export default function SignInForm() {
                 'Sign In'
               )}
             </Button>
+
+            <HCaptcha
+              ref={captcha}
+              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
+              onVerify={token => {
+                setCaptchaToken(token)
+              }}
+            />
 
             <div className='relative'>
               <div className='absolute inset-0 flex items-center'>
