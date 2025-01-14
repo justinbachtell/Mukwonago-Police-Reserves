@@ -115,18 +115,6 @@ jobs:
           npx supabase start
           sleep 10  # Wait for services to be ready
 
-      - name: Setup Test Database
-        run: |
-          docker run -d \
-            -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
-            -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
-            -e POSTGRES_DB=postgres \
-            -p 54322:5432 \
-            postgres:15
-
-          # Wait for PostgreSQL to be ready
-          sleep 10
-
       - name: Run E2E tests
         run: npx percy exec -- npm run test:e2e
         env:
@@ -134,7 +122,7 @@ jobs:
           TEST_NEXT_PUBLIC_SUPABASE_URL: 'http://localhost:54321'
           TEST_NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.TEST_NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           TEST_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.TEST_SUPABASE_SERVICE_ROLE_KEY }}
-          TEST_DATABASE_URL: 'postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:54322/postgres'
+          TEST_DATABASE_URL: 'postgresql://postgres:postgres@localhost:54321/postgres'
           NODE_ENV: test
 
       - uses: actions/upload-artifact@v4
