@@ -7,7 +7,7 @@ export const Env = createEnv({
     NEXT_PUBLIC_APP_URL: z.string().url(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1)
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string()
   },
   runtimeEnv: {
     // Environment
@@ -47,13 +47,13 @@ export const Env = createEnv({
     ENVIRONMENT_URL: z.string().url(),
 
     // Database
-    DATABASE_URL: z.string().min(1),
-    SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+    DATABASE_URL: z.string(),
+    SUPABASE_SERVICE_ROLE_KEY: z.string(),
 
     // Misc
     EMAIL_ADDRESS: z.string().email(),
     VERCEL_BYPASS_TOKEN: z.string().optional(),
-    ARCJET_KEY: z.string().startsWith('ajkey_').min(1),
+    ARCJET_KEY: z.string().startsWith('ajkey_'),
     LOGTAIL_SOURCE_TOKEN: z.string().optional()
   },
   shared: {
