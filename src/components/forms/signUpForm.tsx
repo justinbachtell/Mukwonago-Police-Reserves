@@ -19,6 +19,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/client'
 import { createLogger } from '@/lib/debug'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
+import type { Route } from 'next'
 
 const logger = createLogger({
   module: 'auth',
@@ -362,7 +363,7 @@ export default function SignUpForm() {
         <p className='text-sm text-muted-foreground'>
           Already have an account?{' '}
           <Link
-            href='/sign-in'
+            href={'/sign-in' as Route}
             className='font-medium text-primary hover:underline'
           >
             Sign in

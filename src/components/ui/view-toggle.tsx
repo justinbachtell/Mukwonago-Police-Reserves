@@ -3,6 +3,7 @@
 import { LayoutGrid, Table } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Button } from './button'
+import type { Route } from 'next'
 
 export function ViewToggle() {
   const router = useRouter()
@@ -13,7 +14,7 @@ export function ViewToggle() {
   const setView = (newView: string) => {
     const params = new URLSearchParams(searchParams)
     params.set('view', newView)
-    router.push(`${pathname}?${params.toString()}`)
+    router.push(`${pathname}?${params.toString()}` as Route)
   }
 
   return (

@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import type { Factor } from '@supabase/supabase-js'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
+import type { Route } from 'next'
 
 const logger = createLogger({
   module: 'auth',
@@ -243,7 +244,7 @@ export default function SignInForm() {
                   Password
                 </Label>
                 <Link
-                  href='/forgot-password'
+                  href={'/forgot-password' as Route}
                   className='text-sm font-medium text-primary hover:underline'
                 >
                   Forgot password?
@@ -336,7 +337,7 @@ export default function SignInForm() {
         <p className='text-sm text-muted-foreground'>
           Don't have an account?{' '}
           <Link
-            href='/sign-up'
+            href={'/sign-up' as Route}
             className='font-medium text-primary hover:underline'
           >
             Create account

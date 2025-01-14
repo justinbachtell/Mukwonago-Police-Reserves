@@ -18,6 +18,7 @@ import { redirect } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { getCurrentUser, getUserById } from '@/actions/user'
 import { createLogger } from '@/lib/debug'
+import type { Route } from 'next'
 
 const logger = createLogger({
   module: 'auth',
@@ -232,7 +233,7 @@ export default async function DashboardPage() {
                     .map(assignment => (
                       <Link
                         key={assignment.id}
-                        href={`/user/events/${assignment.event?.id}`}
+                        href={`/user/events/${assignment.event?.id}` as Route}
                         className='group flex items-center gap-4 rounded-lg border border-gray-100 bg-white/50 p-3 transition-all hover:border-green-100 hover:bg-green-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-green-900/50 dark:hover:bg-green-900/20'
                       >
                         <div className='flex size-10 shrink-0 items-center justify-center rounded-lg border-2 border-green-100 bg-green-50 dark:border-green-900 dark:bg-green-900/30'>
@@ -304,7 +305,9 @@ export default async function DashboardPage() {
                       upcomingTraining.map(assignment => (
                         <Link
                           key={assignment.id}
-                          href={`/user/training/${assignment.training?.id}`}
+                          href={
+                            `/user/training/${assignment.training?.id}` as Route
+                          }
                           className='group flex items-center gap-4 rounded-lg border border-gray-100 bg-white/50 p-3 transition-all hover:border-purple-100 hover:bg-purple-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-purple-900/50 dark:hover:bg-purple-900/20'
                         >
                           <div className='flex size-10 shrink-0 items-center justify-center rounded-lg border-2 border-purple-100 bg-purple-50 dark:border-purple-900 dark:bg-purple-900/30'>
@@ -362,7 +365,7 @@ export default async function DashboardPage() {
                     .map(item => (
                       <Link
                         key={item.id}
-                        href={`/user/equipment/${item.equipment?.id}`}
+                        href={`/user/equipment/${item.equipment?.id}` as Route}
                         className='group flex items-center gap-4 rounded-lg border border-gray-100 bg-white/50 p-3 transition-all hover:border-blue-100 hover:bg-blue-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-blue-900/50 dark:hover:bg-blue-900/20'
                       >
                         <div className='flex size-10 shrink-0 items-center justify-center rounded-lg border-2 border-blue-100 bg-blue-50 dark:border-blue-900 dark:bg-blue-900/30'>
@@ -410,7 +413,7 @@ export default async function DashboardPage() {
           <div className='grid w-full items-center justify-center gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 xl:gap-6'>
             {[
               {
-                href: '/user/equipment',
+                href: '/user/equipment' as Route,
                 icon: Boxes,
                 label: 'View Equipment',
                 color: 'blue',
@@ -418,7 +421,7 @@ export default async function DashboardPage() {
                 iconClass: 'text-blue-500'
               },
               {
-                href: '/user/events',
+                href: '/user/events' as Route,
                 icon: CalendarDays,
                 label: 'View Events',
                 color: 'green',
@@ -426,7 +429,7 @@ export default async function DashboardPage() {
                 iconClass: 'text-green-500'
               },
               {
-                href: '/user/training',
+                href: '/user/training' as Route,
                 icon: GraduationCap,
                 label: 'View Training',
                 color: 'purple',
@@ -434,7 +437,7 @@ export default async function DashboardPage() {
                 iconClass: 'text-purple-500'
               },
               {
-                href: '/user/policies',
+                href: '/user/policies' as Route,
                 icon: ScrollText,
                 label: 'View Policies',
                 color: 'indigo',
@@ -444,7 +447,7 @@ export default async function DashboardPage() {
             ].map((action, index) => (
               <Link
                 key={index}
-                href={action.href}
+                href={action.href as Route}
                 className={`group flex w-full items-center justify-between rounded-lg border-0 bg-white/80 p-4 shadow-md transition-all hover:-translate-y-1 hover:shadow-lg ${action.hoverClass} dark:bg-white/5`}
               >
                 <div className='flex items-center gap-3'>

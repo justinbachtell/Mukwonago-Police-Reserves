@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ArrowRight } from 'lucide-react'
+import type { Route } from 'next'
 import Link from 'next/link'
 
 interface CTASectionProps {
@@ -21,13 +22,15 @@ export function CTASection({ isAuthenticated }: CTASectionProps) {
           </p>
           <div className='flex flex-col items-center gap-4 sm:flex-row sm:justify-center'>
             <Button asChild size='default' variant='default'>
-              <Link href={isAuthenticated ? '/application' : '/sign-up'}>
+              <Link
+                href={(isAuthenticated ? '/application' : '/sign-up') as Route}
+              >
                 Apply Now
                 <ArrowRight className='ml-2 transition-transform group-hover:translate-x-0.5' />
               </Link>
             </Button>
             <Button asChild size='default' variant='outline'>
-              <Link href='tel:2623632400'>Contact Us</Link>
+              <Link href={'tel:2623632400' as Route}>Contact Us</Link>
             </Button>
           </div>
         </div>

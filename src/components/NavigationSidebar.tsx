@@ -31,6 +31,7 @@ import Link from 'next/link'
 import type { DBUser } from '@/types/user'
 import { cn } from '@/lib/utils'
 import { usePathname } from 'next/navigation'
+import type { Route } from 'next'
 
 type NavigationSidebarProps = {
   ref?: React.RefObject<HTMLDivElement>
@@ -170,7 +171,7 @@ function NavigationSidebar({
       )}
     >
       <SidebarHeader className='border-b p-4'>
-        <Link href='/' className='flex items-center gap-3'>
+        <Link href={'/' as Route} className='flex items-center gap-3'>
           <div className='flex aspect-square size-8 items-center justify-center rounded-md border bg-background'>
             <Shield className='size-4 text-foreground' />
           </div>
@@ -197,7 +198,10 @@ function NavigationSidebar({
                       pathname === item.url && 'bg-accent/50'
                     )}
                   >
-                    <Link href={item.url} className='flex items-center gap-3'>
+                    <Link
+                      href={item.url as Route}
+                      className='flex items-center gap-3'
+                    >
                       <item.icon className='size-4 shrink-0' />
                       <span>{item.title}</span>
                     </Link>
@@ -221,7 +225,10 @@ function NavigationSidebar({
                       pathname === item.url && 'bg-accent/50'
                     )}
                   >
-                    <Link href={item.url} className='flex items-center gap-3'>
+                    <Link
+                      href={item.url as Route}
+                      className='flex items-center gap-3'
+                    >
                       <item.icon className='size-4 shrink-0' />
                       <span>{item.title}</span>
                     </Link>
@@ -246,7 +253,10 @@ function NavigationSidebar({
                         pathname === item.url && 'bg-accent/50'
                       )}
                     >
-                      <Link href={item.url} className='flex items-center gap-3'>
+                      <Link
+                        href={item.url as Route}
+                        className='flex items-center gap-3'
+                      >
                         <item.icon className='size-4 shrink-0' />
                         <span>{item.title}</span>
                       </Link>
@@ -275,7 +285,7 @@ function NavigationSidebar({
                         )}
                       >
                         <Link
-                          href={item.url}
+                          href={item.url as Route}
                           className='flex items-center gap-3'
                         >
                           <item.icon className='size-4 shrink-0' />
