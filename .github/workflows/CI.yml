@@ -23,15 +23,37 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+
+      # Cache node_modules
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: cache-node-modules
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
+      # Cache Next.js build
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-
+            ${{ runner.os }}-nextjs-
+
       - run: npm ci
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+
       - run: npm run build
         env:
           ARCJET_KEY: ${{ secrets.ARCJET_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
   test:
     strategy:
@@ -64,10 +86,8 @@ jobs:
         env:
           ARCJET_KEY: ${{ secrets.ARCJET_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
       - if: github.event_name == 'pull_request'
         name: Validate all commits from PR
@@ -90,10 +110,32 @@ jobs:
       - name: Run storybook tests
         run: npm run test-storybook:ci
 
+      - name: Start Supabase Local Development setup
+        run: |
+          npx supabase start
+          sleep 10  # Wait for services to be ready
+
+      - name: Setup Test Database
+        run: |
+          docker run -d \
+            -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
+            -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
+            -e POSTGRES_DB=postgres \
+            -p 54322:5432 \
+            postgres:15
+
+          # Wait for PostgreSQL to be ready
+          sleep 10
+
       - name: Run E2E tests
         run: npx percy exec -- npm run test:e2e
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+          TEST_NEXT_PUBLIC_SUPABASE_URL: 'http://localhost:54321'
+          TEST_NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.TEST_NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          TEST_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.TEST_SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_DATABASE_URL: 'postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:54322/postgres'
+          NODE_ENV: test
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -101,30 +143,3 @@ jobs:
           name: test-results
           path: test-results/
           retention-days: 7
-
-  synchronize-with-crowdin:
-    name: GitHub PR synchronize with Crowdin
-    runs-on: ubuntu-latest
-
-    needs: [build, test]
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }} # Crowdin Actions needs to push commits to the PR branch, checkout HEAD commit instead of merge commit
-          fetch-depth: 0
-
-      - name: crowdin action
-        uses: crowdin/github-action@v2
-        with:
-          upload_sources: true
-          upload_translations: true
-          download_translations: true
-          create_pull_request: false
-          localization_branch_name: ${{ github.head_ref || github.ref_name }} # explanation here: https://stackoverflow.com/a/71158878
-          commit_message: 'chore: new Crowdin translations by GitHub Action'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}

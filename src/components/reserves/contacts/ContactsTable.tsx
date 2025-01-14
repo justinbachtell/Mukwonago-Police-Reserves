@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/data-table'
 import { ArrowUpDown, Pencil } from 'lucide-react'
 import Link from 'next/link'
+import type { Route } from 'next'
 
 interface ContactsTableProps {
   data: DBUser[]
@@ -88,7 +89,7 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
       cell: ({ row }) => (
         <div className='flex flex-col px-4'>
           <Link
-            href={`mailto:${row.getValue('email')}`}
+            href={`mailto:${row.getValue('email')}` as Route}
             className='truncate text-primary hover:underline'
           >
             {row.getValue('email')}
@@ -184,7 +185,10 @@ export function ContactsTable({ data, isAdmin }: ContactsTableProps) {
         return (
           <div className='flex items-center justify-end gap-2'>
             <Button variant='outline' size='icon' asChild>
-              <Link href={`/admin/users/${row.original.id}`} className='size-8'>
+              <Link
+                href={`/admin/users/${row.original.id}` as Route}
+                className='size-8'
+              >
                 <Pencil className='size-4' />
               </Link>
             </Button>

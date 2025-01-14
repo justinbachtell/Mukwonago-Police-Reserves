@@ -212,8 +212,6 @@ It generates an optimized production build of the repository. To test the genera
 $ npm run start
 ```
 
-You also need to defined the environment variables `CLERK_SECRET_KEY` using your own key.
-
 This command starts a local server using the production build. You can now open http://localhost:3000 in your preferred browser to see the result.
 
 ### Error Monitoring

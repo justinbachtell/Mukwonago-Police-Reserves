@@ -6,6 +6,7 @@ import { getAllPolicies } from '@/actions/policy'
 import { getTrainings } from '@/actions/training'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import type { LucideIcon } from 'lucide-react'
 import {
   Boxes,
   Users,
@@ -21,6 +22,7 @@ import { policyCompletion } from '@/models/Schema'
 import { eq } from 'drizzle-orm'
 import { createLogger } from '@/lib/debug'
 import Link from 'next/link'
+import type { Route } from 'next'
 
 const logger = createLogger({
   module: 'admin',
@@ -166,6 +168,57 @@ export default async function AdminDashboardPage() {
       'AdminDashboardPage'
     )
 
+    // Define the actions array
+    const actions: Array<{
+      href: Route
+      icon: LucideIcon
+      label: string
+      color: string
+      hoverClass: string
+      iconClass: string
+    }> = [
+      {
+        href: '/admin/users' as Route,
+        icon: Users,
+        label: 'Manage Users',
+        color: 'blue',
+        hoverClass: 'hover:bg-blue-50/50 dark:hover:bg-blue-900/20',
+        iconClass: 'text-blue-500'
+      },
+      {
+        href: '/admin/equipment' as Route,
+        icon: Boxes,
+        label: 'Manage Equipment',
+        color: 'green',
+        hoverClass: 'hover:bg-green-50/50 dark:hover:bg-green-900/20',
+        iconClass: 'text-green-500'
+      },
+      {
+        href: '/admin/events' as Route,
+        icon: CalendarDays,
+        label: 'Manage Events',
+        color: 'purple',
+        hoverClass: 'hover:bg-purple-50/50 dark:hover:bg-purple-900/20',
+        iconClass: 'text-purple-500'
+      },
+      {
+        href: '/admin/training' as Route,
+        icon: GraduationCap,
+        label: 'Manage Training',
+        color: 'indigo',
+        hoverClass: 'hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20',
+        iconClass: 'text-indigo-500'
+      },
+      {
+        href: '/admin/policies' as Route,
+        icon: ScrollText,
+        label: 'Manage Policies',
+        color: 'rose',
+        hoverClass: 'hover:bg-rose-50/50 dark:hover:bg-rose-900/20',
+        iconClass: 'text-rose-500'
+      }
+    ]
+
     return (
       <div className='min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900'>
         <div className='container mx-auto space-y-8 px-4 py-8 md:px-6 lg:px-8 lg:py-10'>
@@ -257,7 +310,7 @@ export default async function AdminDashboardPage() {
                   {nextEvents.map(event => (
                     <Link
                       key={event.id}
-                      href={`/admin/events/${event.id}`}
+                      href={`/admin/events/${event.id}` as Route}
                       className='group flex items-center gap-4 rounded-lg border border-gray-100 bg-white/50 p-3 transition-all hover:border-purple-100 hover:bg-purple-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-purple-900/50 dark:hover:bg-purple-900/20'
                     >
                       <div className='flex size-10 shrink-0 items-center justify-center rounded-lg border-2 border-purple-100 bg-purple-50 dark:border-purple-900 dark:bg-purple-900/30'>
@@ -309,7 +362,7 @@ export default async function AdminDashboardPage() {
                   {nextTrainings.map(training => (
                     <Link
                       key={training.id}
-                      href={`/admin/training/${training.id}`}
+                      href={`/admin/training/${training.id}` as Route}
                       className='group flex items-center gap-4 rounded-lg border border-gray-100 bg-white/50 p-3 transition-all hover:border-purple-100 hover:bg-purple-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-purple-900/50 dark:hover:bg-purple-900/20'
                     >
                       <div className='flex size-10 shrink-0 items-center justify-center rounded-lg border-2 border-purple-100 bg-purple-50 dark:border-purple-900 dark:bg-purple-900/30'>
@@ -364,7 +417,7 @@ export default async function AdminDashboardPage() {
                   {recentUsers.map(user => (
                     <Link
                       key={user.id}
-                      href={`/admin/users/${user.id}`}
+                      href={`/admin/users/${user.id}` as Route}
                       className='group flex items-center gap-4 rounded-lg border border-gray-100 bg-white/50 p-3 transition-all hover:border-blue-100 hover:bg-blue-50/50 dark:border-gray-800 dark:bg-gray-900/50 dark:hover:border-blue-900/50 dark:hover:bg-blue-900/20'
                     >
                       <Avatar className='size-10 border-2 border-blue-100 bg-blue-50 dark:border-blue-900 dark:bg-blue-900/30'>
@@ -401,52 +454,11 @@ export default async function AdminDashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className='grid w-full items-center justify-center gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 xl:gap-6'>
-            {[
-              {
-                href: '/admin/users',
-                icon: Users,
-                label: 'Manage Users',
-                color: 'blue',
-                hoverClass: 'hover:bg-blue-50/50 dark:hover:bg-blue-900/20',
-                iconClass: 'text-blue-500'
-              },
-              {
-                href: '/admin/equipment',
-                icon: Boxes,
-                label: 'Manage Equipment',
-                color: 'green',
-                hoverClass: 'hover:bg-green-50/50 dark:hover:bg-green-900/20',
-                iconClass: 'text-green-500'
-              },
-              {
-                href: '/admin/events',
-                icon: CalendarDays,
-                label: 'Manage Events',
-                color: 'purple',
-                hoverClass: 'hover:bg-purple-50/50 dark:hover:bg-purple-900/20',
-                iconClass: 'text-purple-500'
-              },
-              {
-                href: '/admin/training',
-                icon: GraduationCap,
-                label: 'Manage Training',
-                color: 'indigo',
-                hoverClass: 'hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20',
-                iconClass: 'text-indigo-500'
-              },
-              {
-                href: '/admin/policies',
-                icon: ScrollText,
-                label: 'Manage Policies',
-                color: 'rose',
-                hoverClass: 'hover:bg-rose-50/50 dark:hover:bg-rose-900/20',
-                iconClass: 'text-rose-500'
-              }
-            ].map((action, index) => (
+          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+            {actions.map((action, index) => (
               <Link
                 key={index}
-                href={action.href}
+                href={action.href as Route}
                 className={`group flex w-full items-center justify-between rounded-lg border-0 bg-white/80 p-4 shadow-md transition-all hover:-translate-y-1 hover:shadow-lg ${action.hoverClass} dark:bg-white/5`}
               >
                 <div className='flex items-center gap-3'>

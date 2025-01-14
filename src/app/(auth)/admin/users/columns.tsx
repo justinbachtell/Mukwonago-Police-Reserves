@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowUpDown, Boxes, User } from 'lucide-react'
 import Link from 'next/link'
 import { AssignEquipmentToUserDialog } from '@/components/admin/dialogs/assignEquipmentToUserDialog'
+import type { Route } from 'next'
 
 // Define the type for users in the table including application status
 export interface UserWithApplication extends DBUser {
@@ -205,7 +206,7 @@ export const columns: ColumnDef<UserWithApplication>[] = [
           className='size-8'
           title='View Profile'
         >
-          <Link href={`/admin/users/${row.original.id}`}>
+          <Link href={`/admin/users/${row.original.id}` as Route}>
             <User className='size-4' />
           </Link>
         </Button>
@@ -216,7 +217,7 @@ export const columns: ColumnDef<UserWithApplication>[] = [
           className='size-8'
           title='View Equipment'
         >
-          <Link href={`/admin/users/${row.original.id}/equipment`}>
+          <Link href={`/admin/users/${row.original.id}/equipment` as Route}>
             <Boxes className='size-4' />
           </Link>
         </Button>

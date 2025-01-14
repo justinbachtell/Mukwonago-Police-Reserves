@@ -15,6 +15,7 @@ import {
   Shield,
   PenSquare
 } from 'lucide-react'
+import type { Route } from 'next'
 
 const logger = createLogger({
   module: 'admin',
@@ -85,7 +86,7 @@ export default async function UserProfilePage({ params }: PageProps) {
               {userToView.last_name}
             </p>
           </div>
-          <Link href={`/admin/users/${id}/edit`}>
+          <Link href={`/admin/users/${id}/edit` as Route}>
             <Button className='gap-2'>
               <PenSquare className='size-4' />
               Edit User

@@ -9,6 +9,7 @@ import { RequirementsSection } from '@/components/home/RequirementsSection'
 import { ReserveProgramSection } from '@/components/home/ReserveProgramSection'
 import { CTASection } from '@/components/home/CTASection'
 import { LoadingCard } from '@/components/loading/LoadingShell'
+import type { Route } from 'next'
 
 const logger = createLogger({
   module: 'home',
@@ -39,13 +40,15 @@ function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
           </p>
           <div className='flex flex-col items-center gap-4 sm:flex-row sm:justify-center'>
             <Button asChild size='default' variant='default'>
-              <Link href={isAuthenticated ? '/application' : '/sign-up'}>
+              <Link
+                href={(isAuthenticated ? '/application' : '/sign-up') as Route}
+              >
                 Apply Now
                 <ArrowRight className='ml-2 transition-transform group-hover:translate-x-0.5' />
               </Link>
             </Button>
             <Button asChild size='default' variant='outline'>
-              <Link href='/about'>Learn More</Link>
+              <Link href={'/about' as Route}>Learn More</Link>
             </Button>
           </div>
         </div>
