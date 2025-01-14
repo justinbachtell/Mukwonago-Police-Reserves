@@ -1,4 +1,6 @@
-import withBundleAnalyzer from '@next/bundle-analyzer';
+import type { Configuration as WebpackConfig } from 'webpack'
+import type { NextConfig } from 'next'
+import withBundleAnalyzer from '@next/bundle-analyzer'
 import { withSentryConfig } from '@sentry/nextjs'
 import './src/libs/Env'
 
@@ -7,19 +9,34 @@ const bundleAnalyzer = withBundleAnalyzer({
 })
 
 /** @type {import('next').NextConfig} */
-export default withSentryConfig(
-  bundleAnalyzer({
-    eslint: {
-      dirs: ['.']
-    },
-    poweredByHeader: false,
-    reactStrictMode: true,
-    serverExternalPackages: ['@electric-sql/pglite'],
+const nextConfig: NextConfig = {
+  eslint: {
+    dirs: ['.']
+  },
+  poweredByHeader: false,
+  reactStrictMode: true,
+  serverExternalPackages: ['@electric-sql/pglite'],
+  logging: {
+    fetches: {
+      fullUrl: true
+    }
+  },
+  experimental: {
+    // Enable build cache
+    typedRoutes: true,
+    serverActions: {
+      bodySizeLimit: '2mb'
+    }
+  },
+  // Enable build output compression
+  compress: true,
 
-    webpack: (config, { isServer }) => {
-      if (!isServer) {
-        config.resolve.fallback = {
-          ...config.resolve.fallback,
+  webpack: (config: WebpackConfig, { isServer }: { isServer: boolean }) => {
+    if (!isServer) {
+      config.resolve = {
+        ...config.resolve,
+        fallback: {
+          ...config.resolve?.fallback,
           net: false,
           tls: false,
           fs: false,
@@ -32,34 +49,35 @@ export default withSentryConfig(
           'node:path': require.resolve('path-browserify')
         }
       }
-
-      // Handle PDF.js worker
-      config.module.rules.push({
-        test: /pdf\.worker\.(min\.)?js/,
-        type: 'asset/resource'
-      })
-
-      // Suppress Prisma and OpenTelemetry warnings from Sentry
-      config.ignoreWarnings = [
-        { message: /Critical dependency/ },
-        { message: /Can't resolve 'prisma'/ }
-      ]
-
-      return config
     }
-  }),
-  {
-    automaticVercelMonitors: true,
-    disableLogger: true,
-    hideSourceMaps: true,
-    org: 'justin-bachtell',
-    project: 'mukwonago-police-reserves',
-    reactComponentAnnotation: {
-      enabled: true
-    },
-    silent: !process.env.CI,
-    telemetry: false,
-    tunnelRoute: '/monitoring',
-    widenClientFileUpload: true
+
+    // Handle PDF.js worker
+    config.module?.rules?.push({
+      test: /pdf\.worker\.(min\.)?js/,
+      type: 'asset/resource'
+    })
+
+    // Suppress Prisma and OpenTelemetry warnings from Sentry
+    config.ignoreWarnings = [
+      { message: /Critical dependency/ },
+      { message: /Can't resolve 'prisma'/ }
+    ]
+
+    return config
   }
-)
+}
+
+export default withSentryConfig(bundleAnalyzer(nextConfig), {
+  automaticVercelMonitors: true,
+  disableLogger: true,
+  hideSourceMaps: true,
+  org: 'justin-bachtell',
+  project: 'mukwonago-police-reserves',
+  reactComponentAnnotation: {
+    enabled: true
+  },
+  silent: !process.env.CI,
+  telemetry: false,
+  tunnelRoute: '/monitoring',
+  widenClientFileUpload: true
+})

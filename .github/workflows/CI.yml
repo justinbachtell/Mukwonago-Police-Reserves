@@ -23,7 +23,31 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+
+      # Cache node_modules
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: cache-node-modules
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
+      # Cache Next.js build
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}-
+            ${{ runner.os }}-nextjs-
+
       - run: npm ci
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+
       - run: npm run build
         env:
           ARCJET_KEY: ${{ secrets.ARCJET_KEY }}
@@ -85,6 +109,11 @@ jobs:
 
       - name: Run storybook tests
         run: npm run test-storybook:ci
+
+      - name: Start Supabase Local Development setup
+        run: |
+          npx supabase start
+          sleep 10  # Wait for services to be ready
 
       - name: Setup Test Database
         run: |
