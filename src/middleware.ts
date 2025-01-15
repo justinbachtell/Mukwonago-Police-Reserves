@@ -8,13 +8,36 @@ const logger = createLogger({
 })
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams } = request.nextUrl
+
+  // Handle Supabase auth routes
+  if (pathname.startsWith('/auth/v1/')) {
+    logger.info('Handling Supabase auth route', { pathname })
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl) {
+      logger.error('Missing NEXT_PUBLIC_SUPABASE_URL')
+      return new Response('Internal Server Error', { status: 500 })
+    }
+
+    // Construct the full Supabase URL with query parameters
+    const targetUrl = new URL(pathname, supabaseUrl)
+    searchParams.forEach((value, key) => {
+      targetUrl.searchParams.append(key, value)
+    })
+
+    logger.info('Redirecting to Supabase auth endpoint', {
+      from: pathname,
+      to: targetUrl.toString()
+    })
+
+    return Response.redirect(targetUrl)
+  }
 
   // Skip middleware for specific paths
   if (
     pathname.startsWith('/_next/') || // Next.js resources
     pathname.startsWith('/api/') || // API routes
-    pathname.startsWith('/auth/') || // Auth routes
+    pathname.startsWith('/auth/callback') || // Auth callback route
     pathname.includes('.') || // Static files
     pathname.startsWith('/sign-in') ||
     pathname.startsWith('/sign-up') ||
@@ -40,8 +63,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
-     * - auth endpoints
      */
-    '/((?!_next/static|_next/image|favicon.ico|public|auth/|api/|sign-in|sign-up|terms|privacy|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
+    '/((?!_next/static|_next/image|favicon.ico|public|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/auth/:path*'
   ]
 }
