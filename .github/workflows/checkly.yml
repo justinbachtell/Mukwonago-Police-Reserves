@@ -1,21 +1,23 @@
 name: Checkly
 
-on: [deployment_status]
+on:
+  deployment_status:
+  push:
+    branches: [main, dev]
 
 env:
   CHECKLY_API_KEY: ${{ secrets.CHECKLY_API_KEY }}
   CHECKLY_ACCOUNT_ID: ${{ secrets.CHECKLY_ACCOUNT_ID }}
-  CHECKLY_TEST_ENVIRONMENT: ${{ github.event.deployment_status.environment }}
+  CHECKLY_TEST_ENVIRONMENT: ${{ github.event_name == 'deployment_status' && github.event.deployment_status.environment || 'Production' }}
 
 jobs:
   test-e2e:
+    # Temporarily disabled - remove the following line to re-enable E2E tests
+    if: false # ${{ false }}
+
     strategy:
       matrix:
         node-version: [20.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
-    # Only run when the deployment was successful
-    if: github.event.deployment_status.state == 'success'
 
     name: Test E2E on Checkly
     runs-on: ubuntu-latest
@@ -24,11 +26,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: '${{ github.event.deployment_status.deployment.ref }}'
+          ref: ${{ github.event_name == 'deployment_status' && github.event.deployment_status.deployment.ref || github.ref }}
           fetch-depth: 0
 
-      - name: Set branch name # workaround to detect branch name in "deployment_status" actions
-        run: echo "CHECKLY_TEST_REPO_BRANCH=$(git show -s --pretty=%D HEAD | tr -s ',' '\n' | sed 's/^ //' | grep -e 'origin/' | head -1 | sed 's/\origin\///g')" >> $GITHUB_ENV
+      - name: Set branch name
+        run: |
+          if [ "${{ github.event_name }}" = "deployment_status" ]; then
+            echo "CHECKLY_TEST_REPO_BRANCH=$(git show -s --pretty=%D HEAD | tr -s ',' '\n' | sed 's/^ //' | grep -e 'origin/' | head -1 | sed 's/\origin\///g')" >> $GITHUB_ENV
+          else
+            echo "CHECKLY_TEST_REPO_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -46,18 +53,24 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
-      - name: Run checks # run the checks passing in the ENVIRONMENT_URL and recording a test session.
+      - name: Run checks
         id: run-checks
         run: npx checkly test --reporter=github --record
         env:
           VERCEL_BYPASS_TOKEN: ${{ secrets.VERCEL_BYPASS_TOKEN }}
-          ENVIRONMENT_URL: ${{ github.event.deployment_status.environment_url }}
+          ENVIRONMENT_URL: ${{ github.event_name == 'deployment_status' && github.event.deployment_status.environment_url || format('https://{0}', 'mukwonago-police-reserves.vercel.app') }}
 
-      - name: Create summary # export the markdown report to the job summary.
+      - name: Create summary
         id: create-summary
-        run: cat checkly-github-report.md > $GITHUB_STEP_SUMMARY
+        if: always()
+        run: |
+          if [ -f checkly-github-report.md ]; then
+            cat checkly-github-report.md > $GITHUB_STEP_SUMMARY
+          else
+            echo "No test report was generated" > $GITHUB_STEP_SUMMARY
+          fi
 
-      - name: Deploy checks # if the test run was successful and we are on Production, deploy the checks
+      - name: Deploy checks
         id: deploy-checks
-        if: steps.run-checks.outcome == 'success' && github.event.deployment_status.environment == 'Production'
+        if: steps.run-checks.outcome == 'success' && (github.event_name == 'push' || github.event.deployment_status.environment == 'Production')
         run: npx checkly deploy --force

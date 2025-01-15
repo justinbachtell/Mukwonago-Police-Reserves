@@ -19,27 +19,32 @@ export const config = defineConfig({
     browserChecks: {
       alertChannels: [emailChannel],
       frequency: Frequency.EVERY_24H,
-      testMatch: '**/tests/e2e/**/*.check.e2e.ts',
+      testMatch: [
+        '**/tests/e2e/authentication/**/*.spec.ts',
+        '**/tests/e2e/desktop/**/*.spec.ts',
+        '**/tests/e2e/tablet/**/*.spec.ts',
+        '**/tests/e2e/mobile/**/*.spec.ts'
+      ]
     },
     locations: ['us-east-1', 'eu-west-1'],
     playwrightConfig: {
       use: {
         baseURL: process.env.ENVIRONMENT_URL || productionURL,
         extraHTTPHeaders: {
-          'x-vercel-protection-bypass': process.env.VERCEL_BYPASS_TOKEN,
-        },
-      },
+          'x-vercel-protection-bypass': process.env.VERCEL_BYPASS_TOKEN
+        }
+      }
     },
     runtimeId: '2024.02',
-    tags: ['website'],
+    tags: ['website']
   },
   cli: {
-    reporters: ['list'],
-    runLocation: 'eu-west-1',
+    reporters: ['list', 'github'],
+    runLocation: 'eu-west-1'
   },
   logicalId: 'mukwonago-police-reserves',
   projectName: 'Mukwonago Police Reserves',
-  repoUrl: 'https://github.com/justinbachtell/mukwonago-police-reserves',
-});
+  repoUrl: 'https://github.com/justinbachtell/mukwonago-police-reserves'
+})
 
 export default config;
