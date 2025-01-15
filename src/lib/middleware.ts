@@ -41,6 +41,7 @@ export async function updateSession(request: NextRequest) {
 
   if (
     !user &&
+    !request.nextUrl.pathname.startsWith('/') &&
     !request.nextUrl.pathname.startsWith('/sign-in') &&
     !request.nextUrl.pathname.startsWith('/auth') &&
     !request.nextUrl.pathname.startsWith('/sign-up') &&
@@ -51,7 +52,17 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/monitoring') &&
     !request.nextUrl.pathname.startsWith('/auth/callback') &&
     !request.nextUrl.pathname.startsWith('/auth/v1/authorize') &&
-    !request.nextUrl.pathname.startsWith('/')
+    !request.nextUrl.pathname.startsWith('/auth/v1/signup') &&
+    !request.nextUrl.pathname.startsWith('/auth/v1/token') &&
+    !request.nextUrl.pathname.startsWith('/site.webmanifest') &&
+    !request.nextUrl.pathname.startsWith('/favicon.ico') &&
+    !request.nextUrl.pathname.startsWith('/apple-touch-icon.png') &&
+    !request.nextUrl.pathname.startsWith('/favicon-16x16.png') &&
+    !request.nextUrl.pathname.startsWith('/favicon-32x32.png') &&
+    !request.nextUrl.pathname.startsWith('/favicon-96x96.png') &&
+    !request.nextUrl.pathname.startsWith('/favicon-128x128.png') &&
+    !request.nextUrl.pathname.startsWith('/web-app-manifest-192x192.png') &&
+    !request.nextUrl.pathname.startsWith('/web-app-manifest-512x512.png')
   ) {
     // no user, potentially respond by redirecting the user to the signin page
     const url = request.nextUrl.clone()
