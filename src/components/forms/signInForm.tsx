@@ -140,7 +140,9 @@ export default function SignInForm() {
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-            state
+            state,
+            // Request profile information
+            scope: 'openid email profile'
           }
         }
       })
@@ -227,9 +229,12 @@ export default function SignInForm() {
         provider: 'azure',
         options: {
           redirectTo: redirectURL,
-          scopes: 'email',
+          scopes: 'email profile openid User.Read',
           queryParams: {
-            state
+            state,
+            response_type: 'code',
+            // Request additional profile information
+            scope: 'openid email profile User.Read'
           }
         }
       })

@@ -84,8 +84,14 @@ export function toDBUser(supabaseUser: any): DBUser | null {
 
   return {
     id: supabaseUser.id,
-    first_name: supabaseUser.user_metadata?.first_name || '',
-    last_name: supabaseUser.user_metadata?.last_name || '',
+    first_name:
+      supabaseUser.user_metadata?.given_name ||
+      supabaseUser.user_metadata?.first_name ||
+      '',
+    last_name:
+      supabaseUser.user_metadata?.family_name ||
+      supabaseUser.user_metadata?.last_name ||
+      '',
     email: supabaseUser.email,
     phone: supabaseUser.user_metadata?.phone || null,
     position: supabaseUser.user_metadata?.position || 'candidate',

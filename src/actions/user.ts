@@ -49,63 +49,103 @@ export async function getCurrentUser() {
     }
 
     logger.time(`fetch-user-${authUser.id}`)
-    const [dbUser] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, authUser.id))
 
-    // If user not in public.user, create new user
+    // First try to get the user
+    let [dbUser] = await db.select().from(user).where(eq(user.id, authUser.id))
+
+    // If no user exists, try to create one with error handling for race conditions
     if (!dbUser) {
       logger.info(
-        'Creating new user in public.user',
+        'Attempting to create new user in public.user',
         { userId: authUser.id },
         'getCurrentUser'
       )
-      const now = toISOString(new Date())
-      const [newUser] = await db
-        .insert(user)
-        .values({
-          id: authUser.id,
-          created_at: now,
-          email: authUser.email ?? '',
-          first_name: authUser.user_metadata.first_name ?? '',
-          last_name: authUser.user_metadata.last_name ?? '',
-          updated_at: now,
-          role: 'guest',
-          position: 'reserve',
-          status: 'active'
-        })
-        .returning()
 
-      if (!newUser) {
-        logger.error(
-          'Failed to create new user',
-          { id: authUser.id },
-          'getCurrentUser'
-        )
-        return null
+      try {
+        const now = toISOString(new Date())
+        const [newUser] = await db
+          .insert(user)
+          .values({
+            id: authUser.id,
+            created_at: now,
+            email: authUser.email ?? '',
+            first_name:
+              authUser.user_metadata?.given_name ||
+              authUser.user_metadata?.first_name ||
+              '',
+            last_name:
+              authUser.user_metadata?.family_name ||
+              authUser.user_metadata?.last_name ||
+              '',
+            updated_at: now,
+            role: 'guest',
+            position: 'reserve',
+            status: 'active'
+          })
+          .returning()
+
+        if (newUser) {
+          logger.info(
+            'New user created successfully',
+            { id: newUser.id },
+            'getCurrentUser'
+          )
+          dbUser = newUser
+        }
+      } catch (insertError: any) {
+        // If error is duplicate key, try to fetch the user again
+        if (insertError?.code === '23505') {
+          logger.info(
+            'User already exists (race condition), fetching existing user',
+            { userId: authUser.id },
+            'getCurrentUser'
+          )
+          const [existingUser] = await db
+            .select()
+            .from(user)
+            .where(eq(user.id, authUser.id))
+          dbUser = existingUser
+        } else {
+          // If it's a different error, throw it
+          throw insertError
+        }
       }
-
-      logger.info(
-        'New user created successfully',
-        { id: newUser.id },
-        'getCurrentUser'
-      )
-      logger.timeEnd(`fetch-user-${authUser.id}`)
-
-      return {
-        ...newUser
-      } as DBUser
     }
 
-    // Check if Supabase email differs from DB
-    if (dbUser.email !== authUser.email) {
+    // If we still don't have a user, something went wrong
+    if (!dbUser) {
+      logger.error(
+        'Failed to get or create user',
+        { userId: authUser.id },
+        'getCurrentUser'
+      )
+      return null
+    }
+
+    // Check if Supabase metadata differs from DB
+    if (
+      dbUser.email !== authUser.email ||
+      dbUser.first_name !==
+        (authUser.user_metadata?.given_name ||
+          authUser.user_metadata?.first_name) ||
+      dbUser.last_name !==
+        (authUser.user_metadata?.family_name ||
+          authUser.user_metadata?.last_name)
+    ) {
       logger.info(
-        'Updating user with Supabase email',
+        'Updating user with Supabase data',
         {
           userId: dbUser.id,
           oldEmail: dbUser.email,
-          newEmail: authUser.email
+          newEmail: authUser.email,
+          oldFirstName: dbUser.first_name,
+          newFirstName:
+            authUser.user_metadata?.given_name ||
+            authUser.user_metadata?.first_name,
+          oldLastName: dbUser.last_name,
+          newLastName:
+            authUser.user_metadata?.family_name ||
+            authUser.user_metadata?.last_name
         },
         'getCurrentUser'
       )
@@ -114,33 +154,22 @@ export async function getCurrentUser() {
         .update(user)
         .set({
           email: authUser.email ?? '',
+          first_name:
+            authUser.user_metadata?.given_name ||
+            authUser.user_metadata?.first_name ||
+            dbUser.first_name,
+          last_name:
+            authUser.user_metadata?.family_name ||
+            authUser.user_metadata?.last_name ||
+            dbUser.last_name,
           updated_at: toISOString(new Date())
         })
         .where(eq(user.id, dbUser.id))
         .returning()
 
-      if (!updatedUser) {
-        logger.error(
-          'Failed to update user with Supabase email',
-          { userId: dbUser.id },
-          'getCurrentUser'
-        )
-        return null
+      if (updatedUser) {
+        dbUser = updatedUser
       }
-
-      logger.info(
-        'User updated with Supabase email',
-        {
-          userId: updatedUser.id,
-          email: updatedUser.email
-        },
-        'getCurrentUser'
-      )
-      logger.timeEnd(`fetch-user-${authUser.id}`)
-
-      return {
-        ...updatedUser
-      } as DBUser
     }
 
     logger.info(
