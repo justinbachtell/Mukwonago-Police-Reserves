@@ -28,47 +28,84 @@ export async function uploadResume(
 
   try {
     const supabase = await createClient()
+
+    // Create a clean folder name
     const folderName =
       `${firstName.toLowerCase()}_${lastName.toLowerCase()}`.replace(
         /[^a-z0-9_]/g,
         ''
       )
-    const fileName = `${folderName}/${file.name}`
+
+    // Create a clean file name
+    const fileExtension = file.name.split('.').pop()
+    const timestamp = new Date().getTime()
+    const cleanFileName = `${folderName}_${timestamp}.${fileExtension}`
+    const filePath = `${folderName}/${cleanFileName}`
 
     logger.info(
       'Uploading file to Supabase storage',
-      { fileName, contentType: file.type },
+      { filePath, contentType: file.type },
       'uploadResume'
     )
 
-    const { error: uploadError } = await supabase.storage
+    // Attempt the upload
+    const { error: uploadError, data } = await supabase.storage
       .from('resumes')
-      .upload(fileName, file, {
+      .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: false,
+        upsert: true, // Allow overwriting
         contentType: file.type
       })
 
     if (uploadError) {
       logger.error(
         'Resume upload failed',
-        logger.errorWithData(uploadError),
+        {
+          error: uploadError,
+          message: uploadError.message,
+          name: uploadError.name
+        },
         'uploadResume'
       )
-      throw uploadError
+
+      // Check for common error messages
+      if (uploadError.message.includes('permission denied')) {
+        throw new Error('Permission denied. Please check storage permissions.')
+      } else if (uploadError.message.includes('too large')) {
+        throw new Error('File too large. Maximum size is 5MB.')
+      } else if (uploadError.message.includes('bucket not found')) {
+        throw new Error('Storage not configured. Please contact support.')
+      } else {
+        throw new Error(`Upload failed: ${uploadError.message}`)
+      }
     }
 
-    const filePath = `resumes/${fileName}`
-    logger.info('Resume upload successful', { filePath }, 'uploadResume')
+    if (!data?.path) {
+      logger.error(
+        'No file path returned from upload',
+        { data },
+        'uploadResume'
+      )
+      throw new Error('Failed to get uploaded file path')
+    }
+
+    const fullPath = `resumes/${data.path}`
+    logger.info('Resume upload successful', { fullPath }, 'uploadResume')
     logger.timeEnd('resume-upload')
-    return filePath
+    return fullPath
   } catch (error) {
     logger.error(
       'Resume upload failed',
       logger.errorWithData(error),
       'uploadResume'
     )
-    throw new Error('Failed to upload resume')
+
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      throw error // Rethrow specific errors
+    } else {
+      throw new TypeError('Failed to upload resume. Please try again.')
+    }
   }
 }
 

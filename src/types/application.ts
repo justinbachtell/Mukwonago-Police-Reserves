@@ -16,6 +16,7 @@ export interface Application {
   city: string
   created_at: string
   driver_license: string
+  driver_license_state: string
   email: string
   first_name: string
   last_name: string
@@ -51,6 +52,7 @@ export type RequiredApplicationFields = Pick<
   | 'email'
   | 'phone'
   | 'driver_license'
+  | 'driver_license_state'
   | 'street_address'
   | 'city'
   | 'state'

@@ -160,6 +160,7 @@ export const application = pgTable('application', {
     .defaultNow()
     .notNull(),
   driver_license: text('driver_license').notNull(),
+  driver_license_state: text('driver_license_state').notNull(),
   email: text('email').notNull(),
   first_name: text('first_name').notNull(),
   id: serial('id').primaryKey(),
