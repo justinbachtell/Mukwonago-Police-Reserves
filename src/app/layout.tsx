@@ -5,6 +5,7 @@ import '@/styles/global.css'
 import { createLogger } from '@/lib/debug'
 import { getCurrentUser } from '@/actions/user'
 import { UserProvider } from '@/components/auth/UserProvider'
+import { Analytics } from '@vercel/analytics/react'
 
 const logger = createLogger({
   module: 'root',
@@ -36,7 +37,35 @@ export const metadata: Metadata = {
     },
     {
       rel: 'icon',
+      sizes: '96x96',
+      type: 'image/png',
+      url: '/favicon-96x96.png'
+    },
+    {
+      rel: 'icon',
+      sizes: '120x120',
+      type: 'image/png',
+      url: '/favicon-120x120.png'
+    },
+    {
+      rel: 'icon',
+      sizes: '192x192',
+      type: 'image/png',
+      url: '/web-app-manifest-192x192.png'
+    },
+    {
+      rel: 'icon',
+      sizes: '512x512',
+      type: 'image/png',
+      url: '/web-app-manifest-512x512.png'
+    },
+    {
+      rel: 'icon',
       url: '/favicon.ico'
+    },
+    {
+      rel: 'manifest',
+      url: '/site.webmanifest'
     }
   ]
 }
@@ -123,6 +152,7 @@ export default async function RootLayout({
         <body suppressHydrationWarning className='overflow-x-hidden'>
           <UserProvider user={user}>{children}</UserProvider>
         </body>
+        <Analytics />
       </html>
     )
   } catch (error) {
@@ -138,6 +168,7 @@ export default async function RootLayout({
         <body suppressHydrationWarning className='overflow-x-hidden'>
           {children}
         </body>
+        <Analytics />
       </html>
     )
   } finally {

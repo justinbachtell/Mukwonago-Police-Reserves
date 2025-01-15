@@ -186,8 +186,89 @@ export default function SignUpForm() {
     }
   }
 
+  const handleGoogleSignIn = async () => {
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          }
+        }
+      })
+
+      if (error) {
+        logger.error(
+          'Google OAuth failed',
+          {
+            error: logger.errorWithData(error)
+          },
+          'handleGoogleSignIn'
+        )
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to sign in with Google',
+          variant: 'destructive'
+        })
+      }
+    } catch (error) {
+      logger.error(
+        'Unexpected error during Google OAuth',
+        logger.errorWithData(error),
+        'handleGoogleSignIn'
+      )
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleMicrosoftSignIn = async () => {
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'email'
+        }
+      })
+
+      if (error) {
+        logger.error(
+          'Microsoft OAuth failed',
+          {
+            error: logger.errorWithData(error)
+          },
+          'handleMicrosoftSignIn'
+        )
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to sign in with Microsoft',
+          variant: 'destructive'
+        })
+      }
+    } catch (error) {
+      logger.error(
+        'Unexpected error during Microsoft OAuth',
+        logger.errorWithData(error),
+        'handleMicrosoftSignIn'
+      )
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive'
+      })
+    }
+  }
+
   return (
-    <Card className='mt-16 w-full max-w-md shadow-lg dark:bg-gray-950 dark:shadow-2xl dark:shadow-blue-900/20'>
+    <Card className='w-full max-w-md shadow-lg dark:bg-gray-950 dark:shadow-2xl dark:shadow-blue-900/20'>
       <CardHeader className='space-y-3 pb-8'>
         <CardTitle className='text-center text-2xl font-bold'>
           Create Account
@@ -334,13 +415,15 @@ export default function SignUpForm() {
             </div>
           </div>
 
-          <HCaptcha
-            ref={captcha}
-            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
-            onVerify={token => {
-              setCaptchaToken(token)
-            }}
-          />
+          <div className='mx-auto flex w-full items-center justify-center'>
+            <HCaptcha
+              ref={captcha}
+              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
+              onVerify={token => {
+                setCaptchaToken(token)
+              }}
+            />
+          </div>
 
           <Button
             type='submit'
@@ -357,6 +440,64 @@ export default function SignUpForm() {
               'Create Account'
             )}
           </Button>
+
+          <div className='relative'>
+            <div className='absolute inset-0 flex items-center'>
+              <span className='w-full border-t' />
+            </div>
+            <div className='relative flex justify-center text-xs uppercase'>
+              <span className='bg-background px-2 text-muted-foreground'>
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          <div className='flex flex-col space-y-4'>
+            <Button
+              type='button'
+              variant='outline'
+              className='w-full py-6'
+              size='lg'
+              onClick={handleGoogleSignIn}
+            >
+              <svg
+                className='mr-2 size-4'
+                aria-hidden='true'
+                focusable='false'
+                data-prefix='fab'
+                data-icon='google'
+                role='img'
+                xmlns='http://www.w3.org/2000/svg'
+                viewBox='0 0 488 512'
+              >
+                <path
+                  fill='currentColor'
+                  d='M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z'
+                ></path>
+              </svg>
+              Continue with Google
+            </Button>
+
+            <Button
+              type='button'
+              variant='outline'
+              className='w-full py-6'
+              size='lg'
+              onClick={handleMicrosoftSignIn}
+            >
+              <svg
+                className='mr-2 size-4'
+                xmlns='http://www.w3.org/2000/svg'
+                viewBox='0 0 23 23'
+              >
+                <path
+                  fill='currentColor'
+                  d='M0 0h11v11H0zm12 0h11v11H12zM0 12h11v11H0zm12 0h11v11H12z'
+                />
+              </svg>
+              Continue with Microsoft
+            </Button>
+          </div>
         </form>
       </CardContent>
       <CardFooter className='flex justify-center border-t p-6'>

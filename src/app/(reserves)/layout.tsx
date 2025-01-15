@@ -19,7 +19,7 @@ export default async function ReservesLayout({
   try {
     return (
       <BaseTemplate>
-        <div className='[&_p]:my-6'>{children}</div>
+        <div className='px-4 pb-12 pt-20 lg:px-8 lg:py-10'>{children}</div>
       </BaseTemplate>
     )
   } catch (error) {
