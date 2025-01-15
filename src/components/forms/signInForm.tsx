@@ -20,7 +20,7 @@ import { createLogger } from '@/lib/debug'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import type { Factor } from '@supabase/supabase-js'
-import HCaptcha from '@hcaptcha/react-hcaptcha'
+import type HCaptcha from '@hcaptcha/react-hcaptcha'
 import type { Route } from 'next'
 
 const logger = createLogger({
@@ -39,7 +39,6 @@ export default function SignInForm() {
   const [loading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const captcha = useRef<HCaptcha | null>(null)
 
   const router = useRouter()
@@ -60,14 +59,6 @@ export default function SignInForm() {
       if (!password) {
         validationErrors.password = 'Password is required'
       }
-      if (!captchaToken) {
-        toast({
-          title: 'Error',
-          description: 'Please complete the captcha',
-          variant: 'destructive'
-        })
-        return
-      }
 
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors)
@@ -77,10 +68,7 @@ export default function SignInForm() {
       const supabase = createClient()
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password,
-        options: {
-          captchaToken
-        }
+        password
       })
 
       if (error) {
@@ -273,10 +261,6 @@ export default function SignInForm() {
     }
   }
 
-  const handleCaptchaChange = (token: string | null) => {
-    setCaptchaToken(token)
-  }
-
   return (
     <Card className='w-full max-w-md justify-center shadow-lg dark:bg-gray-950 dark:shadow-2xl dark:shadow-blue-900/20'>
       <CardHeader className='space-y-3 pb-8'>
@@ -446,12 +430,6 @@ export default function SignInForm() {
               </Button>
             </div>
           </div>
-
-          <HCaptcha
-            sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
-            onVerify={handleCaptchaChange}
-            ref={captcha}
-          />
         </form>
       </CardContent>
       <CardFooter className='flex justify-center border-t p-6'>

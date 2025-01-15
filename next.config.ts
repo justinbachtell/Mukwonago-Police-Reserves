@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['@electric-sql/pglite'],
   logging: {
     fetches: {
-      fullUrl: true
+      fullUrl: false
     }
   },
   experimental: {

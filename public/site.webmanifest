@@ -1,6 +1,8 @@
 {
   "name": "Mukwonago Police Reserves",
   "short_name": "MKPD",
+  "description": "Mukwonago Police Reserves - Volunteer Law Enforcement Organization",
+  "start_url": "/",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -17,5 +19,7 @@
   ],
   "theme_color": "#ffffff",
   "background_color": "#ffffff",
-  "display": "standalone"
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/"
 }
