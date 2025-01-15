@@ -55,8 +55,11 @@ export const updateSession = async (request: NextRequest) => {
     const user = await supabase.auth.getUser()
 
     const unprotectedPaths = [
+      '/',
       '/sign-in',
       '/sign-up',
+      '/terms',
+      '/privacy',
       '/forgot-password',
       '/reset-password',
       '/error',
@@ -69,6 +72,7 @@ export const updateSession = async (request: NextRequest) => {
 
     const isSupabaseAuthRoute = (pathname: string) => {
       return (
+        pathname.startsWith('/auth/') ||
         pathname.startsWith('/auth/v1/') ||
         pathname.startsWith('/rest/v1/') ||
         pathname.startsWith('/storage/v1/') ||

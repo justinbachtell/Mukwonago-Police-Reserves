@@ -21,7 +21,6 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
 import type { Route } from 'next'
-import { getRedirectUrl } from '@/lib/redirect'
 
 const logger = createLogger({
   module: 'auth',
@@ -108,10 +107,17 @@ export default function SignInForm() {
   const handleGoogleSignIn = async () => {
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
+      const redirectURL = `${window.location.origin}/auth/callback`
+
+      logger.info('Starting Google OAuth', {
+        redirectURL,
+        origin: window.location.origin
+      })
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: getRedirectUrl('/user/dashboard'),
+          redirectTo: redirectURL,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
@@ -124,7 +130,8 @@ export default function SignInForm() {
           'Google OAuth failed',
           {
             error: logger.errorWithData(error),
-            redirectUrl: window.location.origin
+            redirectUrl: redirectURL,
+            origin: window.location.origin
           },
           'handleGoogleSignIn'
         )
@@ -136,8 +143,35 @@ export default function SignInForm() {
         return
       }
 
+      if (!data?.url) {
+        logger.error(
+          'No OAuth URL returned',
+          {
+            data,
+            redirectUrl: redirectURL
+          },
+          'handleGoogleSignIn'
+        )
+        toast({
+          title: 'Error',
+          description: 'Failed to initiate Google sign in',
+          variant: 'destructive'
+        })
+        return
+      }
+
       // Success case is handled by the redirect
-      logger.info('Redirecting to Google OAuth...', {}, 'handleGoogleSignIn')
+      logger.info(
+        'Redirecting to Google OAuth...',
+        {
+          redirectUrl: data.url,
+          originalRedirect: redirectURL
+        },
+        'handleGoogleSignIn'
+      )
+
+      // Manually redirect to ensure it happens
+      window.location.href = data.url
     } catch (error) {
       logger.error(
         'Unexpected error during Google OAuth',
@@ -155,10 +189,17 @@ export default function SignInForm() {
   const handleMicrosoftSignIn = async () => {
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
+      const redirectURL = `${window.location.origin}/auth/callback`
+
+      logger.info('Starting Microsoft OAuth', {
+        redirectURL,
+        origin: window.location.origin
+      })
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
-          redirectTo: getRedirectUrl('/user/dashboard'),
+          redirectTo: redirectURL,
           scopes: 'email'
         }
       })
@@ -168,7 +209,8 @@ export default function SignInForm() {
           'Microsoft OAuth failed',
           {
             error: logger.errorWithData(error),
-            redirectUrl: window.location.origin
+            redirectUrl: redirectURL,
+            origin: window.location.origin
           },
           'handleMicrosoftSignIn'
         )
@@ -180,12 +222,35 @@ export default function SignInForm() {
         return
       }
 
+      if (!data?.url) {
+        logger.error(
+          'No OAuth URL returned',
+          {
+            data,
+            redirectUrl: redirectURL
+          },
+          'handleMicrosoftSignIn'
+        )
+        toast({
+          title: 'Error',
+          description: 'Failed to initiate Microsoft sign in',
+          variant: 'destructive'
+        })
+        return
+      }
+
       // Success case is handled by the redirect
       logger.info(
         'Redirecting to Microsoft OAuth...',
-        {},
+        {
+          redirectUrl: data.url,
+          originalRedirect: redirectURL
+        },
         'handleMicrosoftSignIn'
       )
+
+      // Manually redirect to ensure it happens
+      window.location.href = data.url
     } catch (error) {
       logger.error(
         'Unexpected error during Microsoft OAuth',
@@ -381,7 +446,7 @@ export default function SignInForm() {
           </div>
         </form>
       </CardContent>
-      <CardFooter className='flex justify-center border-t p-6'>
+      <CardFooter className='flex flex-col space-y-4 border-t p-6'>
         <p className='text-sm text-muted-foreground'>
           Don't have an account?{' '}
           <Link
@@ -389,6 +454,22 @@ export default function SignInForm() {
             className='font-medium text-primary hover:underline'
           >
             Create account
+          </Link>
+        </p>
+        <p className='text-xs text-muted-foreground'>
+          By continuing, you agree to our{' '}
+          <Link
+            href={'/terms' as Route}
+            className='font-medium text-primary hover:underline'
+          >
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link
+            href={'/privacy' as Route}
+            className='font-medium text-primary hover:underline'
+          >
+            Privacy Policy
           </Link>
         </p>
       </CardFooter>
