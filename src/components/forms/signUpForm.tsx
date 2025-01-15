@@ -124,7 +124,7 @@ export default function SignUpForm() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/user/dashboard`,
           data: {
             first_name: firstName,
             last_name: lastName
@@ -139,7 +139,9 @@ export default function SignUpForm() {
           'Registration failed',
           {
             error: logger.errorWithData(error),
-            email
+            email,
+            message: error.message,
+            status: error.status
           },
           'handleSubmit'
         )
