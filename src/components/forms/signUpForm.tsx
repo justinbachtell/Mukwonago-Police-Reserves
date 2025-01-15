@@ -19,6 +19,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/client'
 import { createLogger } from '@/lib/debug'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
+import { getRedirectUrl } from '@/lib/redirect'
 import type { Route } from 'next'
 
 const logger = createLogger({
@@ -137,7 +138,7 @@ export default function SignUpForm() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/user/dashboard`,
+          emailRedirectTo: getRedirectUrl('/user/dashboard'),
           data: {
             first_name: firstName,
             last_name: lastName
@@ -222,7 +223,7 @@ export default function SignUpForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getRedirectUrl('/user/dashboard'),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
@@ -264,7 +265,7 @@ export default function SignUpForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getRedirectUrl('/user/dashboard'),
           scopes: 'email'
         }
       })

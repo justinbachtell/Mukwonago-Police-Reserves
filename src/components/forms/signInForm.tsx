@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
 import type { Route } from 'next'
+import { getRedirectUrl } from '@/lib/redirect'
 
 const logger = createLogger({
   module: 'auth',
@@ -50,7 +51,6 @@ export default function SignInForm() {
     try {
       const supabase = createClient()
 
-      // Add error logging before the request
       logger.info('Attempting authentication', {
         email,
         url: process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -58,7 +58,7 @@ export default function SignInForm() {
         hasCaptcha: !!captchaToken
       })
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
         options: {
@@ -66,13 +66,7 @@ export default function SignInForm() {
         }
       })
 
-      logger.info('Authentication result', {
-        data,
-        error
-      })
-
       if (error) {
-        // Enhanced error logging
         logger.error('Authentication error', {
           error: logger.errorWithData(error),
           statusCode: error.status,
@@ -84,7 +78,13 @@ export default function SignInForm() {
         throw error
       }
 
-      // Rest of your success handling...
+      // Success handling
+      logger.info('Authentication successful', { email })
+      toast({
+        title: 'Success',
+        description: 'Successfully signed in!'
+      })
+      router.push('/user/dashboard')
     } catch (error: any) {
       logger.error('Sign-in error', {
         error: logger.errorWithData(error),
@@ -111,7 +111,7 @@ export default function SignInForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getRedirectUrl('/user/dashboard'),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
@@ -158,7 +158,7 @@ export default function SignInForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getRedirectUrl('/user/dashboard'),
           scopes: 'email'
         }
       })

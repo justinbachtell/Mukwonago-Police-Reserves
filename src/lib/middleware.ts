@@ -69,8 +69,9 @@ export const updateSession = async (request: NextRequest) => {
 
     const isSupabaseAuthRoute = (pathname: string) => {
       return (
-        pathname.startsWith('/auth/') ||
-        pathname.startsWith('/rest/') ||
+        pathname.startsWith('/auth/v1/') ||
+        pathname.startsWith('/rest/v1/') ||
+        pathname.startsWith('/storage/v1/') ||
         pathname.includes('supabase')
       )
     }
@@ -100,4 +101,10 @@ export const updateSession = async (request: NextRequest) => {
       }
     })
   }
+}
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|site.webmanifest|auth/|rest/|storage/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
+  ]
 }
