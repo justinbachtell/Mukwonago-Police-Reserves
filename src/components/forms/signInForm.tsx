@@ -108,10 +108,14 @@ export default function SignInForm() {
     try {
       const supabase = createClient()
       const redirectURL = `${window.location.origin}/auth/callback`
+      const state = JSON.stringify({
+        returnTo: '/user/dashboard'
+      })
 
       logger.info('Starting Google OAuth', {
         redirectURL,
-        origin: window.location.origin
+        origin: window.location.origin,
+        state
       })
 
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -120,7 +124,8 @@ export default function SignInForm() {
           redirectTo: redirectURL,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent'
+            prompt: 'consent',
+            state
           }
         }
       })
@@ -131,7 +136,8 @@ export default function SignInForm() {
           {
             error: logger.errorWithData(error),
             redirectUrl: redirectURL,
-            origin: window.location.origin
+            origin: window.location.origin,
+            state
           },
           'handleGoogleSignIn'
         )
@@ -148,7 +154,8 @@ export default function SignInForm() {
           'No OAuth URL returned',
           {
             data,
-            redirectUrl: redirectURL
+            redirectUrl: redirectURL,
+            state
           },
           'handleGoogleSignIn'
         )
@@ -165,7 +172,8 @@ export default function SignInForm() {
         'Redirecting to Google OAuth...',
         {
           redirectUrl: data.url,
-          originalRedirect: redirectURL
+          originalRedirect: redirectURL,
+          state
         },
         'handleGoogleSignIn'
       )
@@ -190,17 +198,24 @@ export default function SignInForm() {
     try {
       const supabase = createClient()
       const redirectURL = `${window.location.origin}/auth/callback`
+      const state = JSON.stringify({
+        returnTo: '/user/dashboard'
+      })
 
       logger.info('Starting Microsoft OAuth', {
         redirectURL,
-        origin: window.location.origin
+        origin: window.location.origin,
+        state
       })
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
         options: {
           redirectTo: redirectURL,
-          scopes: 'email'
+          scopes: 'email',
+          queryParams: {
+            state
+          }
         }
       })
 
@@ -210,7 +225,8 @@ export default function SignInForm() {
           {
             error: logger.errorWithData(error),
             redirectUrl: redirectURL,
-            origin: window.location.origin
+            origin: window.location.origin,
+            state
           },
           'handleMicrosoftSignIn'
         )
@@ -227,7 +243,8 @@ export default function SignInForm() {
           'No OAuth URL returned',
           {
             data,
-            redirectUrl: redirectURL
+            redirectUrl: redirectURL,
+            state
           },
           'handleMicrosoftSignIn'
         )
@@ -244,7 +261,8 @@ export default function SignInForm() {
         'Redirecting to Microsoft OAuth...',
         {
           redirectUrl: data.url,
-          originalRedirect: redirectURL
+          originalRedirect: redirectURL,
+          state
         },
         'handleMicrosoftSignIn'
       )
