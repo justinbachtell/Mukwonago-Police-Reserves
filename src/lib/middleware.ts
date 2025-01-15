@@ -8,6 +8,13 @@ const logger = createLogger({
 })
 
 export const updateSession = async (request: NextRequest) => {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    throw new Error('Missing Supabase environment variables')
+  }
+
   // This `try/catch` block is only here for the interactive tutorial.
   // Feel free to remove once you have Supabase connected.
   try {
@@ -47,39 +54,35 @@ export const updateSession = async (request: NextRequest) => {
     // https://supabase.com/docs/guides/auth/server-side/nextjs
     const user = await supabase.auth.getUser()
 
-    const publicRoutes = [
-      '/',
+    const unprotectedPaths = [
       '/sign-in',
       '/sign-up',
       '/forgot-password',
       '/reset-password',
-      '/magic-link',
-      '/verify-mfa',
+      '/error',
+      '/unauthorized',
+      '/404',
       '/monitoring',
-      '/auth/callback',
-      '/api/auth/callback',
-      '/auth/v1/callback',
-      '/api/auth/v1/callback',
-      '/auth/v1/authorize',
-      '/api/auth/v1/authorize',
-      '/auth/v1/token',
-      '/api/auth/v1/token',
-      '/auth/v1/signup',
-      '/api/auth/v1/signup',
-      '/site.webmanifest',
-      '/favicon.ico',
-      '/apple-touch-icon.png',
-      '/favicon-16x16.png',
-      '/favicon-32x32.png',
-      '/favicon-96x96.png',
-      '/favicon-128x128.png',
-      '/web-app-manifest-192x192.png',
-      '/web-app-manifest-512x512.png',
-      '/robots.txt',
-      '/sitemap.xml'
+      '/magic-link',
+      '/verify-mfa'
     ]
 
-    if (!publicRoutes.includes(request.nextUrl.pathname) && user.error) {
+    const isSupabaseAuthRoute = (pathname: string) => {
+      return (
+        pathname.startsWith('/auth/') ||
+        pathname.startsWith('/rest/') ||
+        pathname.includes('supabase')
+      )
+    }
+
+    if (isSupabaseAuthRoute(request.nextUrl.pathname)) {
+      logger.info('Bypassing middleware for Supabase auth route', {
+        path: request.nextUrl.pathname
+      })
+      return NextResponse.next()
+    }
+
+    if (!unprotectedPaths.includes(request.nextUrl.pathname) && user.error) {
       return NextResponse.redirect(new URL('/sign-in', request.url))
     }
 
