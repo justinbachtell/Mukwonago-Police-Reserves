@@ -20,7 +20,7 @@ import { createLogger } from '@/lib/debug'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import type { Factor } from '@supabase/supabase-js'
-import type HCaptcha from '@hcaptcha/react-hcaptcha'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 import type { Route } from 'next'
 
 const logger = createLogger({
@@ -40,7 +40,7 @@ export default function SignInForm() {
   const [rememberMe, setRememberMe] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const captcha = useRef<HCaptcha | null>(null)
-
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -62,13 +62,28 @@ export default function SignInForm() {
 
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors)
+        setLoading(false)
+        return
+      }
+
+      // Validate captcha
+      if (!captchaToken) {
+        toast({
+          title: 'Error',
+          description: 'Please complete the captcha verification',
+          variant: 'destructive'
+        })
+        setLoading(false)
         return
       }
 
       const supabase = createClient()
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
+        options: {
+          captchaToken
+        }
       })
 
       if (error) {
@@ -357,6 +372,16 @@ export default function SignInForm() {
                 Remember me
               </Label>
             </div>
+          </div>
+
+          <div className='mx-auto flex w-full items-center justify-center'>
+            <HCaptcha
+              ref={captcha}
+              sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
+              onVerify={token => {
+                setCaptchaToken(token)
+              }}
+            />
           </div>
 
           <div className='space-y-4'>
