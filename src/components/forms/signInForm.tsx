@@ -94,13 +94,28 @@ export default function SignInForm() {
         response: error?.response?.data
       })
 
+      // Show a more specific error message
+      let errorMessage = 'Failed to sign in. Please try again.'
+
+      if (error?.message?.includes('<!DOCTYPE')) {
+        errorMessage =
+          'Authentication service is temporarily unavailable. Please try again later.'
+      } else if (error?.message?.includes('Invalid login credentials')) {
+        errorMessage = 'Invalid email or password. Please try again.'
+      } else if (error?.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please confirm your email address before signing in.'
+      }
+
       toast({
         title: 'Error',
-        description: 'Failed to sign in. Please try again.',
+        description: errorMessage,
         variant: 'destructive'
       })
     } finally {
       setLoading(false)
+      if (captcha.current) {
+        captcha.current.resetCaptcha()
+      }
     }
   }
 
