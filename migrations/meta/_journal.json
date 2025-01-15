@@ -36,6 +36,13 @@
       "when": 1736716868058,
       "tag": "0004_training_type_enum",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1736975374572,
+      "tag": "0005_pretty_union_jack",
+      "breakpoints": true
     }
   ]
 }

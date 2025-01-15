@@ -22,6 +22,8 @@ import * as Sentry from '@sentry/nextjs'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import type { Session } from '@supabase/supabase-js'
+import { updateUser } from '@/actions/user'
+import { STATES } from '@/libs/States'
 
 const logger = createLogger({
   module: 'forms',
@@ -36,12 +38,64 @@ interface Props {
   user: DBUser
 }
 
+// File validation types and constants
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+
+type FileType = keyof typeof ALLOWED_FILE_TYPES
+
+interface FileTypeInfo {
+  magicNumbers: readonly string[]
+  extension: string | readonly string[]
+}
+
+const ALLOWED_FILE_TYPES = {
+  'application/pdf': {
+    magicNumbers: ['25504446'] as const, // %PDF
+    extension: '.pdf'
+  },
+  'application/msword': {
+    magicNumbers: ['D0CF11E0'] as const, // DOC
+    extension: '.doc'
+  },
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
+    magicNumbers: ['504B0304'] as const, // DOCX (ZIP)
+    extension: '.docx'
+  },
+  'image/jpeg': {
+    magicNumbers: ['FFD8FF'] as const, // JPEG
+    extension: ['.jpg', '.jpeg'] as const
+  },
+  'image/png': {
+    magicNumbers: ['89504E47'] as const, // PNG
+    extension: '.png'
+  }
+} as const satisfies Record<string, FileTypeInfo>
+
+// Function to check file's magic numbers
+async function checkFileMagicNumbers(file: File): Promise<boolean> {
+  const arr = new Uint8Array(await file.slice(0, 4).arrayBuffer())
+  const hex = Array.from(arr)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase()
+
+  const fileType = ALLOWED_FILE_TYPES[file.type as FileType]
+  return (
+    fileType?.magicNumbers.some((magic: string) => hex.startsWith(magic)) ??
+    false
+  )
+}
+
 export function ApplicationForm({ user }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [session, setSession] = useState<Session | null>(null)
+  const [selectedState, setSelectedState] = useState(user.state || '')
+  const [selectedLicenseState, setSelectedLicenseState] = useState(
+    user.driver_license_state || ''
+  )
   const supabase = createClient()
 
   logger.time('application-form-render')
@@ -68,46 +122,64 @@ export function ApplicationForm({ user }: Props) {
     checkSession()
   }, [supabase.auth])
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0]
-    if (file) {
-      logger.info(
-        'File selected',
-        { name: file.name, type: file.type, size: file.size },
-        'handleFileChange'
-      )
+    if (!file) {
+      return
+    }
 
-      // Validate file type
-      const allowedTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'image/jpeg',
-        'image/png'
-      ]
-      if (!allowedTypes.includes(file.type)) {
-        logger.warn(
-          'Invalid file type',
-          { type: file.type },
-          'handleFileChange'
-        )
-        toast.error(
+    logger.info(
+      'File selected',
+      { name: file.name, type: file.type, size: file.size },
+      'handleFileChange'
+    )
+
+    try {
+      // 1. Validate file type
+      if (!Object.keys(ALLOWED_FILE_TYPES).includes(file.type)) {
+        throw new Error(
           'Invalid file type. Please upload a PDF, Word document, JPEG, or PNG file.'
         )
-        event.target.value = ''
-        return
       }
 
-      // Validate file size (5MB limit)
-      const maxSize = 5 * 1024 * 1024
-      if (file.size > maxSize) {
-        logger.warn('File too large', { size: file.size }, 'handleFileChange')
-        toast.error('File is too large. Maximum size is 5MB.')
-        event.target.value = ''
-        return
+      // 2. Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error('File is too large. Maximum size is 5MB.')
+      }
+
+      // 3. Validate file content (magic numbers)
+      const isValidContent = await checkFileMagicNumbers(file)
+      if (!isValidContent) {
+        throw new Error(
+          'Invalid file content. The file appears to be different from its extension.'
+        )
+      }
+
+      // 4. Validate file extension matches content type
+      const extension = file.name.toLowerCase().split('.').pop()
+      const fileTypeInfo = ALLOWED_FILE_TYPES[file.type as FileType]
+      const allowedExtensions = Array.isArray(fileTypeInfo.extension)
+        ? fileTypeInfo.extension
+        : [fileTypeInfo.extension]
+
+      if (!extension || !allowedExtensions.includes(`.${extension}` as any)) {
+        throw new Error(
+          `Invalid file extension. Expected one of: ${allowedExtensions.join(', ')}`
+        )
       }
 
       setSelectedFile(file)
+    } catch (error) {
+      logger.warn(
+        'File validation failed',
+        { error: error instanceof Error ? error.message : 'Unknown error' },
+        'handleFileChange'
+      )
+      toast.error(error instanceof Error ? error.message : 'Invalid file')
+      event.target.value = '' // Reset file input
+      setSelectedFile(null)
     }
   }
 
@@ -147,26 +219,37 @@ export function ApplicationForm({ user }: Props) {
 
       startTransition(async () => {
         try {
-          // Upload resume with timeout
+          // Upload resume
           logger.time('resume-upload')
-          const uploadPromise = uploadResume(
-            selectedFile,
-            formData.get('first_name') as string,
-            formData.get('last_name') as string
-          )
-          const resumePath = await Promise.race([
-            uploadPromise,
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Upload timeout')), 30000)
+          let resumePath: string | undefined
+          try {
+            resumePath = await uploadResume(
+              selectedFile,
+              formData.get('first_name') as string,
+              formData.get('last_name') as string
             )
-          ])
-          logger.timeEnd('resume-upload')
+            logger.timeEnd('resume-upload')
+            logger.info(
+              'Resume uploaded successfully',
+              { path: resumePath },
+              'handleSubmit'
+            )
+          } catch (uploadError) {
+            logger.error(
+              'Resume upload failed',
+              logger.errorWithData(uploadError),
+              'handleSubmit'
+            )
+            throw new Error(
+              uploadError instanceof Error
+                ? uploadError.message
+                : 'Failed to upload resume'
+            )
+          }
 
-          logger.info(
-            'Resume uploaded successfully',
-            { path: resumePath },
-            'handleSubmit'
-          )
+          if (!resumePath) {
+            throw new Error('No resume path returned from upload')
+          }
 
           // Create application with resume path
           const result = await createApplication({
@@ -175,6 +258,9 @@ export function ApplicationForm({ user }: Props) {
             email: formData.get('email') as string,
             phone: formData.get('phone') as string,
             driver_license: formData.get('driver_license') as string,
+            driver_license_state: formData.get(
+              'driver_license_state'
+            ) as string,
             street_address: formData.get('street_address') as string,
             city: formData.get('city') as string,
             state: formData.get('state') as string,
@@ -185,8 +271,32 @@ export function ApplicationForm({ user }: Props) {
             availability: formData.get('availability') as Availability,
             position: formData.get('position') as Position,
             user_id: user.id,
-            resume: resumePath as string
+            resume: resumePath
           })
+
+          if (result?.id) {
+            // Update user information with the application data
+            await updateUser(user.id, {
+              first_name: formData.get('first_name') as string,
+              last_name: formData.get('last_name') as string,
+              email: formData.get('email') as string,
+              phone: formData.get('phone') as string,
+              driver_license: formData.get('driver_license') as string,
+              driver_license_state: formData.get(
+                'driver_license_state'
+              ) as string,
+              street_address: formData.get('street_address') as string,
+              city: formData.get('city') as string,
+              state: formData.get('state') as string,
+              zip_code: formData.get('zip_code') as string
+            })
+
+            logger.info(
+              'User information updated with application data',
+              { userId: user.id },
+              'handleSubmit'
+            )
+          }
 
           logger.info(
             'Application submitted successfully',
@@ -198,39 +308,38 @@ export function ApplicationForm({ user }: Props) {
         } catch (error) {
           logger.error(
             'Error submitting application',
-            logger.errorWithData(error),
+            {
+              message: error instanceof Error ? error.message : 'Unknown error'
+            },
             'handleSubmit'
           )
 
           if (error instanceof Error) {
-            if (error.message === 'Upload timeout') {
-              toast.error('Resume upload timed out. Please try again.')
-            } else {
-              toast.error(`Failed to submit application: ${error.message}`)
-            }
-
-            Sentry.captureException(error, {
-              extra: {
-                context: 'ApplicationForm submission',
-                hasFile: true,
-                fileSize: selectedFile.size,
-                fileType: selectedFile.type,
-                userId: user.id
-              },
-              tags: {
-                action: 'application_submission',
-                component: 'ApplicationForm'
-              }
-            })
+            toast.error(`Failed to submit application: ${error.message}`)
           } else {
             toast.error('An unexpected error occurred')
           }
+
+          // Only send non-binary data to Sentry
+          Sentry.captureException(error, {
+            extra: {
+              context: 'ApplicationForm submission',
+              hasFile: true,
+              fileSize: selectedFile.size,
+              fileType: selectedFile.type,
+              userId: user.id
+            },
+            tags: {
+              action: 'application_submission',
+              component: 'ApplicationForm'
+            }
+          })
         }
       })
     } catch (error) {
       logger.error(
         'Form submission error',
-        logger.errorWithData(error),
+        { message: error instanceof Error ? error.message : 'Unknown error' },
         'handleSubmit'
       )
       toast.error('Failed to process form submission')
@@ -303,15 +412,39 @@ export function ApplicationForm({ user }: Props) {
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='driver_license'>Driver's License</Label>
+              <Label htmlFor='driver_license'>Driver&apos;s License</Label>
               <Input
                 id='driver_license'
                 name='driver_license'
                 placeholder="Enter your driver's license number"
                 className='w-full'
-                defaultValue={user.driver_license || ''}
                 required
               />
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='driver_license_state'>
+                Driver&apos;s License State
+              </Label>
+              <Select
+                name='driver_license_state'
+                value={selectedLicenseState}
+                onValueChange={setSelectedLicenseState}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Select state' />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATES.map(state => (
+                    <SelectItem
+                      key={state.abbreviation}
+                      value={state.abbreviation}
+                    >
+                      {state.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </Card>
@@ -347,14 +480,25 @@ export function ApplicationForm({ user }: Props) {
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='state'>State</Label>
-                <Input
-                  id='state'
+                <Select
                   name='state'
-                  placeholder='Enter your state'
-                  className='w-full'
-                  defaultValue={user.state || ''}
-                  required
-                />
+                  value={selectedState}
+                  onValueChange={setSelectedState}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select state' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATES.map(state => (
+                      <SelectItem
+                        key={state.abbreviation}
+                        value={state.abbreviation}
+                      >
+                        {state.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
