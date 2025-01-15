@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Confirm Your Email - Mukwonago Police Reserves</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      padding: 20px 0;
+      background-color: #0f172a;
+      color: white;
+      border-radius: 8px 8px 0 0;
+    }
+    .content {
+      padding: 30px;
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 0 0 8px 8px;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #2563eb;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      margin: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .otp-code {
+      font-family: monospace;
+      font-size: 24px;
+      letter-spacing: 4px;
+      background-color: #f3f4f6;
+      padding: 12px 24px;
+      border-radius: 6px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .divider {
+      text-align: center;
+      margin: 20px 0;
+      position: relative;
+    }
+    .divider::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      border-top: 1px solid #e5e7eb;
+    }
+    .divider span {
+      background-color: white;
+      padding: 0 10px;
+      color: #6b7280;
+      position: relative;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Confirm Your Email</h1>
+    </div>
+    <div class="content">
+      <p>Hello{{ if .Data.first_name }} {{ .Data.first_name }}{{ else }} {{ .Email }}{{ end }},</p>
+      
+      <p>Thank you for signing up for the Mukwonago Police Reserves application process. To complete your registration and begin your journey with us, please confirm your email address by clicking the button below:</p>
+      
+      <div style="text-align: center;">
+        <a href="{{ .ConfirmationURL }}" class="button">Confirm Email Address</a>
+      </div>
+      
+      <div class="divider">
+        <span>OR USE CODE</span>
+      </div>
+      
+      <div class="otp-code">
+        {{ .Token }}
+      </div>
+      
+      <p>This confirmation will expire in 24 hours. If you didn't create this account, you can safely ignore this email.</p>
+      
+      <p>For security reasons, here's what happens next:</p>
+      <ul>
+        <li>Complete your profile information</li>
+        <li>Submit required documentation</li>
+        <li>Background check process begins</li>
+        <li>Application review by our team</li>
+      </ul>
+      
+      <p>After confirmation, you'll be redirected to: {{ .RedirectTo }}</p>
+      
+      <p>If you have any questions or need assistance, please contact us at <a href="mailto:justin@justinbachtell.com">justin@justinbachtell.com</a></p>
+      
+      <p style="font-size: 12px; color: #6b7280;">
+        Site URL: {{ .SiteURL }}<br>
+        Token Hash: {{ .TokenHash }}
+      </p>
+    </div>
+    <div class="footer">
+      <p>© 2024 Mukwonago Police Reserves. Built by <a href="https://justinbachtell.com">Justin Bachtell</a>. All rights reserved.</p>
+      <p>This is an automated message, please do not reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html> 

@@ -64,5 +64,9 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     return <div>Loading...</div>
   }
 
-  return <BaseTemplate>{children}</BaseTemplate>
+  return (
+    <BaseTemplate>
+      <div className='px-4 pb-12 pt-20 lg:px-8 lg:py-10'>{children}</div>
+    </BaseTemplate>
+  )
 }
