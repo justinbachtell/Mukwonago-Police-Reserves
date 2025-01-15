@@ -53,6 +53,17 @@ export default function SignInForm() {
     try {
       // Validate form
       const validationErrors: FormErrors = {}
+
+      logger.info(
+        'Starting sign-in process',
+        {
+          email,
+          hasCaptchaToken: !!captchaToken,
+          hasValidationErrors: Object.keys(validationErrors).length > 0
+        },
+        'handleSubmit'
+      )
+
       if (!email) {
         validationErrors.email = 'Email is required'
       }
@@ -61,6 +72,11 @@ export default function SignInForm() {
       }
 
       if (Object.keys(validationErrors).length > 0) {
+        logger.warn(
+          'Sign-in validation failed',
+          { validationErrors },
+          'handleSubmit'
+        )
         setErrors(validationErrors)
         setLoading(false)
         return
@@ -68,6 +84,7 @@ export default function SignInForm() {
 
       // Validate captcha
       if (!captchaToken) {
+        logger.warn('Missing captcha token', undefined, 'handleSubmit')
         toast({
           title: 'Error',
           description: 'Please complete the captcha verification',
@@ -78,6 +95,18 @@ export default function SignInForm() {
       }
 
       const supabase = createClient()
+
+      // Log auth attempt
+      logger.info(
+        'Attempting Supabase authentication',
+        {
+          email,
+          hasCaptchaToken: !!captchaToken
+        },
+        'handleSubmit'
+      )
+
+      const authStartTime = Date.now()
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -86,12 +115,28 @@ export default function SignInForm() {
         }
       })
 
+      // Log auth response time
+      logger.info(
+        'Auth response received',
+        {
+          responseTime: Date.now() - authStartTime,
+          hasError: !!error,
+          hasData: !!data
+        },
+        'handleSubmit'
+      )
+
       if (error) {
         logger.error(
           'Authentication failed',
           {
             error: logger.errorWithData(error),
-            email
+            email,
+            message: error.message,
+            status: error.status,
+            rawError: JSON.stringify(error),
+            errorName: error.name,
+            errorStack: error.stack
           },
           'handleSubmit'
         )
@@ -174,10 +219,22 @@ export default function SignInForm() {
       // Refresh to ensure server state is updated
       router.refresh()
       router.push('/user/dashboard')
-    } catch (error) {
+    } catch (error: any) {
       logger.error(
         'Unexpected error during authentication',
-        logger.errorWithData(error),
+        {
+          error: logger.errorWithData(error),
+          errorType: typeof error,
+          errorName: error?.name,
+          errorMessage: error?.message,
+          errorStack: error?.stack,
+          isAxiosError: error?.isAxiosError,
+          responseData: error?.response?.data,
+          responseStatus: error?.response?.status,
+          responseHeaders: error?.response?.headers,
+          requestUrl: error?.config?.url,
+          requestMethod: error?.config?.method
+        },
         'handleSubmit'
       )
       toast({

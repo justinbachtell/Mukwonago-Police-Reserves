@@ -119,6 +119,19 @@ export default function SignUpForm() {
     try {
       const supabase = createClient()
 
+      // Log pre-request details
+      logger.info(
+        'Initiating Supabase signup request',
+        {
+          email,
+          hasFirstName: !!firstName,
+          hasLastName: !!lastName,
+          hasCaptchaToken: !!captchaToken,
+          redirectUrl: `${window.location.origin}/auth/callback?next=/user/dashboard`
+        },
+        'handleSubmit'
+      )
+
       logger.time(`supabase-auth-call-${timestamp}`)
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -141,7 +154,10 @@ export default function SignUpForm() {
             error: logger.errorWithData(error),
             email,
             message: error.message,
-            status: error.status
+            status: error.status,
+            rawError: JSON.stringify(error),
+            errorName: error.name,
+            errorStack: error.stack
           },
           'handleSubmit'
         )
@@ -168,10 +184,22 @@ export default function SignUpForm() {
         })
         router.push('/sign-in')
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error(
         'Unexpected error during registration',
-        logger.errorWithData(error),
+        {
+          error: logger.errorWithData(error),
+          errorType: typeof error,
+          errorName: error?.name,
+          errorMessage: error?.message,
+          errorStack: error?.stack,
+          isAxiosError: error?.isAxiosError,
+          responseData: error?.response?.data,
+          responseStatus: error?.response?.status,
+          responseHeaders: error?.response?.headers,
+          requestUrl: error?.config?.url,
+          requestMethod: error?.config?.method
+        },
         'handleSubmit'
       )
       toast({
