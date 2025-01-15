@@ -198,7 +198,8 @@ export default function SignInForm() {
         logger.error(
           'Google OAuth failed',
           {
-            error: logger.errorWithData(error)
+            error: logger.errorWithData(error),
+            redirectUrl: window.location.origin
           },
           'handleGoogleSignIn'
         )
@@ -207,7 +208,11 @@ export default function SignInForm() {
           description: error.message || 'Failed to sign in with Google',
           variant: 'destructive'
         })
+        return
       }
+
+      // Success case is handled by the redirect
+      logger.info('Redirecting to Google OAuth...', {}, 'handleGoogleSignIn')
     } catch (error) {
       logger.error(
         'Unexpected error during Google OAuth',
@@ -237,7 +242,8 @@ export default function SignInForm() {
         logger.error(
           'Microsoft OAuth failed',
           {
-            error: logger.errorWithData(error)
+            error: logger.errorWithData(error),
+            redirectUrl: window.location.origin
           },
           'handleMicrosoftSignIn'
         )
@@ -246,7 +252,15 @@ export default function SignInForm() {
           description: error.message || 'Failed to sign in with Microsoft',
           variant: 'destructive'
         })
+        return
       }
+
+      // Success case is handled by the redirect
+      logger.info(
+        'Redirecting to Microsoft OAuth...',
+        {},
+        'handleMicrosoftSignIn'
+      )
     } catch (error) {
       logger.error(
         'Unexpected error during Microsoft OAuth',

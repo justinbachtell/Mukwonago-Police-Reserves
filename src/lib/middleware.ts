@@ -48,6 +48,9 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/reset-password') &&
     !request.nextUrl.pathname.startsWith('/magic-link') &&
     !request.nextUrl.pathname.startsWith('/verify-mfa') &&
+    !request.nextUrl.pathname.startsWith('/monitoring') &&
+    !request.nextUrl.pathname.startsWith('/auth/callback') &&
+    !request.nextUrl.pathname.startsWith('/auth/v1/authorize') &&
     !request.nextUrl.pathname.startsWith('/')
   ) {
     // no user, potentially respond by redirecting the user to the signin page
