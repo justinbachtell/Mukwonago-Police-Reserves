@@ -83,7 +83,74 @@ export default async function DashboardPage() {
 
     const latestApplication = applications?.[0]
 
-    // Calculate statistics
+    // If user is a guest, show application-focused view
+    if (user.role === 'guest') {
+      return (
+        <div className='min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900'>
+          <div className='container mx-auto space-y-8 px-4 py-8 md:px-6 lg:px-8 lg:py-10'>
+            <div className='space-y-2'>
+              <h1 className='bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-white dark:to-gray-400 sm:text-4xl'>
+                Welcome, {user.first_name}!
+              </h1>
+              <p className='text-base text-gray-600 dark:text-gray-300 sm:text-lg'>
+                Let's get started with your application process.
+              </p>
+            </div>
+
+            {/* Application Status or CTA */}
+            {latestApplication ? (
+              <Card className='overflow-hidden border-0 bg-gradient-to-r from-yellow-50/90 to-yellow-100/90 shadow-lg backdrop-blur-sm dark:from-yellow-900/20 dark:to-yellow-800/20'>
+                <CardHeader className='pb-2 sm:pb-3'>
+                  <CardTitle className='flex items-center gap-2 text-lg font-semibold text-yellow-800 dark:text-yellow-200 sm:text-xl'>
+                    <ShieldCheck className='size-5 text-yellow-600 dark:text-yellow-400 sm:size-6' />
+                    Application Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className='text-sm text-yellow-800 dark:text-yellow-200 sm:text-base'>
+                    Your application is currently {latestApplication.status}.{' '}
+                    {latestApplication.status === 'pending'
+                      ? "We'll notify you once there's an update."
+                      : latestApplication.status === 'rejected'
+                        ? 'You may submit a new application.'
+                        : ''}
+                  </p>
+                  <p className='mt-1 text-xs text-yellow-700 dark:text-yellow-300 sm:text-sm'>
+                    Submitted on{' '}
+                    {new Date(
+                      latestApplication.created_at
+                    ).toLocaleDateString()}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className='overflow-hidden border-0 bg-gradient-to-r from-blue-50/90 to-blue-100/90 shadow-lg backdrop-blur-sm dark:from-blue-900/20 dark:to-blue-800/20'>
+                <CardHeader className='pb-2 sm:pb-3'>
+                  <CardTitle className='flex items-center gap-2 text-lg font-semibold text-blue-800 dark:text-blue-200 sm:text-xl'>
+                    <ShieldCheck className='size-5 text-blue-600 dark:text-blue-400 sm:size-6' />
+                    Start Your Journey
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-4'>
+                  <p className='text-sm text-blue-800 dark:text-blue-200 sm:text-base'>
+                    Ready to join the Mukwonago Police Reserves? Complete your
+                    application to get started.
+                  </p>
+                  <Link
+                    href='/user/application'
+                    className='inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:pointer-events-none disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus-visible:ring-blue-500'
+                  >
+                    Start Application
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    // Calculate statistics for non-guest users
     const activeEquipment = (equipmentAssignments ?? []).filter(
       item => !item.checked_in_at
     ).length

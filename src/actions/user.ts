@@ -13,6 +13,16 @@ const logger = createLogger({
   file: 'user.ts'
 })
 
+// Helper function to split full name into first and last name
+function splitFullName(metadata: any): { firstName: string; lastName: string } {
+  const fullName = metadata?.name || metadata?.full_name || ''
+  const nameParts = fullName.split(' ')
+  return {
+    firstName: nameParts[0] || '',
+    lastName: nameParts.slice(1).join(' ') || ''
+  }
+}
+
 export async function getAuthUserFromSupabase() {
   const supabase = await createClient()
   const {
@@ -53,6 +63,9 @@ export async function getCurrentUser() {
     // First try to get the user
     let [dbUser] = await db.select().from(user).where(eq(user.id, authUser.id))
 
+    // Split the full name from metadata only for new users
+    const { firstName, lastName } = splitFullName(authUser.user_metadata)
+
     // If no user exists, try to create one with error handling for race conditions
     if (!dbUser) {
       logger.info(
@@ -69,14 +82,8 @@ export async function getCurrentUser() {
             id: authUser.id,
             created_at: now,
             email: authUser.email ?? '',
-            first_name:
-              authUser.user_metadata?.given_name ||
-              authUser.user_metadata?.first_name ||
-              '',
-            last_name:
-              authUser.user_metadata?.family_name ||
-              authUser.user_metadata?.last_name ||
-              '',
+            first_name: firstName,
+            last_name: lastName,
             updated_at: now,
             role: 'guest',
             position: 'reserve',
@@ -122,30 +129,14 @@ export async function getCurrentUser() {
       return null
     }
 
-    // Check if Supabase metadata differs from DB
-    if (
-      dbUser.email !== authUser.email ||
-      dbUser.first_name !==
-        (authUser.user_metadata?.given_name ||
-          authUser.user_metadata?.first_name) ||
-      dbUser.last_name !==
-        (authUser.user_metadata?.family_name ||
-          authUser.user_metadata?.last_name)
-    ) {
+    // Only update if email changes - don't overwrite manually entered names
+    if (dbUser.email !== authUser.email) {
       logger.info(
-        'Updating user with Supabase data',
+        'Updating user email',
         {
           userId: dbUser.id,
           oldEmail: dbUser.email,
-          newEmail: authUser.email,
-          oldFirstName: dbUser.first_name,
-          newFirstName:
-            authUser.user_metadata?.given_name ||
-            authUser.user_metadata?.first_name,
-          oldLastName: dbUser.last_name,
-          newLastName:
-            authUser.user_metadata?.family_name ||
-            authUser.user_metadata?.last_name
+          newEmail: authUser.email
         },
         'getCurrentUser'
       )
@@ -154,14 +145,6 @@ export async function getCurrentUser() {
         .update(user)
         .set({
           email: authUser.email ?? '',
-          first_name:
-            authUser.user_metadata?.given_name ||
-            authUser.user_metadata?.first_name ||
-            dbUser.first_name,
-          last_name:
-            authUser.user_metadata?.family_name ||
-            authUser.user_metadata?.last_name ||
-            dbUser.last_name,
           updated_at: toISOString(new Date())
         })
         .where(eq(user.id, dbUser.id))

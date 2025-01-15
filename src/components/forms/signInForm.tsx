@@ -123,9 +123,12 @@ export default function SignInForm() {
     try {
       const supabase = createClient()
       const redirectURL = `${window.location.origin}/auth/callback`
-      const state = JSON.stringify({
-        returnTo: '/user/dashboard'
-      })
+      const state = btoa(
+        JSON.stringify({
+          returnTo: '/user/dashboard',
+          provider: 'google'
+        })
+      )
 
       logger.info('Starting Google OAuth', {
         redirectURL,
@@ -140,9 +143,7 @@ export default function SignInForm() {
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-            state,
-            // Request profile information
-            scope: 'openid email profile'
+            state
           }
         }
       })
@@ -215,9 +216,12 @@ export default function SignInForm() {
     try {
       const supabase = createClient()
       const redirectURL = `${window.location.origin}/auth/callback`
-      const state = JSON.stringify({
-        returnTo: '/user/dashboard'
-      })
+      const state = btoa(
+        JSON.stringify({
+          returnTo: '/user/dashboard',
+          provider: 'microsoft'
+        })
+      )
 
       logger.info('Starting Microsoft OAuth', {
         redirectURL,
@@ -232,9 +236,7 @@ export default function SignInForm() {
           scopes: 'email profile openid User.Read',
           queryParams: {
             state,
-            response_type: 'code',
-            // Request additional profile information
-            scope: 'openid email profile User.Read'
+            response_type: 'code'
           }
         }
       })

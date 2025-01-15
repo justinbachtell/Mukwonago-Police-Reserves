@@ -11,7 +11,26 @@ export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url)
     const code = requestUrl.searchParams.get('code')
-    const next = requestUrl.searchParams.get('next') ?? '/user/dashboard'
+    const state = requestUrl.searchParams.get('state')
+    let next = '/user/dashboard'
+
+    // Try to parse the state parameter to get the returnTo URL
+    if (state) {
+      try {
+        // Decode base64 state
+        const decodedState = atob(state)
+        const stateData = JSON.parse(decodedState)
+        if (stateData.returnTo) {
+          next = stateData.returnTo
+        }
+      } catch (e) {
+        logger.error('Failed to parse state parameter', {
+          state,
+          error: e
+        })
+      }
+    }
+
     const error = requestUrl.searchParams.get('error')
     const error_description = requestUrl.searchParams.get('error_description')
 
@@ -20,6 +39,7 @@ export async function GET(request: Request) {
       next,
       hasError: !!error,
       error_description,
+      hasState: !!state,
       url: requestUrl.toString()
     })
 

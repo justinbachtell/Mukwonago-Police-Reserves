@@ -67,7 +67,16 @@ export const updateSession = async (request: NextRequest) => {
       '/404',
       '/monitoring',
       '/magic-link',
-      '/verify-mfa'
+      '/verify-mfa',
+      '/site.webmanifest',
+      '/favicon.ico',
+      '/favicon-16x16.png',
+      '/favicon-32x32.png',
+      '/favicon-96x96.png',
+      '/favicon-120x120.png',
+      '/web-app-manifest-192x192.png',
+      '/web-app-manifest-512x512.png',
+      '/apple-touch-icon.png'
     ]
 
     const isSupabaseAuthRoute = (pathname: string) => {
@@ -109,6 +118,6 @@ export const updateSession = async (request: NextRequest) => {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|site.webmanifest|auth/|rest/|storage/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
+    '/((?!_next/static|_next/image|favicon.ico|site.webmanifest|auth/|rest/|storage/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'
   ]
 }
