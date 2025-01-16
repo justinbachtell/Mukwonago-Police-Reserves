@@ -6,10 +6,20 @@ import type {
 } from '@/types/trainingAssignment'
 import { toISOString } from '@/lib/utils'
 import { db } from '@/libs/DB'
-import { trainingAssignments } from '@/models/Schema'
+import {
+  training,
+  trainingAssignments,
+  user as userSchema
+} from '@/models/Schema'
 import { and, eq } from 'drizzle-orm'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/server'
+import {
+  createTrainingSignupNotification,
+  createTrainingLeaveNotification
+} from '@/actions/notification'
+import { revalidatePath } from 'next/cache'
+import { getCurrentUser } from '@/actions/user'
 
 const logger = createLogger({
   module: 'training-assignments',
@@ -129,6 +139,26 @@ export async function createTrainingAssignment(
         'createTrainingAssignment'
       )
       return null
+    }
+
+    // Get the training details for the notification
+    const trainingDetails = await db.query.training.findFirst({
+      where: eq(training.id, data.training_id)
+    })
+
+    if (trainingDetails) {
+      // Get the user details for the notification
+      const userDetails = await db.query.user.findFirst({
+        where: eq(userSchema.id, data.user_id)
+      })
+
+      if (userDetails) {
+        await createTrainingSignupNotification(
+          userDetails.first_name,
+          userDetails.last_name,
+          trainingDetails.name
+        )
+      }
     }
 
     logger.info(
@@ -376,6 +406,70 @@ export async function getUserTrainingAssignments(user_id: string) {
       'getUserTrainingAssignments'
     )
     logger.timeEnd(`fetch-user-assignments-${user_id}`)
+    return null
+  }
+}
+
+export async function leaveTraining(trainingId: number) {
+  logger.info('Leaving training', { trainingId }, 'leaveTraining')
+
+  try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      logger.error('User not found', undefined, 'leaveTraining')
+      return null
+    }
+
+    const [trainingRecord] = await db.query.training.findMany({
+      where: eq(training.id, trainingId)
+    })
+
+    if (!trainingRecord) {
+      logger.error('Training not found', { trainingId }, 'leaveTraining')
+      return null
+    }
+
+    const [deletedAssignment] = await db
+      .delete(trainingAssignments)
+      .where(
+        and(
+          eq(trainingAssignments.training_id, trainingId),
+          eq(trainingAssignments.user_id, currentUser.id)
+        )
+      )
+      .returning()
+
+    if (!deletedAssignment) {
+      logger.error(
+        'No assignment returned after deletion',
+        { trainingId, userId: currentUser.id },
+        'leaveTraining'
+      )
+      return null
+    }
+
+    // Create notification for leaving training
+    await createTrainingLeaveNotification(
+      currentUser.first_name,
+      currentUser.last_name,
+      trainingRecord.name
+    )
+
+    logger.info(
+      'Training left successfully',
+      { trainingId, userId: currentUser.id },
+      'leaveTraining'
+    )
+
+    revalidatePath('/training')
+    revalidatePath(`/training/${trainingId}`)
+    return deletedAssignment
+  } catch (error) {
+    logger.error(
+      'Failed to leave training',
+      logger.errorWithData(error),
+      'leaveTraining'
+    )
     return null
   }
 }

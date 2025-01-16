@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createLogger } from '@/lib/debug'
 import { getCurrentUser } from '@/actions/user'
 import { BaseTemplate } from '@/templates/BaseTemplate'
+import { NotificationList } from '@/components/notifications/NotificationList'
 
 const logger = createLogger({
   module: 'auth',
@@ -66,7 +67,10 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
   return (
     <BaseTemplate>
-      <div className='px-4 pb-12 pt-20 lg:px-8 lg:py-10'>{children}</div>
+      <div className='px-4 pb-12 pt-20 lg:py-10'>
+        <NotificationList />
+        {children}
+      </div>
     </BaseTemplate>
   )
 }

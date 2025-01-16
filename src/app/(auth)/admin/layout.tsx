@@ -15,7 +15,7 @@ export default async function AdminLayout({
   logger.info('Rendering admin layout', undefined, 'AdminLayout')
   logger.time('admin-layout-render')
   try {
-    return <div className='[&_p]:my-6'>{children}</div>
+    return <div>{children}</div>
   } catch (error) {
     logger.error(
       'Error in admin layout',

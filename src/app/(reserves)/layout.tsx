@@ -1,5 +1,6 @@
 import { BaseTemplate } from '@/templates/BaseTemplate'
 import { createLogger } from '@/lib/debug'
+import { NotificationList } from '@/components/notifications/NotificationList'
 
 const logger = createLogger({
   module: 'recruiting',
@@ -19,7 +20,10 @@ export default async function ReservesLayout({
   try {
     return (
       <BaseTemplate>
-        <div className='px-4 pb-12 pt-20 lg:px-8 lg:py-10'>{children}</div>
+        <div className='px-4 pb-12 pt-20 lg:py-10'>
+          <NotificationList />
+          {children}
+        </div>
       </BaseTemplate>
     )
   } catch (error) {

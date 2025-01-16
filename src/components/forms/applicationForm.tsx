@@ -542,12 +542,12 @@ export function ApplicationForm({ user }: Props) {
           <div className='grid gap-6'>
             <div className='hidden space-y-2'>
               <Label htmlFor='position'>Position</Label>
-              <Select name='position' defaultValue='reserve' required>
+              <Select name='position' defaultValue='candidate' required>
                 <SelectTrigger>
                   <SelectValue placeholder='Select a position' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='reserve'>Reserve</SelectItem>
+                  <SelectItem value='candidate'>Candidate</SelectItem>
                 </SelectContent>
               </Select>
             </div>

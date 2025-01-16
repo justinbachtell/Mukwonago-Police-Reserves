@@ -29,7 +29,6 @@ test.describe('Sign In Page', () => {
       await expect(
         page.getByRole('link', { name: 'Forgot password?' })
       ).toBeVisible()
-      await expect(page.getByText('Remember me')).toBeVisible()
       await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible()
       await expect(
         page.getByRole('button', { name: 'Passwordless Magic Link' })

@@ -106,8 +106,8 @@ export function CompletedApplicationForm({ application, user }: Props) {
               placeholder="Enter the state of your driver's license"
               className='w-full'
               value={
-                user.driver_license_state
-                  ? getStateName(user.driver_license_state)
+                application.driver_license_state
+                  ? getStateName(application.driver_license_state)
                   : ''
               }
               disabled

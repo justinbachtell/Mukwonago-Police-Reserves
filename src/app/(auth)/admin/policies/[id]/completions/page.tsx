@@ -1,4 +1,8 @@
-import { resetPolicyCompletion, getPolicyById } from '@/actions/policy'
+import {
+  resetPolicyCompletion,
+  getPolicyById,
+  getPolicyCompletions
+} from '@/actions/policy'
 import { getCurrentUser, getUserById } from '@/actions/user'
 import { Button } from '@/components/ui/button'
 import { redirect } from 'next/navigation'
@@ -6,9 +10,6 @@ import { CompletionsTable } from '@/components/admin/policies/PolicyCompletionsT
 import type { Policy, PolicyCompletion } from '@/types/policy'
 import type { DBUser } from '@/types/user'
 import { toISOString } from '@/lib/utils'
-import { db } from '@/libs/DB'
-import { policyCompletion } from '@/models/Schema'
-import { eq } from 'drizzle-orm'
 
 const DEBUG = process.env.NODE_ENV === 'development'
 
@@ -42,10 +43,12 @@ export default async function PolicyCompletionsPage({ params }: Props) {
       )
 
     // Get policy completions from the database
-    const completions = await db
-      .select()
-      .from(policyCompletion)
-      .where(eq(policyCompletion.policy_id, policyId))
+    const completions = await getPolicyCompletions(policyId)
+
+    if (!completions) {
+      DEBUG && console.log('[PolicyCompletionsPage] No completions found')
+      return redirect('/admin/policies')
+    }
 
     const [currentUser, policy] = await Promise.all([
       getCurrentUser(),

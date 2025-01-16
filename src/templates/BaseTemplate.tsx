@@ -11,15 +11,15 @@ export function BaseTemplate(props: {
   const user = useContext(UserContext)
 
   return (
-    <div className='flex h-screen flex-col overflow-hidden bg-white text-gray-700 antialiased dark:bg-gray-900'>
-      <div className='flex h-full'>
+    <div className='fixed inset-0 flex flex-col bg-white text-gray-700 antialiased dark:bg-gray-900'>
+      <div className='flex flex-1 overflow-hidden'>
         <NavigationSidebarWrapper
           user={user}
           signOutButton={props.signOutButton}
         />
-        <div className='flex flex-1 flex-col'>
-          <main className='flex-1 overflow-y-auto'>{props.children}</main>
-          <footer className='border-t border-gray-300 px-4 py-6 text-center text-sm md:py-8'>
+        <div className='flex min-w-0 flex-1 flex-col'>
+          <main className='flex-1 overflow-y-auto px-4'>{props.children}</main>
+          <footer className='shrink-0 border-t border-gray-300 px-4 py-6 text-center text-sm md:py-8'>
             {`© Copyright ${new Date().getFullYear()} Village of Mukwonago Police Department. Built by `}
             <a
               href='https://justinbachtell.com'

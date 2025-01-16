@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { CalendarDays, Clock, MapPin } from 'lucide-react'
 import { EventSignUpButton } from './EventSignUpButton'
+import Link from 'next/link'
 
 interface EventsGridProps {
   data: Event[]
@@ -18,11 +19,14 @@ export function EventsGrid({ data }: EventsGridProps) {
         <Card key={event.id} className='flex flex-col'>
           <CardHeader>
             <div className='flex items-start justify-between'>
-              <div>
-                <h3 className='text-xl font-semibold text-gray-900 dark:text-white'>
+              <div className='flex flex-col'>
+                <Link
+                  href={`/user/events/${event.id}`}
+                  className='text-xl font-semibold text-gray-900 hover:underline dark:text-white'
+                >
                   {event.event_name}
-                </h3>
-                <Badge variant='outline' className='mt-2 capitalize'>
+                </Link>
+                <Badge variant='outline' className='mt-2 w-fit capitalize'>
                   {event.event_type.replace('_', ' ')}
                 </Badge>
               </div>

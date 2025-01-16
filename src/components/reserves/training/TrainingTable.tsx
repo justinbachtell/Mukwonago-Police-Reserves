@@ -9,6 +9,7 @@ import { ArrowUpDown } from 'lucide-react'
 import { TrainingSignUpButton } from './TrainingSignUpButton'
 import { useState } from 'react'
 import { createLogger } from '@/lib/debug'
+import Link from 'next/link'
 
 const logger = createLogger({
   module: 'training',
@@ -36,7 +37,14 @@ export function TrainingTable({ data }: TrainingTableProps) {
       {
         accessorKey: 'name',
         cell: ({ row }) => {
-          return <span className='block px-4'>{row.getValue('name')}</span>
+          return (
+            <Link
+              href={`/user/training/${row.original.id}`}
+              className='block px-4 hover:underline'
+            >
+              {row.getValue('name')}
+            </Link>
+          )
         },
         header: ({ column }) => {
           return (

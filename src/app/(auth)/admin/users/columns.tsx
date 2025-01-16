@@ -200,7 +200,7 @@ export const columns: ColumnDef<UserWithApplication>[] = [
     cell: ({ row }) => (
       <div className='flex items-center justify-end gap-2 px-4'>
         <Button
-          variant='ghost'
+          variant='outline'
           size='icon'
           asChild
           className='size-8'
@@ -211,7 +211,7 @@ export const columns: ColumnDef<UserWithApplication>[] = [
           </Link>
         </Button>
         <Button
-          variant='ghost'
+          variant='outline'
           size='icon'
           asChild
           className='size-8'
@@ -224,16 +224,6 @@ export const columns: ColumnDef<UserWithApplication>[] = [
         <AssignEquipmentToUserDialog user={row.original} />
       </div>
     ),
-    header: ({ column }) => (
-      <Button
-        variant='ghost'
-        size='tableColumn'
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        className='flex justify-end px-4'
-      >
-        Actions
-        <ArrowUpDown className='ml-2 size-4' />
-      </Button>
-    )
+    header: 'Actions'
   }
 ]

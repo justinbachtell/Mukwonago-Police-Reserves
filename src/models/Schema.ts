@@ -87,6 +87,30 @@ export const trainingTypeEnum = pgEnum('training_type', [
   'other'
 ])
 
+export const notificationTypesEnum = pgEnum('notification_type', [
+  'application_submitted',
+  'application_approved',
+  'application_rejected',
+  'event_created',
+  'event_updated',
+  'event_signup',
+  'event_signup_reminder',
+  'training_created',
+  'training_updated',
+  'training_signup',
+  'training_signup_reminder',
+  'equipment_assigned',
+  'equipment_returned',
+  'equipment_return_reminder',
+  'policy_created',
+  'policy_updated',
+  'policy_reminder',
+  'event_reminder',
+  'training_reminder',
+  'general',
+  'announcement'
+])
+
 export const user = pgTable('user', {
   id: uuid('id').primaryKey(),
   email: text('email').notNull(),
@@ -258,7 +282,8 @@ export const events = pgTable('events', {
     .notNull(),
   updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
     .defaultNow()
-    .notNull()
+    .notNull(),
+  last_reminder_sent: timestamp('last_reminder_sent')
 }).enableRLS()
 
 export const eventAssignments = pgTable(
@@ -322,7 +347,8 @@ export const training = pgTable('training', {
     .notNull(),
   updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
     .defaultNow()
-    .notNull()
+    .notNull(),
+  last_reminder_sent: timestamp('last_reminder_sent')
 }).enableRLS()
 
 export const trainingAssignments = pgTable(
@@ -370,7 +396,9 @@ export const policies = pgTable('policies', {
     .notNull(),
   updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
     .defaultNow()
-    .notNull()
+    .notNull(),
+  is_active: boolean('is_active').default(true),
+  last_reminder_sent: timestamp('last_reminder_sent')
 }).enableRLS()
 
 export const policyCompletion = pgTable('policy_completion', {
@@ -389,6 +417,45 @@ export const policyCompletion = pgTable('policy_completion', {
     .notNull()
 }).enableRLS()
 
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  type: notificationTypesEnum('type').notNull(),
+  message: text('message').notNull(),
+  url: text('url'),
+  created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
+    .defaultNow()
+    .notNull()
+}).enableRLS()
+
+export const notificationRecipients = pgTable(
+  'notification_recipients',
+  {
+    id: serial('id').primaryKey(),
+    notification_id: integer('notification_id')
+      .references(() => notifications.id)
+      .notNull(),
+    user_id: uuid('user_id')
+      .references(() => user.id)
+      .notNull(),
+    is_read: boolean('is_read').notNull().default(false),
+    created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp('updated_at', { mode: 'string', withTimezone: true })
+      .defaultNow()
+      .notNull()
+  },
+  table => [
+    unique('notification_recipient_user').on(
+      table.notification_id,
+      table.user_id
+    )
+  ]
+).enableRLS()
+
 export const userRelations = relations(user, ({ many, one }) => ({
   applications: many(application),
   assignedEquipment: many(assignedEquipment),
@@ -404,7 +471,8 @@ export const userRelations = relations(user, ({ many, one }) => ({
   }),
   emergencyContacts: many(emergencyContact),
   eventAssignments: many(eventAssignments),
-  trainingAssignments: many(trainingAssignments)
+  trainingAssignments: many(trainingAssignments),
+  notificationRecipients: many(notificationRecipients)
 }))
 
 export const uniformSizesRelations = relations(uniformSizes, ({ one }) => ({
@@ -510,3 +578,21 @@ export const policyCompletionRelations = relations(
 export const policyRelations = relations(policies, ({ many }) => ({
   completions: many(policyCompletion)
 }))
+
+export const notificationRelations = relations(notifications, ({ many }) => ({
+  recipients: many(notificationRecipients)
+}))
+
+export const notificationRecipientRelations = relations(
+  notificationRecipients,
+  ({ one }) => ({
+    notification: one(notifications, {
+      fields: [notificationRecipients.notification_id],
+      references: [notifications.id]
+    }),
+    user: one(user, {
+      fields: [notificationRecipients.user_id],
+      references: [user.id]
+    })
+  })
+)

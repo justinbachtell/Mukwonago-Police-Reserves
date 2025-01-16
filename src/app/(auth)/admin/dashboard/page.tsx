@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAllUsers, getCurrentUser } from '@/actions/user'
 import { getAllEquipment } from '@/actions/equipment'
 import { getAllEvents } from '@/actions/event'
-import { getAllPolicies } from '@/actions/policy'
+import { getAllPolicies, getPolicyCompletions } from '@/actions/policy'
 import { getTrainings } from '@/actions/training'
+import { getAllApplications } from '@/actions/application'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import type { LucideIcon } from 'lucide-react'
@@ -13,16 +14,15 @@ import {
   CalendarDays,
   ScrollText,
   GraduationCap,
-  Clock
+  Clock,
+  FileText
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { redirect } from 'next/navigation'
-import { db } from '@/libs/DB'
-import { policyCompletion } from '@/models/Schema'
-import { eq } from 'drizzle-orm'
 import { createLogger } from '@/lib/debug'
 import Link from 'next/link'
 import type { Route } from 'next'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 const logger = createLogger({
   module: 'admin',
@@ -48,13 +48,15 @@ export default async function AdminDashboardPage() {
     logger.info('Fetching dashboard data', undefined, 'AdminDashboardPage')
 
     // Fetch all required data
-    const [users, equipment, events, policies, trainings] = await Promise.all([
-      getAllUsers(),
-      getAllEquipment(),
-      getAllEvents(),
-      getAllPolicies(),
-      getTrainings()
-    ])
+    const [users, equipment, events, policies, trainings, applications] =
+      await Promise.all([
+        getAllUsers(),
+        getAllEquipment(),
+        getAllEvents(),
+        getAllPolicies(),
+        getTrainings(),
+        getAllApplications()
+      ])
 
     logger.info(
       'Dashboard data loaded',
@@ -63,7 +65,8 @@ export default async function AdminDashboardPage() {
         equipmentCount: equipment?.length,
         eventCount: events?.length,
         policyCount: policies?.length,
-        trainingCount: trainings?.length
+        trainingCount: trainings?.length,
+        applicationCount: applications?.length
       },
       'AdminDashboardPage'
     )
@@ -76,6 +79,10 @@ export default async function AdminDashboardPage() {
     const totalEquipment = (equipment ?? []).length
     const availableEquipment = (equipment ?? []).filter(
       item => !item.is_assigned
+    ).length
+    const totalApplications = (applications ?? []).length
+    const pendingApplications = (applications ?? []).filter(
+      app => app.status === 'pending'
     ).length
     const upcomingEvents = (events ?? []).filter(
       event => new Date(event.event_date).getTime() > new Date().getTime()
@@ -93,11 +100,8 @@ export default async function AdminDashboardPage() {
     )
     const policyCompletions = await Promise.all(
       (policies ?? []).map(async policy => {
-        const completions = await db
-          .select()
-          .from(policyCompletion)
-          .where(eq(policyCompletion.policy_id, policy.id))
-        return completions
+        const completions = await getPolicyCompletions(policy.id)
+        return completions ?? []
       })
     )
     const totalCompletions = policyCompletions.reduce(
@@ -178,6 +182,14 @@ export default async function AdminDashboardPage() {
       iconClass: string
     }> = [
       {
+        href: '/admin/applications' as Route,
+        icon: FileText,
+        label: 'Manage Applications',
+        color: 'amber',
+        hoverClass: 'hover:bg-amber-50/50 dark:hover:bg-amber-900/20',
+        iconClass: 'text-amber-500'
+      },
+      {
         href: '/admin/users' as Route,
         icon: Users,
         label: 'Manage Users',
@@ -235,6 +247,13 @@ export default async function AdminDashboardPage() {
           {/* Stats Grid */}
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 xl:gap-6'>
             {[
+              {
+                title: 'Applications',
+                value: totalApplications,
+                label: `${pendingApplications} pending`,
+                icon: FileText,
+                color: 'amber'
+              },
               {
                 title: 'Total Users',
                 value: totalUsers,
@@ -333,7 +352,7 @@ export default async function AdminDashboardPage() {
                         variant='secondary'
                         className='ml-auto shrink-0 bg-purple-50 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 sm:text-sm'
                       >
-                        {event.event_type}
+                        {formatEnumValueWithMapping(event.event_type)}
                       </Badge>
                     </Link>
                   ))}
@@ -388,7 +407,7 @@ export default async function AdminDashboardPage() {
                         variant='secondary'
                         className='ml-auto shrink-0 bg-purple-50 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 sm:text-sm'
                       >
-                        {training.training_type}
+                        {formatEnumValueWithMapping(training.training_type)}
                       </Badge>
                     </Link>
                   ))}
@@ -444,7 +463,7 @@ export default async function AdminDashboardPage() {
                         variant='secondary'
                         className='ml-auto shrink-0 bg-blue-50 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 sm:text-sm'
                       >
-                        {user.position}
+                        {formatEnumValueWithMapping(user.position)}
                       </Badge>
                     </Link>
                   ))}

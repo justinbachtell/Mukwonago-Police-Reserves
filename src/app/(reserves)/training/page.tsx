@@ -22,7 +22,11 @@ export default async function TrainingPage() {
   try {
     logger.info('Fetching trainings', undefined, 'TrainingPage')
     const trainings = await getTrainings()
-    logger.info('Trainings fetched', { trainings }, 'TrainingPage')
+    logger.info(
+      'Trainings fetched',
+      { count: trainings?.length },
+      'TrainingPage'
+    )
     return (
       <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
         <TrainingView training={trainings ?? []} />

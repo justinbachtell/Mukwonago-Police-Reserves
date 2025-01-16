@@ -6,6 +6,7 @@ import { assignedEquipment, equipment } from '@/models/Schema'
 import { and, eq, isNull, not, or } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { createLogger } from '@/lib/debug'
+import { createEquipmentNotification } from '@/actions/notification'
 
 const logger = createLogger({
   module: 'equipment',
@@ -330,6 +331,169 @@ export async function getEquipment(id: number) {
       'Failed to fetch equipment',
       logger.errorWithData(error),
       'getEquipment'
+    )
+    return null
+  }
+}
+
+export async function assignEquipment(equipmentId: number, userId: string) {
+  logger.info('Assigning equipment', { equipmentId, userId }, 'assignEquipment')
+
+  try {
+    const now = toISOString(new Date())
+    const [assignment] = await db
+      .insert(assignedEquipment)
+      .values({
+        equipment_id: equipmentId,
+        user_id: userId,
+        checked_out_at: now,
+        created_at: now,
+        updated_at: now,
+        condition: 'good' // Default to good condition for new assignments
+      })
+      .returning()
+
+    if (!assignment) {
+      logger.error(
+        'No assignment returned after creation',
+        { equipmentId, userId },
+        'assignEquipment'
+      )
+      return null
+    }
+
+    // Update equipment status
+    await db
+      .update(equipment)
+      .set({
+        is_assigned: true,
+        assigned_to: userId,
+        updated_at: now
+      })
+      .where(eq(equipment.id, equipmentId))
+
+    // Get equipment details for notification
+    const [equipmentItem] = await db
+      .select()
+      .from(equipment)
+      .where(eq(equipment.id, equipmentId))
+
+    if (equipmentItem) {
+      await createEquipmentNotification(
+        equipmentItem.name,
+        userId,
+        'equipment_assigned'
+      )
+    }
+
+    revalidatePath('/admin/equipment')
+    return assignment
+  } catch (error) {
+    logger.error(
+      'Failed to assign equipment',
+      logger.errorWithData(error),
+      'assignEquipment'
+    )
+    return null
+  }
+}
+
+export async function returnEquipment(equipmentId: number, userId: string) {
+  logger.info('Returning equipment', { equipmentId, userId }, 'returnEquipment')
+
+  try {
+    const now = toISOString(new Date())
+    const [assignment] = await db
+      .update(assignedEquipment)
+      .set({
+        checked_in_at: now,
+        updated_at: now
+      })
+      .where(
+        and(
+          eq(assignedEquipment.equipment_id, equipmentId),
+          eq(assignedEquipment.user_id, userId),
+          isNull(assignedEquipment.checked_in_at)
+        )
+      )
+      .returning()
+
+    if (!assignment) {
+      logger.error(
+        'No assignment returned after update',
+        { equipmentId, userId },
+        'returnEquipment'
+      )
+      return null
+    }
+
+    // Update equipment status
+    await db
+      .update(equipment)
+      .set({
+        is_assigned: false,
+        assigned_to: null,
+        updated_at: now
+      })
+      .where(eq(equipment.id, equipmentId))
+
+    // Get equipment details for notification
+    const [equipmentItem] = await db
+      .select()
+      .from(equipment)
+      .where(eq(equipment.id, equipmentId))
+
+    if (equipmentItem) {
+      await createEquipmentNotification(
+        equipmentItem.name,
+        userId,
+        'equipment_returned'
+      )
+    }
+
+    revalidatePath('/admin/equipment')
+    return assignment
+  } catch (error) {
+    logger.error(
+      'Failed to return equipment',
+      logger.errorWithData(error),
+      'returnEquipment'
+    )
+    return null
+  }
+}
+
+export async function sendEquipmentReturnReminder(
+  equipmentId: number,
+  userId: string
+) {
+  logger.info(
+    'Sending equipment return reminder',
+    { equipmentId, userId },
+    'sendEquipmentReturnReminder'
+  )
+
+  try {
+    // Get equipment details for notification
+    const [equipmentItem] = await db
+      .select()
+      .from(equipment)
+      .where(eq(equipment.id, equipmentId))
+
+    if (equipmentItem) {
+      await createEquipmentNotification(
+        equipmentItem.name,
+        userId,
+        'equipment_return_reminder'
+      )
+    }
+
+    return { success: true }
+  } catch (error) {
+    logger.error(
+      'Failed to send equipment return reminder',
+      logger.errorWithData(error),
+      'sendEquipmentReturnReminder'
     )
     return null
   }

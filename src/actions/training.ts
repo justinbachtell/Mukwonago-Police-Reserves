@@ -7,6 +7,7 @@ import { training } from '@/models/Schema'
 import { eq } from 'drizzle-orm'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/server'
+import { createTrainingNotification } from '@/actions/notification'
 
 const logger = createLogger({
   module: 'training',
@@ -182,6 +183,8 @@ export async function createTraining(data: RequiredTrainingFields) {
       return null
     }
 
+    await createTrainingNotification(newTraining.name, newTraining.id)
+
     logger.info(
       'Training created successfully',
       {
@@ -270,6 +273,12 @@ export async function updateTraining(id: number, data: UpdateTraining) {
       return null
     }
 
+    await createTrainingNotification(
+      updatedTraining.name,
+      updatedTraining.id,
+      'training_updated'
+    )
+
     logger.info(
       'Training updated successfully',
       {
@@ -337,6 +346,12 @@ export async function deleteTraining(id: number) {
       )
       return null
     }
+
+    await createTrainingNotification(
+      `${deletedTraining.name} (Cancelled)`,
+      deletedTraining.id,
+      'training_updated'
+    )
 
     logger.info(
       'Training deleted successfully',

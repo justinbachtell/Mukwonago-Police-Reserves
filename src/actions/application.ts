@@ -8,6 +8,10 @@ import { createClient } from '@/lib/server'
 import { createLogger } from '@/lib/debug'
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import {
+  createApplicationNotification,
+  createNotificationWithRecipients
+} from '@/actions/notification'
 
 const logger = createLogger({
   module: 'applications',
@@ -170,6 +174,9 @@ export async function createApplication(data: CreateApplicationData) {
       throw new Error('Failed to create application')
     }
 
+    // Create notification for application submission
+    await createApplicationNotification(data.first_name, data.last_name)
+
     logger.info(
       'Application created successfully',
       { applicationId: newApplication.id },
@@ -241,6 +248,22 @@ export async function updateApplicationStatus(
         logger.error('Application not found', { applicationId }, 'application')
         throw new Error('Failed to update application status')
       }
+
+      // Create notification based on status
+      await createNotificationWithRecipients(
+        {
+          type:
+            status === 'approved'
+              ? 'application_approved'
+              : 'application_rejected',
+          message:
+            status === 'approved'
+              ? 'Your application has been approved'
+              : 'Your application has been rejected',
+          url: `/user/dashboard`
+        },
+        [updatedApplication.user_id]
+      )
 
       if (status === 'approved') {
         logger.info(

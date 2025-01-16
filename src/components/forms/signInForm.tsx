@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
 import { useRef, useState } from 'react'
 import { Loader2, Mail, Lock } from 'lucide-react'
 import Link from 'next/link'
@@ -36,7 +35,6 @@ export default function SignInForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
   const captcha = useRef<HCaptcha | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
@@ -347,20 +345,6 @@ export default function SignInForm() {
                   <p className='mt-1 text-xs text-red-500'>{errors.password}</p>
                 )}
               </div>
-            </div>
-
-            <div className='flex items-center space-x-2'>
-              <Checkbox
-                id='remember'
-                checked={rememberMe}
-                onCheckedChange={checked => setRememberMe(checked as boolean)}
-              />
-              <Label
-                htmlFor='remember'
-                className='text-sm text-muted-foreground'
-              >
-                Remember me
-              </Label>
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import type { EventAssignment } from '@/types/eventAssignment'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowUpDown } from 'lucide-react'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 export const columns: ColumnDef<EventAssignment>[] = [
   {
@@ -42,12 +43,15 @@ export const columns: ColumnDef<EventAssignment>[] = [
       )
     },
     cell: ({ row }) => {
-      const type = row.original.event?.event_type
-      return type ? (
-        <Badge variant='outline' className='px-4 py-1 capitalize'>
-          {type.replace('_', ' ')}
+      const event = row.original.event
+      if (!event) {
+        return null
+      }
+      return (
+        <Badge variant='secondary' className='font-medium'>
+          {formatEnumValueWithMapping(event.event_type)}
         </Badge>
-      ) : null
+      )
     }
   },
   {
@@ -142,16 +146,18 @@ export const columns: ColumnDef<EventAssignment>[] = [
       )
     },
     cell: ({ row }) => {
-      const status = row.original.completion_status
+      const status = row.getValue('completion_status') as string
       return status ? (
         <Badge
           variant={status === 'completed' ? 'default' : 'secondary'}
-          className='capitalize'
+          className='font-medium'
         >
-          {status}
+          {formatEnumValueWithMapping(status)}
         </Badge>
       ) : (
-        <Badge variant='outline'>Pending</Badge>
+        <Badge variant='secondary' className='font-medium'>
+          Pending
+        </Badge>
       )
     }
   }

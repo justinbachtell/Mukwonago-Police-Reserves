@@ -9,6 +9,7 @@ import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/actions/user'
 import { toISOString } from '@/lib/utils'
 import type { Policy, NewPolicy } from '@/types/policy'
+import { createPolicyNotification } from '@/actions/notification'
 
 const logger = createLogger({
   module: 'policies',
@@ -130,13 +131,13 @@ export async function uploadPolicy(
   file: File,
   policyNumber: string,
   policyName: string
-): Promise<string | null> {
+): Promise<string> {
   logger.info(
-    'Uploading policy file',
-    { policyNumber, policyName, fileName: file.name },
+    'Starting policy upload',
+    { fileName: file.name, policyNumber, policyName },
     'uploadPolicy'
   )
-  logger.time(`upload-policy-${policyNumber}`)
+  logger.time('policy-upload')
 
   try {
     const supabase = await createClient()
@@ -151,27 +152,34 @@ export async function uploadPolicy(
         logger.errorWithData(userError),
         'uploadPolicy'
       )
-      return null
+      throw new Error('Authentication error. Please try again.')
     }
 
     if (!user) {
       logger.warn('No active user found', undefined, 'uploadPolicy')
-      return null
+      throw new Error('You must be logged in to upload policies.')
     }
 
-    const fileExt = file.name.split('.').pop()
-    const sanitizedName = policyName.toLowerCase().replace(/[^a-z0-9]/g, '_')
-    const fileName = `${policyNumber}_${sanitizedName}.${fileExt}`
+    // Create a clean folder name based on policy number
+    const folderName = policyNumber.toLowerCase().replace(/[^a-z0-9_]/g, '')
+
+    // Create a clean file name
+    const fileExtension = file.name.split('.').pop()
+    const timestamp = new Date().getTime()
+    const sanitizedName = policyName.toLowerCase().replace(/[^a-z0-9_]/g, '')
+    const cleanFileName = `${folderName}_${sanitizedName}_${timestamp}.${fileExtension}`
+    const filePath = `${folderName}/${cleanFileName}`
 
     logger.info(
-      'Uploading file to storage',
-      { fileName, fileType: file.type },
+      'Uploading file to Supabase storage',
+      { filePath, contentType: file.type },
       'uploadPolicy'
     )
 
-    const { error: uploadError } = await supabase.storage
+    // Attempt the upload
+    const { error: uploadError, data } = await supabase.storage
       .from('policies')
-      .upload(fileName, file, {
+      .upload(filePath, file, {
         cacheControl: '3600',
         upsert: true,
         contentType: file.type
@@ -179,28 +187,53 @@ export async function uploadPolicy(
 
     if (uploadError) {
       logger.error(
-        'Upload error',
-        logger.errorWithData(uploadError),
+        'Policy upload failed',
+        {
+          error: uploadError,
+          message: uploadError.message,
+          name: uploadError.name
+        },
         'uploadPolicy'
       )
-      return null
+
+      // Check for common error messages
+      if (uploadError.message.includes('permission denied')) {
+        throw new Error('Permission denied. Please check storage permissions.')
+      } else if (uploadError.message.includes('too large')) {
+        throw new Error('File too large. Maximum size is 5MB.')
+      } else if (uploadError.message.includes('bucket not found')) {
+        throw new Error('Storage not configured. Please contact support.')
+      } else {
+        throw new Error(`Upload failed: ${uploadError.message}`)
+      }
     }
 
-    logger.info(
-      'Policy file uploaded successfully',
-      { fileName },
-      'uploadPolicy'
-    )
-    logger.timeEnd(`upload-policy-${policyNumber}`)
-    return fileName
+    if (!data?.path) {
+      logger.error(
+        'No file path returned from upload',
+        { data },
+        'uploadPolicy'
+      )
+      throw new Error('Failed to get uploaded file path')
+    }
+
+    const fullPath = `policies/${data.path}`
+    logger.info('Policy upload successful', { fullPath }, 'uploadPolicy')
+    logger.timeEnd('policy-upload')
+    return fullPath
   } catch (error) {
     logger.error(
-      'Failed to upload policy',
+      'Policy upload failed',
       logger.errorWithData(error),
       'uploadPolicy'
     )
-    logger.timeEnd(`upload-policy-${policyNumber}`)
-    return null
+
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      throw error // Rethrow specific errors
+    } else {
+      throw new TypeError('Failed to upload policy. Please try again.')
+    }
   }
 }
 
@@ -289,9 +322,7 @@ export async function getAllPolicies(): Promise<Policy[]> {
         count: policyRecords.length,
         withCompletions: policyRecords.filter(
           p => p.completions && p.completions.length > 0
-        ).length,
-        firstPolicy: policyRecords[0]?.name,
-        lastPolicy: policyRecords[policyRecords.length - 1]?.name
+        ).length
       },
       'getAllPolicies'
     )
@@ -334,6 +365,24 @@ export async function markPolicyAsAcknowledged(policyId: number) {
       policy_id: policyId,
       user_id: currentUser.id
     })
+
+    // Get policy details
+    const [policy] = await db
+      .select()
+      .from(policies)
+      .where(eq(policies.id, policyId))
+
+    if (policy) {
+      // Create notification for policy acknowledgment
+      await createPolicyNotification(
+        policy.name,
+        policy.policy_number,
+        policy.id,
+        'policy_updated',
+        currentUser.first_name,
+        currentUser.last_name
+      )
+    }
 
     logger.info(
       'Policy marked as acknowledged',
@@ -553,11 +602,24 @@ export async function createPolicy(policy: NewPolicy): Promise<boolean> {
       return false
     }
 
-    await db.insert(policies).values({
-      ...policy,
-      created_at: toISOString(new Date()),
-      updated_at: toISOString(new Date())
-    })
+    const [newPolicy] = await db
+      .insert(policies)
+      .values({
+        ...policy,
+        created_at: toISOString(new Date()),
+        updated_at: toISOString(new Date())
+      })
+      .returning()
+
+    if (newPolicy) {
+      // Create notification for new policy
+      await createPolicyNotification(
+        policy.name,
+        policy.policy_number,
+        newPolicy.id,
+        'policy_created'
+      )
+    }
 
     logger.info(
       'Policy created successfully',
@@ -577,5 +639,81 @@ export async function createPolicy(policy: NewPolicy): Promise<boolean> {
     )
     logger.timeEnd(`create-policy-${policy.policy_number}`)
     return false
+  }
+}
+
+export async function updatePolicy(
+  id: number,
+  policy: Partial<NewPolicy>
+): Promise<boolean> {
+  logger.info(
+    'Updating policy',
+    { policyId: id, policyName: policy.name },
+    'updatePolicy'
+  )
+
+  try {
+    const [updatedPolicy] = await db
+      .update(policies)
+      .set({
+        ...policy,
+        updated_at: toISOString(new Date())
+      })
+      .where(eq(policies.id, id))
+      .returning()
+
+    if (updatedPolicy) {
+      // Create notification for updated policy
+      await createPolicyNotification(
+        updatedPolicy.name,
+        updatedPolicy.policy_number,
+        updatedPolicy.id,
+        'policy_updated'
+      )
+    }
+
+    revalidatePath('/policies')
+    revalidatePath('/admin/policies')
+    return true
+  } catch (error) {
+    logger.error(
+      'Failed to update policy',
+      logger.errorWithData(error),
+      'updatePolicy'
+    )
+    return false
+  }
+}
+
+export async function getPolicyCompletions(policyId?: number) {
+  logger.info(
+    'Getting policy completions',
+    { policyId },
+    'getPolicyCompletions'
+  )
+
+  try {
+    const query = db.select().from(policyCompletion)
+
+    if (policyId) {
+      query.where(eq(policyCompletion.policy_id, policyId))
+    }
+
+    const completions = await query
+
+    logger.info(
+      'Policy completions retrieved',
+      { count: completions.length },
+      'getPolicyCompletions'
+    )
+
+    return completions
+  } catch (error) {
+    logger.error(
+      'Failed to get policy completions',
+      logger.errorWithData(error),
+      'getPolicyCompletions'
+    )
+    return null
   }
 }
