@@ -40,11 +40,11 @@ export function ApplicationsTable({ data }: ApplicationsTableProps) {
 
       switch (row.status) {
         case 'approved':
-          return 'bg-green-50 hover:bg-green-100'
+          return 'bg-green-50 hover:bg-green-100 dark:bg-green-950/40 dark:hover:bg-green-900/50'
         case 'rejected':
-          return 'bg-red-50 hover:bg-red-100'
+          return 'bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50'
         default:
-          return 'hover:bg-gray-50'
+          return 'hover:bg-gray-50 dark:hover:bg-gray-900/50'
       }
     }
 

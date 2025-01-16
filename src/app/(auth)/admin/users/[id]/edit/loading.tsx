@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function EditUserLoading() {
   return (
-    <div className='container mx-auto py-8'>
+    <div className='container mx-auto px-4 py-8 md:px-6 lg:px-8'>
       <div className='mb-8'>
         <Skeleton className='h-8 w-48' />
         <Skeleton className='mt-2 h-4 w-64' />

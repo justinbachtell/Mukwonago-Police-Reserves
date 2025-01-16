@@ -39,7 +39,7 @@ export default async function UsersPage() {
     })
 
     return (
-      <div className='container mx-auto py-10'>
+      <div className='container mx-auto min-h-screen px-4 md:px-6 lg:px-10'>
         <div className='flex flex-col gap-4'>
           <div>
             <h1 className='text-3xl font-bold tracking-tight'>

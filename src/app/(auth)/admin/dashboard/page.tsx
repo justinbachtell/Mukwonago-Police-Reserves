@@ -232,8 +232,8 @@ export default async function AdminDashboardPage() {
     ]
 
     return (
-      <div className='min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900'>
-        <div className='container mx-auto space-y-8 px-4 py-8 md:px-6 lg:px-8 lg:py-10'>
+      <div className='min-h-screen px-4 md:px-6 lg:px-10'>
+        <div className='container mx-auto space-y-8'>
           {/* Header Section with Gradient Text */}
           <div className='space-y-2'>
             <h1 className='bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-white dark:to-gray-400 sm:text-4xl'>

@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/actions/user'
 import { UserProvider } from '@/components/auth/UserProvider'
 import { Analytics } from '@vercel/analytics/react'
 import { NotificationProvider } from '@/context/NotificationContext'
+import { ThemeProvider } from '@/components/theme/ThemeProvider'
 
 const logger = createLogger({
   module: 'root',
@@ -86,13 +87,22 @@ export default async function RootLayout({
     const user = await getCurrentUser()
 
     return (
-      <html lang='en'>
-        <body suppressHydrationWarning className='overflow-x-hidden'>
-          <NotificationProvider>
-            <UserProvider user={user}>{children}</UserProvider>
-          </NotificationProvider>
+      <html lang='en' suppressHydrationWarning>
+        <body>
+          <ThemeProvider
+            attribute='class'
+            defaultTheme='system'
+            enableSystem
+            disableTransitionOnChange
+          >
+            <UserProvider user={user}>
+              <NotificationProvider>
+                {children}
+                <Analytics />
+              </NotificationProvider>
+            </UserProvider>
+          </ThemeProvider>
         </body>
-        <Analytics />
       </html>
     )
   } catch (error) {
@@ -104,11 +114,22 @@ export default async function RootLayout({
 
     // Return basic layout even on error
     return (
-      <html lang='en'>
-        <body suppressHydrationWarning className='overflow-x-hidden'>
-          <NotificationProvider>{children}</NotificationProvider>
+      <html lang='en' suppressHydrationWarning>
+        <body>
+          <ThemeProvider
+            attribute='class'
+            defaultTheme='system'
+            enableSystem
+            disableTransitionOnChange
+          >
+            <UserProvider user={null}>
+              <NotificationProvider>
+                {children}
+                <Analytics />
+              </NotificationProvider>
+            </UserProvider>
+          </ThemeProvider>
         </body>
-        <Analytics />
       </html>
     )
   } finally {

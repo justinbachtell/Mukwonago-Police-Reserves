@@ -18,8 +18,8 @@ export default async function SignInPage() {
   try {
     logger.info('Rendering sign-in form', undefined, 'SignInPage')
     return (
-      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
-        <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+      <div className='container relative mx-auto min-h-screen overflow-hidden px-4 md:px-6 lg:px-10'>
+        <div className='flex flex-1 items-center justify-center'>
           <SignInForm />
         </div>
       </div>
@@ -34,7 +34,7 @@ export default async function SignInPage() {
     // Show the sign-in form for other types of errors
     logger.info('Rendering sign-in form due to error', undefined, 'SignInPage')
     return (
-      <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+      <div className='flex min-h-screen flex-1 items-center justify-center px-4 md:px-6 lg:px-10'>
         <SignInForm />
       </div>
     )

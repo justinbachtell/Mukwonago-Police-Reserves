@@ -7,6 +7,7 @@ import { createLogger } from '@/lib/debug'
 import { getCurrentUser } from '@/actions/user'
 import { BaseTemplate } from '@/templates/BaseTemplate'
 import { NotificationList } from '@/components/notifications/NotificationList'
+import { LoadingPage } from '@/components/ui/loading'
 
 const logger = createLogger({
   module: 'auth',
@@ -62,15 +63,13 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   }, [router, supabase.auth, pathname])
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <LoadingPage />
   }
 
   return (
     <BaseTemplate>
-      <div className='px-4 pb-12 pt-20 lg:py-10'>
-        <NotificationList />
-        {children}
-      </div>
+      <NotificationList />
+      {children}
     </BaseTemplate>
   )
 }

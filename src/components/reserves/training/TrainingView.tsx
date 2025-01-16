@@ -38,7 +38,7 @@ export function TrainingView({ training }: TrainingViewProps) {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
 
   return (
-    <div className='container mx-auto px-4 py-8'>
+    <div className='container mx-auto pt-8'>
       <div className='mb-6 flex items-center justify-between lg:mb-0'>
         <div>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>

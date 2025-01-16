@@ -87,10 +87,10 @@ export default async function DashboardPage() {
     // If user is a guest, show application-focused view
     if (user.role === 'guest') {
       return (
-        <div className='min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900'>
-          <div className='container mx-auto space-y-8 px-4 py-8 md:px-6 lg:px-8 lg:py-10'>
+        <div className='min-h-screen'>
+          <div className='container relative mx-auto space-y-8 px-4 md:px-6 lg:px-10'>
             <div className='space-y-2'>
-              <h1 className='bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-white dark:to-gray-400 sm:text-4xl'>
+              <h1 className='text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl'>
                 Welcome, {user.first_name}!
               </h1>
               <p className='text-base text-gray-600 dark:text-gray-300 sm:text-lg'>
@@ -183,11 +183,11 @@ export default async function DashboardPage() {
     )
 
     return (
-      <div className='min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900'>
-        <div className='container mx-auto space-y-8 px-4 py-8 lg:py-10'>
-          {/* Header Section with Gradient Text */}
+      <div className='min-h-screen px-4 md:px-6 lg:px-10'>
+        <div className='container relative mx-auto space-y-8'>
+          {/* Header Section */}
           <div className='space-y-2'>
-            <h1 className='bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-white dark:to-gray-400 sm:text-4xl'>
+            <h1 className='text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl'>
               Welcome back, {user.first_name}!
             </h1>
             <p className='text-base text-gray-600 dark:text-gray-300 sm:text-lg'>
@@ -195,21 +195,21 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          {/* Application Status Card - Show only if there's a pending application */}
+          {/* Application Status Card */}
           {latestApplication?.status === 'pending' && (
-            <Card className='overflow-hidden border-0 bg-gradient-to-r from-yellow-50/90 to-yellow-100/90 shadow-lg backdrop-blur-sm dark:from-yellow-900/20 dark:to-yellow-800/20'>
+            <Card className='border-0 bg-white/80 shadow-lg backdrop-blur-sm dark:bg-white/5'>
               <CardHeader className='pb-2 sm:pb-3'>
-                <CardTitle className='flex items-center gap-2 text-lg font-semibold text-yellow-800 dark:text-yellow-200 sm:text-xl'>
-                  <ShieldCheck className='size-5 text-yellow-600 dark:text-yellow-400 sm:size-6' />
+                <CardTitle className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white sm:text-xl'>
+                  <ShieldCheck className='size-5 text-blue-500 dark:text-blue-400 sm:size-6' />
                   Application Status
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className='text-sm text-yellow-800 dark:text-yellow-200 sm:text-base'>
+                <p className='text-sm text-gray-600 dark:text-gray-300 sm:text-base'>
                   Your application is currently under review. We'll notify you
                   once there's an update.
                 </p>
-                <p className='mt-1 text-xs text-yellow-700 dark:text-yellow-300 sm:text-sm'>
+                <p className='mt-1 text-xs text-gray-500 dark:text-gray-400 sm:text-sm'>
                   Submitted on{' '}
                   {new Date(latestApplication.created_at).toLocaleDateString()}
                 </p>
@@ -218,7 +218,7 @@ export default async function DashboardPage() {
           )}
 
           {/* Stats Grid */}
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 xl:gap-6'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6'>
             {[
               {
                 title: 'Your Equipment',
@@ -275,11 +275,11 @@ export default async function DashboardPage() {
 
           {/* Activity Grid */}
           <div className='grid gap-6 xl:grid-cols-2'>
-            {/* Upcoming Events */}
-            <Card className='overflow-hidden border-0 bg-white/80 shadow-lg backdrop-blur-sm transition-all hover:shadow-xl dark:bg-white/5'>
+            {/* Upcoming Events Card */}
+            <Card className='border-0 bg-white/80 shadow-lg backdrop-blur-sm transition-all hover:shadow-xl dark:bg-white/5'>
               <CardHeader className='border-b border-gray-100 pb-4 dark:border-gray-800'>
-                <CardTitle className='flex items-center gap-2 text-lg font-semibold sm:text-xl'>
-                  <CalendarDays className='size-5 text-green-500' />
+                <CardTitle className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white sm:text-xl'>
+                  <CalendarDays className='size-5 text-green-500 dark:text-green-400' />
                   Upcoming Events
                 </CardTitle>
               </CardHeader>
@@ -347,11 +347,11 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Upcoming Training */}
-            <Card className='overflow-hidden border-0 bg-white/80 shadow-lg backdrop-blur-sm transition-all hover:shadow-xl dark:bg-white/5'>
+            {/* Upcoming Training Card */}
+            <Card className='border-0 bg-white/80 shadow-lg backdrop-blur-sm transition-all hover:shadow-xl dark:bg-white/5'>
               <CardHeader className='border-b border-gray-100 pb-4 dark:border-gray-800'>
-                <CardTitle className='flex items-center gap-2 text-lg font-semibold sm:text-xl'>
-                  <GraduationCap className='size-5 text-purple-500' />
+                <CardTitle className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white sm:text-xl'>
+                  <GraduationCap className='size-5 text-purple-500 dark:text-purple-400' />
                   Upcoming Training
                 </CardTitle>
               </CardHeader>
@@ -426,11 +426,11 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Equipment List */}
-            <Card className='overflow-hidden border-0 bg-white/80 shadow-lg backdrop-blur-sm transition-all hover:shadow-xl dark:bg-white/5'>
+            {/* Equipment List Card */}
+            <Card className='border-0 bg-white/80 shadow-lg backdrop-blur-sm transition-all hover:shadow-xl dark:bg-white/5'>
               <CardHeader className='border-b border-gray-100 pb-4 dark:border-gray-800'>
-                <CardTitle className='flex items-center gap-2 text-lg font-semibold sm:text-xl'>
-                  <Boxes className='size-5 text-blue-500' />
+                <CardTitle className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white sm:text-xl'>
+                  <Boxes className='size-5 text-blue-500 dark:text-blue-400' />
                   Current Equipment
                 </CardTitle>
               </CardHeader>
@@ -488,7 +488,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className='grid w-full items-center justify-center gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 xl:gap-6'>
+          <div className='grid w-full items-center justify-center gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6'>
             {[
               {
                 href: '/user/equipment' as Route,
@@ -496,7 +496,7 @@ export default async function DashboardPage() {
                 label: 'View Equipment',
                 color: 'blue',
                 hoverClass: 'hover:bg-blue-50/50 dark:hover:bg-blue-900/20',
-                iconClass: 'text-blue-500'
+                iconClass: 'text-blue-500 dark:text-blue-400'
               },
               {
                 href: '/user/events' as Route,
@@ -504,7 +504,7 @@ export default async function DashboardPage() {
                 label: 'View Events',
                 color: 'green',
                 hoverClass: 'hover:bg-green-50/50 dark:hover:bg-green-900/20',
-                iconClass: 'text-green-500'
+                iconClass: 'text-green-500 dark:text-green-400'
               },
               {
                 href: '/user/training' as Route,
@@ -512,7 +512,7 @@ export default async function DashboardPage() {
                 label: 'View Training',
                 color: 'purple',
                 hoverClass: 'hover:bg-purple-50/50 dark:hover:bg-purple-900/20',
-                iconClass: 'text-purple-500'
+                iconClass: 'text-purple-500 dark:text-purple-400'
               },
               {
                 href: '/user/policies' as Route,
@@ -520,19 +520,21 @@ export default async function DashboardPage() {
                 label: 'View Policies',
                 color: 'indigo',
                 hoverClass: 'hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20',
-                iconClass: 'text-indigo-500'
+                iconClass: 'text-indigo-500 dark:text-indigo-400'
               }
             ].map((action, index) => (
               <Link
                 key={index}
-                href={action.href as Route}
+                href={action.href}
                 className={`group flex w-full items-center justify-between rounded-lg border-0 bg-white/80 p-4 shadow-md transition-all hover:-translate-y-1 hover:shadow-lg ${action.hoverClass} dark:bg-white/5`}
               >
                 <div className='flex items-center gap-3'>
                   <action.icon
                     className={`size-5 ${action.iconClass} transition-transform group-hover:scale-110`}
                   />
-                  <span className='font-medium'>{action.label}</span>
+                  <span className='font-medium text-gray-900 dark:text-white'>
+                    {action.label}
+                  </span>
                 </div>
               </Link>
             ))}

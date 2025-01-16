@@ -24,6 +24,7 @@ import { createClient } from '@/lib/client'
 import type { Session } from '@supabase/supabase-js'
 import { updateUser } from '@/actions/user'
 import { STATES } from '@/libs/States'
+import { LoadingCard } from '@/components/ui/loading'
 
 const logger = createLogger({
   module: 'forms',
@@ -350,7 +351,7 @@ export function ApplicationForm({ user }: Props) {
 
   try {
     if (isLoading) {
-      return <div className='p-4 text-center'>Loading...</div>
+      return <LoadingCard />
     }
 
     return (
