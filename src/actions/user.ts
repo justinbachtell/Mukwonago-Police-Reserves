@@ -4,7 +4,7 @@ import type { DBUser } from '@/types/user'
 import { toISOString } from '@/lib/utils'
 import { db } from '@/libs/DB'
 import { application, user } from '@/models/Schema'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, or } from 'drizzle-orm'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/server'
 
@@ -469,5 +469,49 @@ export async function updateUserSettings(
       success: false,
       message: 'An unexpected error occurred'
     }
+  }
+}
+
+export async function getDepartmentContacts() {
+  logger.info('Getting department contacts', undefined, 'getDepartmentContacts')
+
+  try {
+    const users = await db
+      .select()
+      .from(user)
+      .where(or(eq(user.role, 'member'), eq(user.role, 'admin')))
+      .orderBy(user.first_name, user.last_name)
+
+    if (!users) {
+      logger.error(
+        'Failed to fetch contacts',
+        undefined,
+        'getDepartmentContacts'
+      )
+      return null
+    }
+
+    const contacts = users.map(u => ({
+      ...u,
+      first_name: u.first_name,
+      last_name: u.last_name,
+      created_at: toISOString(u.created_at),
+      updated_at: toISOString(u.updated_at)
+    })) satisfies DBUser[]
+
+    logger.info(
+      'Department contacts retrieved',
+      { count: contacts.length },
+      'getDepartmentContacts'
+    )
+
+    return contacts
+  } catch (error) {
+    logger.error(
+      'Failed to get department contacts',
+      logger.errorWithData(error),
+      'getDepartmentContacts'
+    )
+    return null
   }
 }

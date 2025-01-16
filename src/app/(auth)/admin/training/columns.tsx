@@ -27,6 +27,7 @@ import { TrainingForm } from '@/components/admin/training/TrainingForm'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createLogger } from '@/lib/debug'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 const logger = createLogger({
   module: 'admin',
@@ -103,78 +104,78 @@ function TrainingActions({
   )
 }
 
-export const createColumns = (
-  availableUsers: DBUser[]
-): ColumnDef<Training>[] => [
-  {
-    accessorKey: 'name',
-    header: 'Training Name'
-  },
-  {
-    accessorKey: 'training_type',
-    header: 'Type',
-    cell: ({ row }) => {
-      const type = row.getValue('training_type') as string
-      return (
-        <Badge variant='outline' className='capitalize'>
-          {type.replace(/_/g, ' ')}
-        </Badge>
+export function createColumns(availableUsers: DBUser[]): ColumnDef<Training>[] {
+  return [
+    {
+      accessorKey: 'name',
+      header: 'Name'
+    },
+    {
+      accessorKey: 'training_type',
+      header: 'Type',
+      cell: ({ row }) => {
+        const type = row.getValue('training_type') as string
+        return (
+          <Badge variant='secondary' className='font-medium'>
+            {formatEnumValueWithMapping(type)}
+          </Badge>
+        )
+      }
+    },
+    {
+      accessorKey: 'training_date',
+      header: 'Date',
+      cell: ({ row }) => {
+        const date = row.getValue('training_date') as string
+        return new Date(date).toLocaleDateString()
+      }
+    },
+    {
+      accessorKey: 'training_start_time',
+      header: 'Start Time',
+      cell: ({ row }) => {
+        const time = row.getValue('training_start_time') as string
+        return new Date(time).toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit'
+        })
+      }
+    },
+    {
+      accessorKey: 'training_end_time',
+      header: 'End Time',
+      cell: ({ row }) => {
+        const time = row.getValue('training_end_time') as string
+        return new Date(time).toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit'
+        })
+      }
+    },
+    {
+      accessorKey: 'instructor',
+      header: 'Instructor',
+      cell: ({ row }) => {
+        const instructor = row.original.instructor
+        return instructor ? (
+          <Badge variant='outline'>
+            {instructor.first_name} {instructor.last_name}
+          </Badge>
+        ) : (
+          <Badge variant='outline' className='opacity-50'>
+            No instructor
+          </Badge>
+        )
+      }
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => (
+        <TrainingActions
+          training={row.original}
+          availableUsers={availableUsers}
+        />
       )
     }
-  },
-  {
-    accessorKey: 'training_date',
-    header: 'Date',
-    cell: ({ row }) => {
-      const date = row.getValue('training_date') as string
-      return new Date(date).toLocaleDateString()
-    }
-  },
-  {
-    accessorKey: 'training_start_time',
-    header: 'Start Time',
-    cell: ({ row }) => {
-      const time = row.getValue('training_start_time') as string
-      return new Date(time).toLocaleTimeString([], {
-        hour: 'numeric',
-        minute: '2-digit'
-      })
-    }
-  },
-  {
-    accessorKey: 'training_end_time',
-    header: 'End Time',
-    cell: ({ row }) => {
-      const time = row.getValue('training_end_time') as string
-      return new Date(time).toLocaleTimeString([], {
-        hour: 'numeric',
-        minute: '2-digit'
-      })
-    }
-  },
-  {
-    accessorKey: 'instructor',
-    header: 'Instructor',
-    cell: ({ row }) => {
-      const instructor = row.original.instructor
-      return instructor ? (
-        <Badge variant='outline'>
-          {instructor.first_name} {instructor.last_name}
-        </Badge>
-      ) : (
-        <Badge variant='outline' className='opacity-50'>
-          No instructor
-        </Badge>
-      )
-    }
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => (
-      <TrainingActions
-        training={row.original}
-        availableUsers={availableUsers}
-      />
-    )
-  }
-]
+  ]
+}

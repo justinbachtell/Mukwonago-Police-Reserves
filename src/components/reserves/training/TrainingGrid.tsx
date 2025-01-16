@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { CalendarDays, Clock, MapPin } from 'lucide-react'
 import { TrainingSignUpButton } from './TrainingSignUpButton'
+import Link from 'next/link'
 
 interface TrainingGridProps {
   data: Training[]
@@ -19,9 +20,12 @@ export function TrainingGrid({ data }: TrainingGridProps) {
           <CardHeader>
             <div className='flex items-start justify-between'>
               <div>
-                <h3 className='text-xl font-semibold text-gray-900 dark:text-white'>
+                <Link
+                  href={`/user/training/${training.id}`}
+                  className='text-xl font-semibold text-gray-900 hover:underline dark:text-white'
+                >
                   {training.name}
-                </h3>
+                </Link>
                 <Badge variant='outline' className='mt-2 capitalize'>
                   {training.training_type.replace('_', ' ')}
                 </Badge>

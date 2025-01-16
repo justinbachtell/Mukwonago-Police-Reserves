@@ -13,6 +13,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 import { EventForm } from '@/components/admin/forms/EventForm'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 export const columns: ColumnDef<Event>[] = [
   {
@@ -53,8 +54,8 @@ export const columns: ColumnDef<Event>[] = [
       const type = row.getValue('event_type') as string
       return (
         <div className='flex flex-col px-4'>
-          <Badge variant='outline' className='w-fit capitalize'>
-            {type.replace('_', ' ')}
+          <Badge variant='secondary' className='font-medium'>
+            {formatEnumValueWithMapping(type)}
           </Badge>
         </div>
       )

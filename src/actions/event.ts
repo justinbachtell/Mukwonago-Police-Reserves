@@ -4,9 +4,16 @@ import type { NewEvent, UpdateEvent } from '@/types/event'
 import { toISOString } from '@/lib/utils'
 import { db } from '@/libs/DB'
 import type { eventTypesEnum } from '@/models/Schema'
-import { events } from '@/models/Schema'
-import { eq } from 'drizzle-orm'
+import { events, eventAssignments } from '@/models/Schema'
+import { eq, and } from 'drizzle-orm'
 import { createLogger } from '@/lib/debug'
+import {
+  createEventNotification,
+  createEventSignupNotification,
+  createEventLeaveNotification
+} from '@/actions/notification'
+import { getCurrentUser } from '@/actions/user'
+import { revalidatePath } from 'next/cache'
 
 const logger = createLogger({
   module: 'events',
@@ -58,7 +65,17 @@ export async function getEventById(id: number) {
   logger.info('Fetching event by ID', { eventId: id }, 'getEventById')
 
   try {
-    const [event] = await db.select().from(events).where(eq(events.id, id))
+    const [event] = await db.query.events.findMany({
+      where: eq(events.id, id),
+      with: {
+        assignments: {
+          with: {
+            user: true
+          }
+        }
+      }
+    })
+
     if (!event) {
       logger.warn('Event not found', { eventId: id }, 'getEventById')
       return null
@@ -127,6 +144,8 @@ export async function createEvent(data: NewEvent) {
       )
       return null
     }
+
+    await createEventNotification(newEvent.event_name, newEvent.id)
 
     logger.info(
       'Event created successfully',
@@ -201,6 +220,11 @@ export async function updateEvent(id: number, data: UpdateEvent) {
       return null
     }
 
+    await createEventNotification(
+      `${updatedEvent.event_name} (Updated)`,
+      updatedEvent.id
+    )
+
     logger.info(
       'Event updated successfully',
       {
@@ -251,6 +275,11 @@ export async function deleteEvent(id: number) {
       return null
     }
 
+    await createEventNotification(
+      `${deletedEvent.event_name} (Cancelled)`,
+      deletedEvent.id
+    )
+
     logger.info('Event deleted successfully', { eventId: id }, 'deleteEvent')
     return deletedEvent
   } catch (error) {
@@ -258,6 +287,122 @@ export async function deleteEvent(id: number) {
       'Failed to delete event',
       logger.errorWithData(error),
       'deleteEvent'
+    )
+    return null
+  }
+}
+
+export async function signUpForEvent(eventId: number) {
+  logger.info('Signing up for event', { eventId }, 'signUpForEvent')
+
+  try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      logger.error('User not found', undefined, 'signUpForEvent')
+      return null
+    }
+
+    const [event] = await db.select().from(events).where(eq(events.id, eventId))
+
+    if (!event) {
+      logger.error('Event not found', { eventId }, 'signUpForEvent')
+      return null
+    }
+
+    const now = toISOString(new Date())
+    const [signup] = await db
+      .insert(eventAssignments)
+      .values({
+        event_id: eventId,
+        user_id: currentUser.id,
+        created_at: now,
+        updated_at: now
+      })
+      .returning()
+
+    if (signup) {
+      // Create notification for event signup
+      await createEventSignupNotification(
+        event.event_name,
+        eventId,
+        currentUser.first_name,
+        currentUser.last_name
+      )
+    }
+
+    revalidatePath('/events')
+    revalidatePath(`/events/${eventId}`)
+    return signup
+  } catch (error) {
+    logger.error(
+      'Failed to sign up for event',
+      logger.errorWithData(error),
+      'signUpForEvent'
+    )
+    return null
+  }
+}
+
+export async function leaveEvent(eventId: number) {
+  logger.info('Leaving event', { eventId }, 'leaveEvent')
+
+  try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      logger.error('User not found', undefined, 'leaveEvent')
+      return null
+    }
+
+    const [event] = await db.query.events.findMany({
+      where: eq(events.id, eventId)
+    })
+
+    if (!event) {
+      logger.error('Event not found', { eventId }, 'leaveEvent')
+      return null
+    }
+
+    const [deletedAssignment] = await db
+      .delete(eventAssignments)
+      .where(
+        and(
+          eq(eventAssignments.event_id, eventId),
+          eq(eventAssignments.user_id, currentUser.id)
+        )
+      )
+      .returning()
+
+    if (!deletedAssignment) {
+      logger.error(
+        'No assignment returned after deletion',
+        { eventId, userId: currentUser.id },
+        'leaveEvent'
+      )
+      return null
+    }
+
+    // Create notification for leaving event
+    await createEventLeaveNotification(
+      event.event_name,
+      event.id,
+      currentUser.first_name,
+      currentUser.last_name
+    )
+
+    logger.info(
+      'Event left successfully',
+      { eventId, userId: currentUser.id },
+      'leaveEvent'
+    )
+
+    revalidatePath('/events')
+    revalidatePath(`/events/${eventId}`)
+    return deletedAssignment
+  } catch (error) {
+    logger.error(
+      'Failed to leave event',
+      logger.errorWithData(error),
+      'leaveEvent'
     )
     return null
   }

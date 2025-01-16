@@ -18,6 +18,43 @@ const logger = createLogger({
   file: 'PolicyForm.tsx'
 })
 
+// File validation types and constants
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+
+type FileType = keyof typeof ALLOWED_FILE_TYPES
+
+interface FileTypeInfo {
+  magicNumbers: readonly string[]
+  extension: string | readonly string[]
+}
+
+const ALLOWED_FILE_TYPES = {
+  'application/pdf': {
+    magicNumbers: ['25504446'] as const, // %PDF
+    extension: '.pdf'
+  },
+  'application/msword': {
+    magicNumbers: ['D0CF11E0'] as const, // DOC
+    extension: '.doc'
+  },
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
+    magicNumbers: ['504B0304'] as const, // DOCX (ZIP)
+    extension: '.docx'
+  }
+} as const satisfies Record<string, FileTypeInfo>
+
+// Function to check file's magic numbers
+async function checkFileMagicNumbers(file: File): Promise<boolean> {
+  const arr = new Uint8Array(await file.slice(0, 4).arrayBuffer())
+  const hex = Array.from(arr)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase()
+
+  const fileType = ALLOWED_FILE_TYPES[file.type as FileType]
+  return fileType?.magicNumbers.some((magic: string) => hex.startsWith(magic)) ?? false
+}
+
 interface PolicyFormProps {
   policy?: Policy
   onSuccess?: () => void
@@ -36,43 +73,50 @@ export function PolicyForm({
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const router = useRouter()
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      logger.debug('File input change detected', undefined, 'handleFileChange')
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file) {
+        return
+      }
 
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0]
-        logger.info(
-          'Processing file selection',
-          { fileName: file.name, fileSize: file.size, fileType: file.type },
-          'handleFileChange'
-        )
+      logger.info(
+        'File selected',
+        { name: file.name, type: file.type, size: file.size },
+        'handleFileChange'
+      )
 
-        // Check file type
-        if (
-          !file.type.match(
-            'application/pdf|application/msword|application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      try {
+        // 1. Validate file type
+        if (!Object.keys(ALLOWED_FILE_TYPES).includes(file.type)) {
+          throw new Error(
+            'Invalid file type. Please upload a PDF or Word document.'
           )
-        ) {
-          logger.warn(
-            'Invalid file type',
-            { fileType: file.type },
-            'handleFileChange'
-          )
-          toast.error('Please upload a PDF or Word document')
-          e.target.value = ''
-          return
         }
 
-        // Check file size
-        if (file.size > 5 * 1024 * 1024) {
-          logger.warn(
-            'File too large',
-            { fileSize: file.size },
-            'handleFileChange'
+        // 2. Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error('File is too large. Maximum size is 5MB.')
+        }
+
+        // 3. Validate file content (magic numbers)
+        const isValidContent = await checkFileMagicNumbers(file)
+        if (!isValidContent) {
+          throw new Error(
+            'Invalid file content. The file appears to be different from its extension.'
           )
-          toast.error('File size should be less than 5MB')
-          e.target.value = ''
-          return
+        }
+
+        // 4. Validate file extension matches content type
+        const extension = file.name.toLowerCase().split('.').pop()
+        const fileTypeInfo = ALLOWED_FILE_TYPES[file.type as FileType]
+        const allowedExtensions = Array.isArray(fileTypeInfo.extension)
+          ? fileTypeInfo.extension
+          : [fileTypeInfo.extension]
+
+        if (!extension || !allowedExtensions.includes(`.${extension}` as any)) {
+          throw new Error(
+            `Invalid file extension. Expected one of: ${allowedExtensions.join(', ')}`
+          )
         }
 
         logger.info(
@@ -81,6 +125,15 @@ export function PolicyForm({
           'handleFileChange'
         )
         setSelectedFile(file)
+      } catch (error) {
+        logger.warn(
+          'File validation failed',
+          { error: error instanceof Error ? error.message : 'Unknown error' },
+          'handleFileChange'
+        )
+        toast.error(error instanceof Error ? error.message : 'Invalid file')
+        e.target.value = '' // Reset file input
+        setSelectedFile(null)
       }
     }
 

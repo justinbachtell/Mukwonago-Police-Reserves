@@ -1,12 +1,7 @@
-import { getCurrentUser } from '@/actions/user';
+import { getCurrentUser, getDepartmentContacts } from '@/actions/user'
 import { ContactsTable } from '@/components/reserves/contacts/ContactsTable'
-import { db } from '@/libs/DB'
-import { eq, or } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
-import type { DBUser } from '@/types/user'
-import { toISOString } from '@/lib/utils'
 import { createLogger } from '@/lib/debug'
-import { user } from '@/models/Schema'
 
 const logger = createLogger({
   module: 'contacts',
@@ -38,30 +33,12 @@ export default async function ContactsPage() {
     }
 
     logger.info('Fetching department contacts', undefined, 'ContactsPage')
-    const users = await db
-      .select()
-      .from(user)
-      .where(or(eq(user.role, 'member'), eq(user.role, 'admin')))
-      .orderBy(user.first_name, user.last_name)
+    const contacts = await getDepartmentContacts()
 
-    if (!users) {
+    if (!contacts) {
       logger.error('Failed to fetch contacts', undefined, 'ContactsPage')
       throw new Error('Failed to fetch contacts')
     }
-
-    const contacts = users.map(u => ({
-      ...u,
-      first_name: u.first_name,
-      last_name: u.last_name,
-      created_at: toISOString(u.created_at),
-      updated_at: toISOString(u.updated_at)
-    })) satisfies DBUser[]
-
-    logger.info(
-      'Contacts processed successfully',
-      { count: contacts.length },
-      'ContactsPage'
-    )
 
     return (
       <div className='container mx-auto'>

@@ -16,6 +16,7 @@ import { ArrowUpDown, Users } from 'lucide-react'
 import { EventSignUpButton } from './EventSignUpButton'
 import { useState } from 'react'
 import { createLogger } from '@/lib/debug'
+import Link from 'next/link'
 
 const logger = createLogger({
   module: 'events',
@@ -66,7 +67,12 @@ export function EventsTable({ data }: EventsTableProps) {
         accessorKey: 'event_name',
         cell: ({ row }) => {
           return (
-            <span className='block px-4'>{row.getValue('event_name')}</span>
+            <Link
+              href={`/user/events/${row.original.id}`}
+              className='block px-4 hover:underline'
+            >
+              {row.getValue('event_name')}
+            </Link>
           )
         },
         header: ({ column }) => {

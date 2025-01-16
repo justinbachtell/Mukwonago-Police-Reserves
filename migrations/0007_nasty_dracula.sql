@@ -1,0 +1,4 @@
+ALTER TABLE "public"."notifications" ALTER COLUMN "type" SET DATA TYPE text;--> statement-breakpoint
+DROP TYPE "public"."notification_type";--> statement-breakpoint
+CREATE TYPE "public"."notification_type" AS ENUM('application_submitted', 'application_approved', 'application_rejected', 'event_created', 'event_updated', 'event_signup', 'event_signup_reminder', 'training_created', 'training_updated', 'training_signup', 'training_signup_reminder', 'equipment_assigned', 'equipment_returned', 'equipment_return_reminder', 'policy_created', 'policy_updated', 'policy_reminder', 'general', 'announcement');--> statement-breakpoint
+ALTER TABLE "public"."notifications" ALTER COLUMN "type" SET DATA TYPE "public"."notification_type" USING "type"::"public"."notification_type";
