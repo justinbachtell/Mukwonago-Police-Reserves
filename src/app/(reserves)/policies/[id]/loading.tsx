@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function PolicyLoading() {
   return (
-    <div className='container mx-auto py-8'>
+    <div className='container mx-auto px-4 py-8 md:px-6 lg:px-8'>
       <div className='flex flex-col gap-8'>
         {/* Policy Details Skeleton */}
         <div className='flex flex-col gap-2'>

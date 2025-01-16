@@ -270,14 +270,14 @@ export async function updateApplicationStatus(
           'Updating user role',
           {
             userId: updatedApplication.user_id,
-            newRole: 'member'
+            newRole: 'guest'
           },
           'application'
         )
 
         const result = await tx
           .update(user)
-          .set({ role: 'member', position: 'candidate' })
+          .set({ role: 'guest', position: 'candidate' })
           .where(eq(user.id, updatedApplication.user_id))
           .returning()
 

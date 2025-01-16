@@ -33,7 +33,7 @@ export function AdminPoliciesTable({
 
   try {
     const [sorting, setSorting] = useState<SortingState>([
-      { id: 'effective_date', desc: true }
+      { id: 'policy_number', desc: false }
     ])
 
     // Add completion counts to policies

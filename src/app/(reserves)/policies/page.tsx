@@ -1,4 +1,4 @@
-import { PoliciesTable } from '@/components/policies/PoliciesTable'
+import { PoliciesView } from '@/components/reserves/policies/PoliciesView'
 import { getPoliciesWithCompletionStatus } from '@/actions/policy'
 import { createLogger } from '@/lib/debug'
 import { getCurrentUser } from '@/actions/user'
@@ -11,6 +11,11 @@ const logger = createLogger({
 
 // export const dynamic = 'force-dynamic'
 // export const revalidate = 0
+
+export const metadata = {
+  title: 'Policies - Mukwonago Police Reserves',
+  description: 'View and acknowledge required department policies'
+}
 
 export default async function PoliciesPage() {
   logger.info('Rendering policies page', undefined, 'PoliciesPage')
@@ -37,14 +42,11 @@ export default async function PoliciesPage() {
     const { policies, completedPolicies } = data
 
     return (
-      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
-        <h1 className='mb-6 text-2xl font-bold'>Policies</h1>
-        <div className='flex flex-col gap-6'>
-          <PoliciesTable
-            data={policies}
-            completedPolicies={completedPolicies}
-          />
-        </div>
+      <div className='container relative mx-auto min-h-screen overflow-hidden px-4 md:px-6 lg:px-10'>
+        <PoliciesView
+          policies={policies}
+          completedPolicies={completedPolicies}
+        />
       </div>
     )
   } catch (error) {

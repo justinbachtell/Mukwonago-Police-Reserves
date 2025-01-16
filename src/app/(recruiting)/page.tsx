@@ -25,9 +25,8 @@ export const metadata = {
 // Hero section component - No async operations, renders immediately
 function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
-    <div className='relative mx-auto w-full overflow-hidden bg-white dark:bg-gray-950'>
-      {/* Subtle gradient background */}
-      <div className='absolute inset-0 w-full bg-gradient-to-b from-blue-50 to-transparent dark:from-blue-950/30 dark:to-transparent' />
+    <div className='relative mx-auto w-full overflow-hidden dark:border-b dark:border-gray-800'>
+      <div className='absolute inset-0 w-full bg-gradient-to-b from-blue-100 to-white dark:from-gray-950 dark:to-blue-950/40' />
 
       <div className='container relative mx-auto px-4 py-24 sm:py-32'>
         <div className='mx-auto max-w-4xl text-center'>
@@ -75,37 +74,39 @@ export default async function HomePage() {
     )
 
     return (
-      <div className='min-h-screen bg-white dark:bg-gray-950'>
+      <div className='min-h-screen'>
         <HeroSection isAuthenticated={isAuthenticated} />
 
-        {/* Improved section layout with subtle backgrounds and spacing */}
         <div className='relative'>
           {/* Department Overview Section */}
           <div className='relative overflow-hidden'>
-            <div className='absolute inset-0 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-950' />
-            <Suspense fallback={<LoadingCard />}>
-              <DepartmentOverview />
-            </Suspense>
+            <div className='relative'>
+              <Suspense fallback={<LoadingCard />}>
+                <DepartmentOverview />
+              </Suspense>
+            </div>
           </div>
 
-          {/* Requirements Section - with subtle background */}
-          <div className='relative overflow-hidden bg-white dark:bg-gray-950'>
-            <div className='absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-transparent dark:from-blue-950/30' />
-            <Suspense fallback={<LoadingCard />}>
-              <RequirementsSection />
-            </Suspense>
-          </div>
-
-          {/* Reserve Program Section - with alternate background */}
+          {/* Requirements Section */}
           <div className='relative overflow-hidden'>
-            <div className='absolute inset-0 bg-gradient-to-bl from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-950' />
-            <Suspense fallback={<LoadingCard />}>
-              <ReserveProgramSection />
-            </Suspense>
+            <div className='relative'>
+              <Suspense fallback={<LoadingCard />}>
+                <RequirementsSection />
+              </Suspense>
+            </div>
           </div>
 
-          {/* CTA Section - Keep it clean without background */}
-          <div className='relative bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-950'>
+          {/* Reserve Program Section */}
+          <div className='relative overflow-hidden'>
+            <div className='relative'>
+              <Suspense fallback={<LoadingCard />}>
+                <ReserveProgramSection />
+              </Suspense>
+            </div>
+          </div>
+
+          {/* CTA Section */}
+          <div className='relative'>
             <Suspense fallback={<LoadingCard />}>
               <CTASection isAuthenticated={isAuthenticated} />
             </Suspense>

@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function PoliciesLoading() {
   return (
-    <div className='container mx-auto py-6'>
+    <div className='container mx-auto px-4 py-8 md:px-6 lg:px-8'>
       <Skeleton className='mb-6 h-8 w-[200px]' />
       <div className='grid gap-6 md:grid-cols-12'>
         {/* Navigation Skeleton */}

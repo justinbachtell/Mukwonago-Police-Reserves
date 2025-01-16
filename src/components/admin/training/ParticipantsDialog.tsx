@@ -11,6 +11,7 @@ import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { LoadingDialog } from '@/components/ui/loading'
 
 const logger = createLogger({
   module: 'training',
@@ -100,7 +101,7 @@ export function ParticipantsDialog({ training }: ParticipantsDialogProps) {
 
   try {
     if (isLoading) {
-      return <div className='p-4 text-center'>Loading...</div>
+      return <LoadingDialog />
     }
 
     if (!training.assignments?.length) {

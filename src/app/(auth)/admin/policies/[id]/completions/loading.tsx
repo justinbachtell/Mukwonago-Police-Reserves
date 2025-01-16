@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function PolicyCompletionsLoading() {
   return (
-    <div className='container mx-auto space-y-6 py-8'>
+    <div className='container mx-auto space-y-6 px-4 py-8 md:px-6 lg:px-8'>
       {/* Header Skeleton */}
       <div className='mb-4'>
         <Skeleton className='mb-2 h-8 w-[250px]' />

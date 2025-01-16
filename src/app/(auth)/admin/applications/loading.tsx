@@ -2,7 +2,7 @@ import { LoadingHeader, LoadingCard } from '@/components/loading/LoadingShell'
 
 export default function AdminApplicationsLoading() {
   return (
-    <div className='container mx-auto space-y-6 py-8'>
+    <div className='container mx-auto space-y-6 px-4 py-8 md:px-6 lg:px-8'>
       <LoadingHeader />
       <div className='rounded-md border'>
         <div className='space-y-4 p-4'>

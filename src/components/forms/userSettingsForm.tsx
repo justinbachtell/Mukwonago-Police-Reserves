@@ -10,6 +10,7 @@ import type { DBUser } from '@/types/user'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import type { Session } from '@supabase/supabase-js'
+import { LoadingCard } from '@/components/ui/loading'
 
 const logger = createLogger({
   module: 'forms',
@@ -235,7 +236,7 @@ export function UserSettingsForm({ user }: UserSettingsFormProps) {
 
   try {
     if (isLoading) {
-      return <div className='p-4 text-center'>Loading...</div>
+      return <LoadingCard />
     }
 
     return (

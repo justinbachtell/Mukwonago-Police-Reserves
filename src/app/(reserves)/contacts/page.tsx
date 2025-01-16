@@ -41,7 +41,7 @@ export default async function ContactsPage() {
     }
 
     return (
-      <div className='container mx-auto'>
+      <div className='container mx-auto min-h-screen px-4 md:px-6 lg:px-10'>
         <div className='mb-6 space-y-1'>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl'>
             Department Contacts

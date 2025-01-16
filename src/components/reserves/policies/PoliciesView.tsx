@@ -1,18 +1,20 @@
 'use client'
 
-import type { Event } from '@/types/event'
+import type { Policy } from '@/types/policy'
 import { Button } from '@/components/ui/button'
-import { LayoutGrid, Table } from 'lucide-react'
+import { Grid2X2, Table } from 'lucide-react'
 import { useState, Suspense } from 'react'
-import { EventsTable } from './EventsTable'
-import { EventsGrid } from './EventsGrid'
+import { PoliciesTable } from '@/components/reserves/policies/PoliciesTable'
+import { PoliciesGrid } from '@/components/reserves/policies/PoliciesGrid'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Input } from '@/components/ui/input'
 
-interface EventsViewProps {
-  events: Event[]
+interface PoliciesViewProps {
+  policies: Policy[]
+  completedPolicies: Record<number, boolean>
 }
 
-function EventsTableSkeleton() {
+function PoliciesTableSkeleton() {
   return (
     <div className='space-y-4'>
       <div className='rounded-md border'>
@@ -34,7 +36,10 @@ function EventsTableSkeleton() {
   )
 }
 
-export function EventsView({ events }: EventsViewProps) {
+export function PoliciesView({
+  policies,
+  completedPolicies
+}: PoliciesViewProps) {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
 
   return (
@@ -42,10 +47,10 @@ export function EventsView({ events }: EventsViewProps) {
       <div className='mb-6 flex items-center justify-between lg:mb-0'>
         <div>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>
-            Events
+            Policies
           </h1>
           <p className='pr-8 text-gray-600 dark:text-gray-300'>
-            View and sign up for upcoming events.
+            View and acknowledge required department policies.
           </p>
         </div>
 
@@ -62,16 +67,23 @@ export function EventsView({ events }: EventsViewProps) {
             onClick={() => setViewMode('grid')}
             size='icon'
           >
-            <LayoutGrid className='size-4' />
+            <Grid2X2 className='size-4' />
           </Button>
         </div>
       </div>
 
-      <Suspense fallback={<EventsTableSkeleton />}>
+      <div className='mb-6'>
+        <Input placeholder='Search all columns...' className='max-w-sm' />
+      </div>
+
+      <Suspense fallback={<PoliciesTableSkeleton />}>
         {viewMode === 'table' ? (
-          <EventsTable data={events} />
+          <PoliciesTable
+            data={policies}
+            completedPolicies={completedPolicies}
+          />
         ) : (
-          <EventsGrid data={events} />
+          <PoliciesGrid data={policies} completedPolicies={completedPolicies} />
         )}
       </Suspense>
     </div>

@@ -32,17 +32,20 @@ import type { DBUser } from '@/types/user'
 import { cn } from '@/lib/utils'
 import { usePathname } from 'next/navigation'
 import type { Route } from 'next'
+import { ThemeToggle } from '@/components/theme/ThemeToggle'
 
 type NavigationSidebarProps = {
   ref?: React.RefObject<HTMLDivElement>
   user: DBUser | null
   signOutButton?: React.ReactNode
+  onNavigate?: () => void
 } & Omit<React.ComponentProps<typeof Sidebar>, 'ref'>
 
 function NavigationSidebar({
   user,
   signOutButton,
   className,
+  onNavigate,
   ...props
 }: NavigationSidebarProps) {
   const isAuthenticated = !!user
@@ -50,6 +53,12 @@ function NavigationSidebar({
   const isMember = user?.role === 'member'
   const isActive = user?.status === 'active'
   const pathname = usePathname()
+
+  const handleNavigation = () => {
+    if (onNavigate) {
+      onNavigate()
+    }
+  }
 
   const sidebarItems = {
     overview: [
@@ -165,18 +174,25 @@ function NavigationSidebar({
     <Sidebar
       {...props}
       className={cn(
-        'h-screen border-r bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/60',
+        'h-screen border-r bg-background',
         'fixed inset-y-0 left-0 z-50 w-[240px] lg:sticky lg:top-0',
+        'dark:bg-gray-900',
         className
       )}
     >
-      <SidebarHeader className='border-b p-4'>
-        <Link href={'/' as Route} className='flex items-center gap-3'>
-          <div className='flex aspect-square size-8 items-center justify-center rounded-md border bg-background'>
+      <SidebarHeader className='border-b border-border bg-background p-4 dark:border-gray-800 dark:bg-gray-900/95'>
+        <Link
+          href={'/' as Route}
+          className='flex items-center gap-3'
+          onClick={handleNavigation}
+        >
+          <div className='flex aspect-square size-8 items-center justify-center rounded-md border bg-background dark:border-gray-700 dark:bg-gray-800'>
             <Shield className='size-4 text-foreground' />
           </div>
           <div>
-            <div className='text-sm'>Mukwonago Police</div>
+            <div className='text-sm font-medium text-foreground'>
+              Mukwonago Police
+            </div>
             <div className='text-xs text-muted-foreground'>Reserves</div>
           </div>
         </Link>
@@ -194,13 +210,14 @@ function NavigationSidebar({
                   <SidebarMenuButton
                     asChild
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50',
-                      pathname === item.url && 'bg-accent/50'
+                      'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50 dark:hover:bg-gray-800',
+                      pathname === item.url && 'bg-accent/50 dark:bg-gray-800'
                     )}
                   >
                     <Link
                       href={item.url as Route}
                       className='flex items-center gap-3'
+                      onClick={handleNavigation}
                     >
                       <item.icon className='size-4 shrink-0' />
                       <span>{item.title}</span>
@@ -221,13 +238,14 @@ function NavigationSidebar({
                   <SidebarMenuButton
                     asChild
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50',
-                      pathname === item.url && 'bg-accent/50'
+                      'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50 dark:hover:bg-gray-800',
+                      pathname === item.url && 'bg-accent/50 dark:bg-gray-800'
                     )}
                   >
                     <Link
                       href={item.url as Route}
                       className='flex items-center gap-3'
+                      onClick={handleNavigation}
                     >
                       <item.icon className='size-4 shrink-0' />
                       <span>{item.title}</span>
@@ -249,13 +267,14 @@ function NavigationSidebar({
                     <SidebarMenuButton
                       asChild
                       className={cn(
-                        'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50',
-                        pathname === item.url && 'bg-accent/50'
+                        'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50 dark:hover:bg-gray-800',
+                        pathname === item.url && 'bg-accent/50 dark:bg-gray-800'
                       )}
                     >
                       <Link
                         href={item.url as Route}
                         className='flex items-center gap-3'
+                        onClick={handleNavigation}
                       >
                         <item.icon className='size-4 shrink-0' />
                         <span>{item.title}</span>
@@ -280,13 +299,15 @@ function NavigationSidebar({
                       <SidebarMenuButton
                         asChild
                         className={cn(
-                          'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50',
-                          pathname === item.url && 'bg-accent/50'
+                          'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50 dark:hover:bg-gray-800',
+                          pathname === item.url &&
+                            'bg-accent/50 dark:bg-gray-800'
                         )}
                       >
                         <Link
                           href={item.url as Route}
                           className='flex items-center gap-3'
+                          onClick={handleNavigation}
                         >
                           <item.icon className='size-4 shrink-0' />
                           <span>{item.title}</span>
@@ -294,6 +315,9 @@ function NavigationSidebar({
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  <SidebarMenuItem>
+                    <ThemeToggle />
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroup>
             )}
@@ -301,7 +325,9 @@ function NavigationSidebar({
       </SidebarContent>
 
       {isAuthenticated && signOutButton && (
-        <SidebarFooter className='border-t p-4'>{signOutButton}</SidebarFooter>
+        <SidebarFooter className='border-t p-4 dark:border-gray-800'>
+          {signOutButton}
+        </SidebarFooter>
       )}
     </Sidebar>
   )

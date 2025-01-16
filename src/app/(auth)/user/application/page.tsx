@@ -39,7 +39,7 @@ export default async function ApplicationPage() {
     const latestApplication = applications[0]
 
     return (
-      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
+      <div className='container relative mx-auto min-h-screen overflow-hidden px-4 md:px-6 lg:px-10'>
         <div className='mb-8'>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>
             Reserve Officer Application

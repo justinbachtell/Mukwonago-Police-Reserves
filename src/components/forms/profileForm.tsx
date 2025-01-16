@@ -28,6 +28,7 @@ import { createLogger } from '@/lib/debug'
 import type { Session } from '@supabase/supabase-js'
 import { useForm } from 'react-hook-form'
 import { Label } from '@/components/ui/label'
+import { LoadingCard } from '@/components/ui/loading'
 
 const logger = createLogger({
   module: 'forms',
@@ -403,7 +404,7 @@ export function ProfileForm({
   }
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <LoadingCard />
   }
 
   return (

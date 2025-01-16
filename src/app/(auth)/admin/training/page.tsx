@@ -18,9 +18,11 @@ export default async function AdminTrainingPage() {
     )
 
     return (
-      <Suspense fallback={<div>Loading...</div>}>
-        <AdminTrainingContent initialTrainings={trainings ?? []} />
-      </Suspense>
+      <div className='container relative mx-auto min-h-screen overflow-hidden px-4 md:px-6 lg:px-10'>
+        <Suspense fallback={<div>Loading...</div>}>
+          <AdminTrainingContent initialTrainings={trainings ?? []} />
+        </Suspense>
+      </div>
     )
   } catch (error) {
     logger.error(

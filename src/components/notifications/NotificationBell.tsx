@@ -43,7 +43,7 @@ export function NotificationBell({ onClick }: NotificationBellProps) {
       aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
       disabled={loading}
     >
-      <Bell className={cn('size-6', loading && 'animate-pulse')} />
+      <Bell className={cn('size-6', loading && 'animate-subtle-pulse')} />
       {unreadCount > 0 && (
         <Badge
           variant='destructive'

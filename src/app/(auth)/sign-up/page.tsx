@@ -18,8 +18,8 @@ export default async function SignUpPage() {
   try {
     logger.info('Rendering registration form', undefined, 'SignUpPage')
     return (
-      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
-        <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+      <div className='container relative mx-auto min-h-screen overflow-hidden px-4 md:px-6 lg:px-10'>
+        <div className='flex flex-1 items-center justify-center'>
           <SignUpForm />
         </div>
       </div>
@@ -34,7 +34,7 @@ export default async function SignUpPage() {
     // Show the sign-up form for other types of errors
     logger.info('Rendering sign-up form due to error', undefined, 'SignUpPage')
     return (
-      <div className='flex flex-1 items-center justify-center p-4 md:p-8'>
+      <div className='flex min-h-screen flex-1 items-center justify-center px-4 md:px-6 lg:px-10'>
         <SignUpForm />
       </div>
     )

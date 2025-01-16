@@ -133,7 +133,7 @@ export function NotificationList() {
     <div
       className={cn(
         'fixed right-6 top-4 z-50 transition-all duration-300',
-        hasUnread && 'animate-pulse'
+        hasUnread && 'animate-subtle-pulse'
       )}
     >
       <div

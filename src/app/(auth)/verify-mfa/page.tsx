@@ -72,7 +72,7 @@ export default async function VerifyMFAPage({ searchParams }: PageProps) {
     )
     logger.timeEnd('verify-mfa-page-load')
     return (
-      <div className='container relative mx-auto overflow-hidden bg-white dark:bg-gray-950'>
+      <div className='container relative mx-auto min-h-screen overflow-hidden px-4 md:px-6 lg:px-10'>
         <VerifyMFA factorId={factorId} />
       </div>
     )

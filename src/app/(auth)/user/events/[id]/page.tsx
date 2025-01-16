@@ -38,7 +38,7 @@ export default async function EventPage({ params }: Props) {
   )
 
   return (
-    <div className='container mx-auto py-8'>
+    <div className='container mx-auto min-h-screen px-4 md:px-6 lg:px-10'>
       <Card className='border-0 bg-white/80 shadow-lg backdrop-blur-sm dark:bg-white/5'>
         <CardHeader className='border-b border-gray-100 dark:border-gray-800'>
           <div className='flex items-center justify-between'>
@@ -49,7 +49,7 @@ export default async function EventPage({ params }: Props) {
             <div className='flex items-center gap-4'>
               <Badge
                 variant='secondary'
-                className='bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                className='bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300'
               >
                 {formatEnumValueWithMapping(event.event_type)}
               </Badge>
