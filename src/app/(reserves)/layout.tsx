@@ -14,8 +14,10 @@ const logger = createLogger({
 function ReservesLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <BaseTemplate>
-      <NotificationList />
-      <Suspense fallback={<LoadingPage />}>{children}</Suspense>
+      <div className='py-8'>
+        <NotificationList />
+        <Suspense fallback={<LoadingPage />}>{children}</Suspense>
+      </div>
     </BaseTemplate>
   )
 }

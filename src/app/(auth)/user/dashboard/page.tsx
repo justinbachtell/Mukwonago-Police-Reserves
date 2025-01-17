@@ -515,12 +515,11 @@ export default async function DashboardPage() {
                 iconClass: 'text-purple-500 dark:text-purple-400'
               },
               {
-                href: '/user/policies' as Route,
+                title: 'Policies',
+                description: 'View and complete required policies',
                 icon: ScrollText,
-                label: 'View Policies',
-                color: 'indigo',
-                hoverClass: 'hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20',
-                iconClass: 'text-indigo-500 dark:text-indigo-400'
+                href: '/policies' as Route,
+                color: 'text-indigo-500'
               }
             ].map((action, index) => (
               <Link

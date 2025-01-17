@@ -255,16 +255,49 @@ export function PoliciesTable({
         }
       },
       {
+        id: 'status',
+        header: ({ column }) => {
+          return (
+            <Button
+              variant='ghost'
+              size='tableColumn'
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === 'asc')
+              }
+              className='flex'
+            >
+              Status
+              <ArrowUpDown className='ml-2 size-4' />
+            </Button>
+          )
+        },
+        cell: ({ row }) => {
+          const policy = row.original
+          const isCompleted = completedPolicies[policy.id] ?? false
+          return (
+            <Badge
+              variant={isCompleted ? 'default' : 'secondary'}
+              className='px-4 py-1 capitalize'
+            >
+              {isCompleted ? 'Completed' : 'Pending'}
+            </Badge>
+          )
+        },
+        sortingFn: (rowA, rowB) => {
+          const aCompleted = completedPolicies[rowA.original.id] ?? false
+          const bCompleted = completedPolicies[rowB.original.id] ?? false
+          return aCompleted === bCompleted ? 0 : aCompleted ? 1 : -1
+        }
+      },
+      {
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => (
-          <span className='px-0'>
-            <PolicyCell
-              policy={row.original}
-              isCompleted={completedPolicies[row.original.id] ?? false}
-              onPolicyAcknowledged={onPolicyAcknowledged}
-            />
-          </span>
+          <PolicyCell
+            policy={row.original}
+            isCompleted={completedPolicies[row.original.id] ?? false}
+            onPolicyAcknowledged={onPolicyAcknowledged}
+          />
         )
       }
     ]

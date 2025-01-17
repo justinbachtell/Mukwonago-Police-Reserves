@@ -68,8 +68,10 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
   return (
     <BaseTemplate>
-      <NotificationList />
-      {children}
+      <div className='py-8'>
+        <NotificationList />
+        {children}
+      </div>
     </BaseTemplate>
   )
 }

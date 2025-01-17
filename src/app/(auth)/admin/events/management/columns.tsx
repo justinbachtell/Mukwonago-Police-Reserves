@@ -185,11 +185,14 @@ export const columns: ColumnDef<Event>[] = [
             <Button
               variant='ghost'
               size='sm'
-              className='w-full'
-              title='Manage Participants'
+              className='flex items-center gap-1 px-4 text-sm'
             >
               <Users className='size-4' />
-              <span className='ml-2'>{assignments.length}</span>
+              <span>
+                {assignments.length !== 0
+                  ? ` ${assignments.length} out of ${event.max_participants}`
+                  : `Need at least ${event.min_participants}`}
+              </span>
             </Button>
           </DialogTrigger>
           <DialogContent>

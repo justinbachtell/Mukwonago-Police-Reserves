@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, Pencil, Trash } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { deleteTraining } from '@/actions/training'
 import {
@@ -28,6 +28,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createLogger } from '@/lib/debug'
 import { formatEnumValueWithMapping } from '@/lib/format-enums'
+import { ParticipantsDialog } from '@/components/admin/training/ParticipantsDialog'
 
 const logger = createLogger({
   module: 'admin',
@@ -165,6 +166,42 @@ export function createColumns(availableUsers: DBUser[]): ColumnDef<Training>[] {
           <Badge variant='outline' className='opacity-50'>
             No instructor
           </Badge>
+        )
+      }
+    },
+    {
+      accessorKey: 'assignments',
+      header: 'Participants',
+      cell: ({ row }) => {
+        const training = row.original
+        const assignments = training.assignments || []
+        const completedCount = assignments.filter(
+          a => a.completion_status === 'completed'
+        ).length
+
+        return (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='flex items-center gap-1 px-4 text-sm'
+              >
+                <Users className='size-4' />
+                <span>
+                  {assignments.length > 0
+                    ? `${completedCount}/${assignments.length} completed`
+                    : 'No participants'}
+                </span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Training Participants</DialogTitle>
+              </DialogHeader>
+              <ParticipantsDialog training={training} />
+            </DialogContent>
+          </Dialog>
         )
       }
     },

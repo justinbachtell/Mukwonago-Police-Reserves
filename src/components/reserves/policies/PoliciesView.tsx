@@ -7,7 +7,6 @@ import { useState, Suspense } from 'react'
 import { PoliciesTable } from '@/components/reserves/policies/PoliciesTable'
 import { PoliciesGrid } from '@/components/reserves/policies/PoliciesGrid'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
 
 interface PoliciesViewProps {
   policies: Policy[]
@@ -70,10 +69,6 @@ export function PoliciesView({
             <Grid2X2 className='size-4' />
           </Button>
         </div>
-      </div>
-
-      <div className='mb-6'>
-        <Input placeholder='Search all columns...' className='max-w-sm' />
       </div>
 
       <Suspense fallback={<PoliciesTableSkeleton />}>

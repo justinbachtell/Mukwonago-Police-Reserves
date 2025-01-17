@@ -7,7 +7,13 @@ import type { UniformSizes } from './uniformSizes'
 
 // Enum types from Schema
 export type Role = 'admin' | 'member' | 'guest'
-export type Position = 'candidate' | 'officer' | 'reserve' | 'admin' | 'staff'
+export type Position =
+  | 'candidate'
+  | 'officer'
+  | 'reserve'
+  | 'admin'
+  | 'staff'
+  | 'dispatcher'
 export type Status = 'active' | 'inactive' | 'denied'
 
 export interface DBUser {

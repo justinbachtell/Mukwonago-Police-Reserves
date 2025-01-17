@@ -11,7 +11,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { PDFViewer } from '@/components/ui/pdf-viewer'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { ArrowUpDown, CheckCircle, EyeIcon, Loader2 } from 'lucide-react'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
@@ -38,6 +38,7 @@ function PolicyCell({
   isCompleted: boolean
   onPolicyAcknowledged?: (policyId: number) => void
 }) {
+  const { toast } = useToast()
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -59,7 +60,11 @@ function PolicyCell({
         logger.errorWithData(error),
         'handlePolicyView'
       )
-      toast.error('Failed to load policy')
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load policy'
+      })
     }
   }
 
@@ -83,14 +88,21 @@ function PolicyCell({
         { policyId: policy.id },
         'handleMarkAsAcknowledged'
       )
-      toast.success('Policy marked as read')
+      toast({
+        title: 'Success',
+        description: 'Policy marked as read'
+      })
     } catch (error) {
       logger.error(
         'Failed to mark policy as read',
         logger.errorWithData(error),
         'handleMarkAsAcknowledged'
       )
-      toast.error('Failed to mark policy as read')
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to mark policy as read'
+      })
     } finally {
       setIsLoading(false)
     }
@@ -255,16 +267,48 @@ export function PoliciesTable({
         }
       },
       {
+        id: 'status',
+        header: ({ column }) => {
+          return (
+            <Button
+              variant='ghost'
+              size='tableColumn'
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === 'asc')
+              }
+              className='flex'
+            >
+              Status
+              <ArrowUpDown className='ml-2 size-4' />
+            </Button>
+          )
+        },
+        cell: ({ row }) => {
+          const policy = row.original
+          const isCompleted = completedPolicies[policy.id] ?? false
+          return (
+            <Badge
+              variant={isCompleted ? 'default' : 'secondary'}
+              className='px-4 py-1 capitalize'
+            >
+              {isCompleted ? 'Completed' : 'Pending'}
+            </Badge>
+          )
+        },
+        sortingFn: (rowA, rowB) => {
+          const aCompleted = completedPolicies[rowA.original.id] ?? false
+          const bCompleted = completedPolicies[rowB.original.id] ?? false
+          return aCompleted === bCompleted ? 0 : aCompleted ? 1 : -1
+        }
+      },
+      {
         id: 'actions',
-        header: 'Actions',
         cell: ({ row }) => (
-          <span className='px-0'>
-            <PolicyCell
-              policy={row.original}
-              isCompleted={completedPolicies[row.original.id] ?? false}
-              onPolicyAcknowledged={onPolicyAcknowledged}
-            />
-          </span>
+          <PolicyCell
+            policy={row.original}
+            isCompleted={completedPolicies[row.original.id] ?? false}
+            onPolicyAcknowledged={onPolicyAcknowledged}
+          />
         )
       }
     ]

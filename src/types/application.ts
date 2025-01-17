@@ -8,7 +8,13 @@ export type PriorExperience =
   | 'more_than_3_years'
 export type Availability = 'weekdays' | 'weekends' | 'both' | 'flexible'
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected'
-export type Position = 'candidate' | 'officer' | 'reserve' | 'admin' | 'staff'
+export type Position =
+  | 'candidate'
+  | 'officer'
+  | 'reserve'
+  | 'admin'
+  | 'staff'
+  | 'dispatcher'
 
 export interface Application {
   id: number
