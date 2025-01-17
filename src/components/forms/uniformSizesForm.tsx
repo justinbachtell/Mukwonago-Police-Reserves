@@ -15,11 +15,12 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { updateUniformSizes } from '@/actions/uniformSizes'
-import { Textarea } from '../ui/textarea'
 import { toISOString } from '@/lib/utils'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import type { Session } from '@supabase/supabase-js'
+import { FormTextarea } from '@/components/ui/form-textarea'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'forms',
@@ -302,12 +303,12 @@ export function UniformSizesForm({
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='notes'>Notes</Label>
-            <Textarea
-              id='notes'
+            <FormTextarea
+              label='Notes'
+              name='notes'
               value={uniformData.notes || ''}
-              onChange={e => handleUniformChange('notes', e.target.value)}
-              className='w-full'
+              rules={[rules.notes()]}
+              onValueChange={value => handleUniformChange('notes', value)}
               placeholder='Any special sizing requirements'
               rows={1}
             />

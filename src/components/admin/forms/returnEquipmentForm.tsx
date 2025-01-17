@@ -25,11 +25,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { FormTextarea } from '@/components/ui/form-textarea'
+import { useToast } from '@/hooks/use-toast'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import * as z from 'zod'
+import { rules } from '@/lib/validation'
 
 const returnEquipmentSchema = z.object({
   condition: z.enum(['new', 'good', 'fair', 'poor', 'damaged/broken']),
@@ -75,7 +76,7 @@ export function ReturnEquipmentForm({ assignmentId, currentCondition }: ReturnEq
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant='outline' size='sm'>
           Return
         </Button>
       </DialogTrigger>
@@ -83,29 +84,35 @@ export function ReturnEquipmentForm({ assignmentId, currentCondition }: ReturnEq
         <DialogHeader>
           <DialogTitle>Return Equipment</DialogTitle>
           <DialogDescription>
-            Please provide the condition of the equipment and any notes about its return.
+            Please provide the condition of the equipment and any notes about
+            its return.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
             <FormField
               control={form.control}
-              name="condition"
+              name='condition'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Condition</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select condition" />
+                        <SelectValue placeholder='Select condition' />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="good">Good</SelectItem>
-                      <SelectItem value="fair">Fair</SelectItem>
-                      <SelectItem value="poor">Poor</SelectItem>
-                      <SelectItem value="damaged/broken">Damaged/Broken</SelectItem>
+                      <SelectItem value='new'>New</SelectItem>
+                      <SelectItem value='good'>Good</SelectItem>
+                      <SelectItem value='fair'>Fair</SelectItem>
+                      <SelectItem value='poor'>Poor</SelectItem>
+                      <SelectItem value='damaged/broken'>
+                        Damaged/Broken
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -115,22 +122,28 @@ export function ReturnEquipmentForm({ assignmentId, currentCondition }: ReturnEq
 
             <FormField
               control={form.control}
-              name="notes"
+              name='notes'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="Enter any notes about the return" />
+                    <FormTextarea
+                      {...field}
+                      label='Notes'
+                      placeholder='Enter any notes about the return'
+                      rules={[rules.notes()]}
+                      onValueChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Button type="submit">Return Equipment</Button>
+            <Button type='submit'>Return Equipment</Button>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

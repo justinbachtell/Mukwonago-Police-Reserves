@@ -1,13 +1,11 @@
-'use client';
+'use client'
 
-import type { AssignedEquipment } from '@/types/assignedEquipment';
-import type { SaveResult } from '@/types/forms';
-import type { DBUser } from '@/types/user';
-import { useCallback, useEffect, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { FormTextarea } from '@/components/ui/form-textarea'
-import { Button } from '@/components/ui/button'
+import type { AssignedEquipment } from '@/types/assignedEquipment'
+import type { SaveResult } from '@/types/forms'
+import type { DBUser } from '@/types/user'
+import { useCallback, useEffect, useState } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -16,11 +14,15 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { getAssignedEquipment } from '@/actions/assignedEquipment'
+import {
+  getAssignedEquipment,
+  updateAssignedEquipment
+} from '@/actions/assignedEquipment'
 import { createClient } from '@/lib/client'
 import { format } from 'date-fns'
 import type { Session } from '@supabase/supabase-js'
 import { createLogger } from '@/lib/debug'
+import { FormTextarea } from '@/components/ui/form-textarea'
 import { rules } from '@/lib/validation'
 import { useToast } from '@/hooks/use-toast'
 
@@ -38,15 +40,14 @@ export function AssignedEquipmentForm({
   saveRef,
   user
 }: AssignedEquipmentFormProps) {
+  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [session, setSession] = useState<Session | null>(null)
   const supabase = createClient()
   const [assignedEquipment, setAssignedEquipment] = useState<
     AssignedEquipment[]
   >([])
-  const [editingNotes, setEditingNotes] = useState<Record<string, string>>({})
   const [hasChanges, setHasChanges] = useState(false)
-  const { toast } = useToast()
 
   // Check session
   useEffect(() => {
@@ -177,12 +178,39 @@ export function AssignedEquipmentForm({
     }
   }, [user.id, session, isLoading])
 
-  const handleNotesChange = (id: string | number, value: string) => {
-    setEditingNotes(prev => ({
-      ...prev,
-      [id.toString()]: value
-    }))
-    setHasChanges(true)
+  const handleNotesChange = async (equipmentId: number, notes: string) => {
+    const equipment = assignedEquipment.find(e => e.id === equipmentId)
+    if (!equipment) {
+      return
+    }
+
+    try {
+      const updatedEquipment = await updateAssignedEquipment(equipmentId, {
+        notes: notes || undefined
+      })
+
+      if (updatedEquipment) {
+        setAssignedEquipment(prev =>
+          prev.map(e => (e.id === equipmentId ? { ...e, notes } : e))
+        )
+        setHasChanges(true)
+        toast({
+          title: 'Success',
+          description: 'Notes updated successfully'
+        })
+      }
+    } catch (error) {
+      logger.error(
+        'Failed to update notes',
+        logger.errorWithData(error),
+        'handleNotesChange'
+      )
+      toast({
+        title: 'Error',
+        description: 'Failed to update notes',
+        variant: 'destructive'
+      })
+    }
   }
 
   const handleSaveChanges = useCallback(async () => {
@@ -199,36 +227,12 @@ export function AssignedEquipmentForm({
       }
 
       if (!hasChanges) {
-        logger.info('No changes to save', undefined, 'handleSaveChanges')
+        logger.info('No changes needed', undefined, 'handleSaveChanges')
         return { message: 'No changes needed', success: true }
       }
 
-      // Update notes for each changed item
-      const updates = Object.entries(editingNotes).map(async ([id, notes]) => {
-        const { error } = await supabase
-          .from('assigned_equipment')
-          .update({ notes })
-          .eq('id', id)
-
-        if (error) {
-          throw error
-        }
-      })
-
-      await Promise.all(updates)
-
-      // Refresh the equipment list
-      const equipment = await getAssignedEquipment(user.id)
-      if (equipment) {
-        setAssignedEquipment(equipment)
-      }
-
+      // Reset changes flag after successful save
       setHasChanges(false)
-      toast({
-        title: 'Success',
-        description: 'Changes saved successfully',
-        variant: 'default'
-      })
       return { message: 'Changes saved successfully', success: true }
     } catch (error) {
       logger.error(
@@ -236,22 +240,9 @@ export function AssignedEquipmentForm({
         logger.errorWithData(error),
         'handleSaveChanges'
       )
-      toast({
-        title: 'Error',
-        description: 'Failed to save changes',
-        variant: 'destructive'
-      })
       return { message: 'Failed to save changes', success: false }
     }
-  }, [
-    isLoading,
-    session?.user,
-    hasChanges,
-    editingNotes,
-    user.id,
-    toast,
-    supabase
-  ])
+  }, [session, isLoading, hasChanges])
 
   useEffect(() => {
     logger.info('Updating save ref', undefined, 'useEffect')
@@ -260,16 +251,9 @@ export function AssignedEquipmentForm({
 
   return (
     <Card className='p-6 shadow-md md:col-span-12'>
-      <div className='mb-6 flex items-center justify-between'>
-        <h2 className='text-xl font-semibold text-gray-900 dark:text-white'>
-          Assigned Equipment
-        </h2>
-        {hasChanges && (
-          <Button onClick={handleSaveChanges} disabled={isLoading}>
-            Save Changes
-          </Button>
-        )}
-      </div>
+      <h2 className='mb-6 text-xl font-semibold text-gray-900 dark:text-white'>
+        Assigned Equipment
+      </h2>
       <Table>
         <TableHeader>
           <TableRow>
@@ -278,7 +262,7 @@ export function AssignedEquipmentForm({
             <TableHead>Assigned Date</TableHead>
             <TableHead>Return Date</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className='w-1/3'>Notes</TableHead>
+            <TableHead>Notes</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -356,3 +340,5 @@ function getConditionVariant(condition: AssignedEquipment['condition']) {
       return 'outline'
   }
 }
+
+export default AssignedEquipmentForm

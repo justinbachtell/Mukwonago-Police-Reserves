@@ -9,10 +9,9 @@ import {
   CardDescription,
   CardFooter
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRef, useState } from 'react'
-import { Loader2, Mail, Lock } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/client'
 import { createLogger } from '@/lib/debug'
@@ -20,6 +19,8 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
 import type { Route } from 'next'
+import { FormInput } from '@/components/ui/form-input'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'auth',
@@ -292,27 +293,20 @@ export default function SignInForm() {
         <form onSubmit={handleSubmit} className='space-y-6'>
           <div className='space-y-4'>
             <div className='space-y-2'>
-              <Label htmlFor='email' className='text-sm font-medium'>
-                Email Address
-              </Label>
-              <div className='relative'>
-                <Mail className='absolute left-3 top-2.5 size-5 text-muted-foreground' />
-                <Input
-                  id='email'
-                  type='email'
-                  placeholder='name@example.com'
-                  required
-                  className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
-                  onChange={e => {
-                    setEmail(e.target.value)
-                    setErrors(prev => ({ ...prev, email: undefined }))
-                  }}
-                  value={email}
-                />
-                {errors.email && (
-                  <p className='mt-1 text-xs text-red-500'>{errors.email}</p>
-                )}
-              </div>
+              <FormInput
+                label='Email Address'
+                name='email'
+                type='email'
+                placeholder='name@example.com'
+                required
+                rules={[rules.required('Email'), rules.email()]}
+                onValueChange={value => {
+                  setEmail(value)
+                  setErrors(prev => ({ ...prev, email: undefined }))
+                }}
+                value={email}
+                error={errors.email}
+              />
             </div>
 
             <div className='space-y-2'>
@@ -327,24 +321,20 @@ export default function SignInForm() {
                   Forgot password?
                 </Link>
               </div>
-              <div className='relative'>
-                <Lock className='absolute left-3 top-2.5 size-5 text-muted-foreground' />
-                <Input
-                  id='password'
-                  type='password'
-                  placeholder='••••••••'
-                  required
-                  className={`pl-10 ${errors.password ? 'border-red-500' : ''}`}
-                  value={password}
-                  onChange={e => {
-                    setPassword(e.target.value)
-                    setErrors(prev => ({ ...prev, password: undefined }))
-                  }}
-                />
-                {errors.password && (
-                  <p className='mt-1 text-xs text-red-500'>{errors.password}</p>
-                )}
-              </div>
+              <FormInput
+                label=''
+                name='password'
+                type='password'
+                placeholder='••••••••'
+                required
+                rules={[rules.required('Password'), rules.password()]}
+                onValueChange={value => {
+                  setPassword(value)
+                  setErrors(prev => ({ ...prev, password: undefined }))
+                }}
+                value={password}
+                error={errors.password}
+              />
             </div>
           </div>
 

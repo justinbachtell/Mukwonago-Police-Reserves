@@ -9,10 +9,8 @@ import {
   CardTitle,
   CardFooter
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useState, useRef } from 'react'
-import { Loader2, Mail, User, Lock, KeyRound } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -21,6 +19,8 @@ import { createLogger } from '@/lib/debug'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
 import { getRedirectUrl } from '@/lib/redirect'
 import type { Route } from 'next'
+import { FormInput } from '@/components/ui/form-input'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'auth',
@@ -393,136 +393,101 @@ export default function SignUpForm() {
           <div className='space-y-4'>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
-                <Label htmlFor='firstName' className='text-sm font-medium'>
-                  First Name
-                </Label>
-                <div className='relative'>
-                  <User className='absolute left-3 top-2.5 size-5 text-muted-foreground' />
-                  <Input
-                    id='firstName'
-                    placeholder='John'
-                    required
-                    className={`pl-10 ${errors.firstName ? 'border-red-500' : ''}`}
-                    onChange={e => {
-                      setFirstName(e.target.value)
-                      setErrors(prev => ({ ...prev, firstName: undefined }))
-                    }}
-                    value={firstName}
-                  />
-                  {errors.firstName && (
-                    <p className='mt-1 text-xs text-red-500'>
-                      {errors.firstName}
-                    </p>
-                  )}
-                </div>
+                <FormInput
+                  label='First Name'
+                  name='firstName'
+                  placeholder='John'
+                  required
+                  rules={[
+                    rules.required('First name'),
+                    rules.minLength(2, 'First name'),
+                    rules.name()
+                  ]}
+                  onValueChange={value => {
+                    setFirstName(value)
+                    setErrors(prev => ({ ...prev, firstName: undefined }))
+                  }}
+                  value={firstName}
+                  error={errors.firstName}
+                />
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='lastName' className='text-sm font-medium'>
-                  Last Name
-                </Label>
-                <div className='relative'>
-                  <User className='absolute left-3 top-2.5 size-5 text-muted-foreground' />
-                  <Input
-                    id='lastName'
-                    placeholder='Doe'
-                    required
-                    className={`pl-10 ${errors.lastName ? 'border-red-500' : ''}`}
-                    onChange={e => {
-                      setLastName(e.target.value)
-                      setErrors(prev => ({ ...prev, lastName: undefined }))
-                    }}
-                    value={lastName}
-                  />
-                  {errors.lastName && (
-                    <p className='mt-1 text-xs text-red-500'>
-                      {errors.lastName}
-                    </p>
-                  )}
-                </div>
+                <FormInput
+                  label='Last Name'
+                  name='lastName'
+                  placeholder='Doe'
+                  required
+                  rules={[
+                    rules.required('Last name'),
+                    rules.minLength(2, 'Last name'),
+                    rules.name()
+                  ]}
+                  onValueChange={value => {
+                    setLastName(value)
+                    setErrors(prev => ({ ...prev, lastName: undefined }))
+                  }}
+                  value={lastName}
+                  error={errors.lastName}
+                />
               </div>
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='email' className='text-sm font-medium'>
-                Email Address
-              </Label>
-              <div className='relative'>
-                <Mail className='absolute left-3 top-2.5 size-5 text-muted-foreground' />
-                <Input
-                  id='email'
-                  type='email'
-                  placeholder='john@example.com'
-                  required
-                  className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
-                  onChange={e => {
-                    setEmail(e.target.value)
-                    setErrors(prev => ({ ...prev, email: undefined }))
-                  }}
-                  value={email}
-                />
-                {errors.email && (
-                  <p className='mt-1 text-xs text-red-500'>{errors.email}</p>
-                )}
-              </div>
+              <FormInput
+                label='Email Address'
+                name='email'
+                type='email'
+                placeholder='john@example.com'
+                required
+                rules={[rules.required('Email'), rules.email()]}
+                onValueChange={value => {
+                  setEmail(value)
+                  setErrors(prev => ({ ...prev, email: undefined }))
+                }}
+                value={email}
+                error={errors.email}
+              />
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='password' className='text-sm font-medium'>
-                Password
-              </Label>
-              <div className='relative'>
-                <Lock className='absolute left-3 top-2.5 size-5 text-muted-foreground' />
-                <Input
-                  id='password'
-                  type='password'
-                  placeholder='••••••••'
-                  required
-                  className={`pl-10 ${errors.password ? 'border-red-500' : ''}`}
-                  onChange={e => {
-                    setPassword(e.target.value)
-                    setErrors(prev => ({ ...prev, password: undefined }))
-                  }}
-                  value={password}
-                />
-                {errors.password && (
-                  <p className='mt-1 text-xs text-red-500'>{errors.password}</p>
-                )}
-              </div>
+              <FormInput
+                label='Password'
+                name='password'
+                type='password'
+                placeholder='••••••••'
+                required
+                rules={[rules.required('Password'), rules.password()]}
+                onValueChange={value => {
+                  setPassword(value)
+                  setErrors(prev => ({ ...prev, password: undefined }))
+                }}
+                value={password}
+                error={errors.password}
+              />
             </div>
 
             <div className='space-y-2'>
-              <Label
-                htmlFor='password-confirmation'
-                className='text-sm font-medium'
-              >
-                Confirm Password
-              </Label>
-              <div className='relative'>
-                <KeyRound className='absolute left-3 top-2.5 size-5 text-muted-foreground' />
-                <Input
-                  id='password-confirmation'
-                  type='password'
-                  placeholder='••••••••'
-                  required
-                  className={`pl-10 ${
-                    errors.passwordConfirmation ? 'border-red-500' : ''
-                  }`}
-                  onChange={e => {
-                    setPasswordConfirmation(e.target.value)
-                    setErrors(prev => ({
-                      ...prev,
-                      passwordConfirmation: undefined
-                    }))
-                  }}
-                  value={passwordConfirmation}
-                />
-                {errors.passwordConfirmation && (
-                  <p className='mt-1 text-xs text-red-500'>
-                    {errors.passwordConfirmation}
-                  </p>
-                )}
-              </div>
+              <FormInput
+                label='Confirm Password'
+                name='password-confirmation'
+                type='password'
+                placeholder='••••••••'
+                required
+                rules={[
+                  rules.required('Password confirmation'),
+                  rules.passwordMatch(password)
+                ]}
+                onValueChange={value => {
+                  setPasswordConfirmation(value)
+                  setErrors(prev => ({
+                    ...prev,
+                    passwordConfirmation: undefined
+                  }))
+                }}
+                value={passwordConfirmation}
+                error={errors.passwordConfirmation}
+              />
             </div>
           </div>
 

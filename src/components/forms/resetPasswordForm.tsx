@@ -8,14 +8,14 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { FormInput } from '@/components/ui/form-input'
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/client'
 import { createLogger } from '@/lib/debug'
+import { rules } from '@/lib/validation'
+import { useToast } from '@/hooks/use-toast'
 
 const logger = createLogger({
   module: 'auth',
@@ -27,6 +27,7 @@ export default function ResetPasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,7 +37,11 @@ export default function ResetPasswordForm() {
 
     if (password !== confirmPassword) {
       logger.warn('Password mismatch during reset', undefined, 'handleSubmit')
-      toast.error('Passwords do not match')
+      toast({
+        title: 'Error',
+        description: 'Passwords do not match',
+        variant: 'destructive'
+      })
       return
     }
 
@@ -60,12 +65,20 @@ export default function ResetPasswordForm() {
           },
           'handleSubmit'
         )
-        toast.error(error.message || 'Failed to reset password')
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to reset password',
+          variant: 'destructive'
+        })
         return
       }
 
       logger.info('Password reset successful', undefined, 'handleSubmit')
-      toast.success('Password has been reset successfully')
+      toast({
+        title: 'Success',
+        description: 'Password has been reset successfully',
+        variant: 'default'
+      })
       router.push('/sign-in')
     } catch (error) {
       logger.error(
@@ -73,7 +86,11 @@ export default function ResetPasswordForm() {
         logger.errorWithData(error),
         'handleSubmit'
       )
-      toast.error('An unexpected error occurred')
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive'
+      })
     } finally {
       setLoading(false)
       logger.timeEnd(resetLabel)
@@ -90,27 +107,28 @@ export default function ResetPasswordForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className='grid gap-4'>
-          <div className='grid gap-2'>
-            <Label htmlFor='password'>New Password</Label>
-            <Input
-              id='password'
-              type='password'
-              required
-              onChange={e => setPassword(e.target.value)}
-              value={password}
-            />
-          </div>
+          <FormInput
+            label='New Password'
+            name='password'
+            type='password'
+            rules={[rules.password()]}
+            onValueChange={setPassword}
+            value={password}
+            required
+          />
 
-          <div className='grid gap-2'>
-            <Label htmlFor='confirm-password'>Confirm New Password</Label>
-            <Input
-              id='confirm-password'
-              type='password'
-              required
-              onChange={e => setConfirmPassword(e.target.value)}
-              value={confirmPassword}
-            />
-          </div>
+          <FormInput
+            label='Confirm New Password'
+            name='confirm-password'
+            type='password'
+            rules={[
+              rules.required('Password confirmation'),
+              rules.passwordMatch(password)
+            ]}
+            onValueChange={setConfirmPassword}
+            value={confirmPassword}
+            required
+          />
 
           <Button type='submit' className='w-full' disabled={loading}>
             {loading ? <Loader2 className='animate-spin' /> : 'Reset Password'}

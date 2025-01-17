@@ -12,7 +12,6 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
 import {
   Popover,
   PopoverContent,
@@ -25,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { createEvent, updateEvent } from '@/actions/event'
 import { cn, toISOString } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -39,6 +37,9 @@ import { createClient } from '@/lib/client'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
+import { FormInput } from '@/components/ui/form-input'
+import { FormTextarea } from '@/components/ui/form-textarea'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'admin',
@@ -215,7 +216,15 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
               <FormItem>
                 <FormLabel>Event Name</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <FormInput
+                    {...field}
+                    label='Event Name'
+                    rules={[
+                      rules.required('Event name'),
+                      rules.minLength(2, 'Event name')
+                    ]}
+                    onValueChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -300,7 +309,14 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
                 <FormItem>
                   <FormLabel>Start Time</FormLabel>
                   <FormControl>
-                    <Input type='time' {...field} />
+                    <FormInput
+                      type='time'
+                      label='Start Time'
+                      name='event_start_time'
+                      value={field.value}
+                      rules={[rules.required('Start time')]}
+                      onValueChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -314,7 +330,14 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
                 <FormItem>
                   <FormLabel>End Time</FormLabel>
                   <FormControl>
-                    <Input type='time' {...field} />
+                    <FormInput
+                      type='time'
+                      label='End Time'
+                      name='event_end_time'
+                      value={field.value}
+                      rules={[rules.required('End time')]}
+                      onValueChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -329,7 +352,15 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <FormInput
+                    {...field}
+                    label='Location'
+                    rules={[
+                      rules.required('Location'),
+                      rules.minLength(2, 'Location')
+                    ]}
+                    onValueChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -343,7 +374,13 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
               <FormItem>
                 <FormLabel>Notes</FormLabel>
                 <FormControl>
-                  <Textarea {...field} value={field.value || ''} />
+                  <FormTextarea
+                    {...field}
+                    label='Notes'
+                    value={field.value || ''}
+                    rules={[rules.notes()]}
+                    onValueChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

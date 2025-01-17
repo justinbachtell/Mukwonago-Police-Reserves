@@ -3,15 +3,16 @@
 import { createPolicy, uploadPolicy } from '@/actions/policy'
 import type { Policy } from '@/types/policy'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { FormInput } from '@/components/ui/form-input'
+import { FormTextarea } from '@/components/ui/form-textarea'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { useRouter } from 'next/navigation'
 import { useTransition, useState } from 'react'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import * as Sentry from '@sentry/nextjs'
 import { createLogger } from '@/lib/debug'
 import { toISOString } from '@/lib/utils'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'forms',
@@ -52,7 +53,10 @@ async function checkFileMagicNumbers(file: File): Promise<boolean> {
     .toUpperCase()
 
   const fileType = ALLOWED_FILE_TYPES[file.type as FileType]
-  return fileType?.magicNumbers.some((magic: string) => hex.startsWith(magic)) ?? false
+  return (
+    fileType?.magicNumbers.some((magic: string) => hex.startsWith(magic)) ??
+    false
+  )
 }
 
 interface PolicyFormProps {
@@ -72,6 +76,7 @@ export function PolicyForm({
     const [isPending, startTransition] = useTransition()
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const router = useRouter()
+    const { toast } = useToast()
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
@@ -131,7 +136,11 @@ export function PolicyForm({
           { error: error instanceof Error ? error.message : 'Unknown error' },
           'handleFileChange'
         )
-        toast.error(error instanceof Error ? error.message : 'Invalid file')
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Invalid file',
+          variant: 'destructive'
+        })
         e.target.value = '' // Reset file input
         setSelectedFile(null)
       }
@@ -144,7 +153,11 @@ export function PolicyForm({
       try {
         if (!selectedFile) {
           logger.warn('No file selected', undefined, 'handleSubmit')
-          toast.error('Please select a policy file')
+          toast({
+            title: 'Error',
+            description: 'Please select a policy file',
+            variant: 'destructive'
+          })
           return
         }
 
@@ -169,7 +182,11 @@ export function PolicyForm({
 
         if (!name || !policyNumber || !policyType || !effectiveDate) {
           logger.warn('Missing required fields', undefined, 'handleSubmit')
-          toast.error('Please fill in all required fields')
+          toast({
+            title: 'Error',
+            description: 'Please fill in all required fields',
+            variant: 'destructive'
+          })
           return
         }
 
@@ -202,7 +219,10 @@ export function PolicyForm({
               undefined,
               'handleSubmit'
             )
-            toast.success('Policy created successfully')
+            toast({
+              title: 'Success',
+              description: 'Policy created successfully'
+            })
             router.refresh()
             onSuccess?.()
             closeDialog()
@@ -215,9 +235,17 @@ export function PolicyForm({
 
             if (error instanceof Error) {
               if (error.message === 'Upload timeout') {
-                toast.error('File upload timed out. Please try again.')
+                toast({
+                  title: 'Error',
+                  description: 'File upload timed out. Please try again.',
+                  variant: 'destructive'
+                })
               } else {
-                toast.error(`Failed to create policy: ${error.message}`)
+                toast({
+                  title: 'Error',
+                  description: `Failed to create policy: ${error.message}`,
+                  variant: 'destructive'
+                })
               }
 
               Sentry.captureException(error, {
@@ -233,7 +261,11 @@ export function PolicyForm({
                 }
               })
             } else {
-              toast.error('An unexpected error occurred')
+              toast({
+                title: 'Error',
+                description: 'An unexpected error occurred',
+                variant: 'destructive'
+              })
             }
           }
         })
@@ -243,7 +275,11 @@ export function PolicyForm({
           logger.errorWithData(error),
           'handleSubmit'
         )
-        toast.error('Failed to process form submission')
+        toast({
+          title: 'Error',
+          description: 'Failed to process form submission',
+          variant: 'destructive'
+        })
       } finally {
         logger.timeEnd('policy-submission')
       }
@@ -252,44 +288,57 @@ export function PolicyForm({
     return (
       <form onSubmit={handleSubmit} className='space-y-4'>
         <div className='space-y-2'>
-          <Label htmlFor='name'>Policy Name</Label>
-          <Input id='name' name='name' defaultValue={policy?.name} required />
+          <FormInput
+            label='Policy Name'
+            name='name'
+            defaultValue={policy?.name}
+            rules={[
+              rules.required('Policy name'),
+              rules.minLength(2, 'Policy name')
+            ]}
+            required
+          />
         </div>
 
         <div className='grid grid-cols-2 gap-4'>
           <div className='space-y-2'>
-            <Label htmlFor='policy_number'>Policy Number</Label>
-            <Input
-              id='policy_number'
+            <FormInput
+              label='Policy Number'
               name='policy_number'
               defaultValue={policy?.policy_number}
+              rules={[
+                rules.required('Policy number'),
+                rules.minLength(2, 'Policy number')
+              ]}
               required
             />
           </div>
           <div className='space-y-2'>
-            <Label htmlFor='policy_type'>Policy Type</Label>
-            <Input
-              id='policy_type'
+            <FormInput
+              label='Policy Type'
               name='policy_type'
               defaultValue={policy?.policy_type}
+              rules={[
+                rules.required('Policy type'),
+                rules.minLength(2, 'Policy type')
+              ]}
               required
             />
           </div>
         </div>
 
         <div className='space-y-2'>
-          <Label htmlFor='description'>Description</Label>
-          <Textarea
-            id='description'
+          <FormTextarea
+            label='Description'
             name='description'
             defaultValue={policy?.description || ''}
+            rules={[rules.maxLength(500, 'Description')]}
           />
         </div>
 
         <div className='space-y-2'>
-          <Label htmlFor='effective_date'>Effective Date</Label>
-          <Input
-            id='effective_date'
+          <FormInput
+            label='Effective Date'
             name='effective_date'
             type='date'
             defaultValue={
@@ -297,19 +346,23 @@ export function PolicyForm({
                 ? new Date(policy.effective_date).toISOString().split('T')[0]
                 : undefined
             }
+            rules={[rules.required('Effective date')]}
             required
           />
         </div>
 
         <div className='space-y-2'>
           <Label htmlFor='policy_file'>Policy Document</Label>
-          <Input
+          <input
             id='policy_file'
             name='policy_file'
             type='file'
             accept='.pdf,.doc,.docx'
             onChange={handleFileChange}
             required={!policy}
+            title='Upload policy document (PDF, DOC, or DOCX)'
+            aria-label='Upload policy document'
+            className='w-full cursor-pointer rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
           />
           <p className='text-sm text-gray-500'>
             Accepted formats: PDF, DOC, DOCX (max 5MB)
