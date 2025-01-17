@@ -76,6 +76,16 @@ export async function getCurrentUser() {
 
       try {
         const now = toISOString(new Date())
+        // Check if email is from mkpd.org domain
+        const isMkpdEmail = authUser.email?.toLowerCase().endsWith('@mkpd.org')
+        const defaultRole = isMkpdEmail ? 'member' : 'guest'
+
+        logger.info(
+          'Setting user role based on email domain',
+          { email: authUser.email, role: defaultRole },
+          'getCurrentUser'
+        )
+
         const [newUser] = await db
           .insert(user)
           .values({
@@ -85,7 +95,7 @@ export async function getCurrentUser() {
             first_name: firstName,
             last_name: lastName,
             updated_at: now,
-            role: 'guest',
+            role: defaultRole,
             position: 'reserve',
             status: 'active'
           })
@@ -94,7 +104,7 @@ export async function getCurrentUser() {
         if (newUser) {
           logger.info(
             'New user created successfully',
-            { id: newUser.id },
+            { id: newUser.id, role: defaultRole },
             'getCurrentUser'
           )
           dbUser = newUser
@@ -493,11 +503,9 @@ export async function getDepartmentContacts() {
 
     const contacts = users.map(u => ({
       ...u,
-      first_name: u.first_name,
-      last_name: u.last_name,
       created_at: toISOString(u.created_at),
       updated_at: toISOString(u.updated_at)
-    })) satisfies DBUser[]
+    })) as DBUser[]
 
     logger.info(
       'Department contacts retrieved',

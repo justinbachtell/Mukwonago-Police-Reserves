@@ -5,6 +5,8 @@ import { getCurrentUser } from '@/actions/user'
 import { redirect } from 'next/navigation'
 import { toISOString } from '@/lib/utils'
 import type { eventTypesEnum } from '@/models/Schema'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CalendarDays } from 'lucide-react'
 
 const logger = createLogger({
   module: 'events',
@@ -53,6 +55,16 @@ export default async function EventsPage() {
       event_end_time: toISOString(event.event_end_time)
     }))
 
+    // Calculate event statistics
+    const now = new Date()
+    const upcomingEvents = events.filter(
+      event => new Date(event.event_date) > now
+    ).length
+    const pastEvents = events.filter(
+      event => new Date(event.event_date) <= now
+    ).length
+    const totalEvents = events.length
+
     const metadata = {
       count: events.length,
       types: [...new Set(events.map(e => e.event_type))]
@@ -61,7 +73,31 @@ export default async function EventsPage() {
     logger.info('Events fetched successfully', { metadata }, 'EventsPage')
 
     return (
-      <div className='container relative mx-auto min-h-screen overflow-hidden px-4 md:px-6 lg:px-10'>
+      <div className='container mx-auto min-h-screen px-4 pt-4 md:px-6 lg:px-10'>
+        {/* Stats Card */}
+        <Card className='mb-8 bg-white/80 shadow-md dark:bg-white/5'>
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2'>
+              <CalendarDays className='size-5 text-green-500' />
+              Event Statistics
+            </CardTitle>
+          </CardHeader>
+          <CardContent className='grid gap-4 sm:grid-cols-3'>
+            <div>
+              <p className='text-sm text-muted-foreground'>Total Events</p>
+              <p className='mt-1 text-2xl font-bold'>{totalEvents}</p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground'>Upcoming Events</p>
+              <p className='mt-1 text-2xl font-bold'>{upcomingEvents}</p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground'>Past Events</p>
+              <p className='mt-1 text-2xl font-bold'>{pastEvents}</p>
+            </div>
+          </CardContent>
+        </Card>
+
         <EventsView events={events} />
       </div>
     )

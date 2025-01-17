@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog'
 import { PDFViewer } from '@/components/ui/pdf-viewer'
 import { getPolicyUrl, markPolicyAsAcknowledged } from '@/actions/policy'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { createLogger } from '@/lib/debug'
 
 const logger = createLogger({
@@ -80,6 +80,7 @@ function PolicyCard({
   isCompleted,
   onPolicyAcknowledged
 }: PolicyCardProps) {
+  const { toast } = useToast()
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -101,7 +102,11 @@ function PolicyCard({
         logger.errorWithData(error),
         'handlePolicyView'
       )
-      toast.error('Failed to load policy')
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load policy'
+      })
     }
   }
 
@@ -125,14 +130,21 @@ function PolicyCard({
         { policyId: policy.id },
         'handleMarkAsAcknowledged'
       )
-      toast.success('Policy marked as read')
+      toast({
+        title: 'Success',
+        description: 'Policy marked as read'
+      })
     } catch (error) {
       logger.error(
         'Failed to mark policy as read',
         logger.errorWithData(error),
         'handleMarkAsAcknowledged'
       )
-      toast.error('Failed to mark policy as read')
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to mark policy as read'
+      })
     } finally {
       setIsLoading(false)
     }

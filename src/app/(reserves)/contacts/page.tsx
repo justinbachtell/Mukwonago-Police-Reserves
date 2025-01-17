@@ -2,6 +2,8 @@ import { getCurrentUser, getDepartmentContacts } from '@/actions/user'
 import { ContactsTable } from '@/components/reserves/contacts/ContactsTable'
 import { redirect } from 'next/navigation'
 import { createLogger } from '@/lib/debug'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Users } from 'lucide-react'
 
 const logger = createLogger({
   module: 'contacts',
@@ -40,8 +42,61 @@ export default async function ContactsPage() {
       throw new Error('Failed to fetch contacts')
     }
 
+    // Calculate contact statistics
+    const officers = contacts.filter(
+      contact => contact.position === 'officer'
+    ).length
+    const reserves = contacts.filter(
+      contact => contact.position === 'reserve'
+    ).length
+    const staff = contacts.filter(
+      contact => contact.position === 'staff'
+    ).length
+    const admins = contacts.filter(
+      contact => contact.position === 'admin'
+    ).length
+    const dispatchers = contacts.filter(
+      contact => contact.position === 'dispatcher'
+    ).length
+
     return (
-      <div className='container mx-auto min-h-screen px-4 md:px-6 lg:px-10'>
+      <div className='container mx-auto min-h-screen px-4 pt-4 md:px-6 lg:px-10'>
+        {/* Stats Card */}
+        <Card className='mb-8 bg-white/80 shadow-md dark:bg-white/5'>
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2'>
+              <Users className='size-5 text-blue-500' />
+              Department Statistics
+            </CardTitle>
+          </CardHeader>
+          <CardContent className='grid gap-4 sm:grid-cols-5'>
+            <div>
+              <p className='text-sm text-muted-foreground'>Total Members</p>
+              <p className='mt-1 text-2xl font-bold'>{contacts.length}</p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground'>Officers</p>
+              <p className='mt-1 text-2xl font-bold'>{officers}</p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground'>Reserves</p>
+              <p className='mt-1 text-2xl font-bold'>{reserves}</p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground'>Dispatchers</p>
+              <p className='mt-1 text-2xl font-bold'>{dispatchers}</p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground'>Staff</p>
+              <p className='mt-1 text-2xl font-bold'>{staff}</p>
+            </div>
+            <div>
+              <p className='text-sm text-muted-foreground'>Admins</p>
+              <p className='mt-1 text-2xl font-bold'>{admins}</p>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className='mb-6 space-y-1'>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl'>
             Department Contacts

@@ -19,7 +19,8 @@ export const positionsEnum = pgEnum('position', [
   'officer',
   'reserve',
   'admin',
-  'staff'
+  'staff',
+  'dispatcher'
 ])
 
 export const userStatusEnum = pgEnum('user_status', [

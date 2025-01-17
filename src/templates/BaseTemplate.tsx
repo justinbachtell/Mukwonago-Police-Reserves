@@ -19,8 +19,8 @@ export function BaseTemplate(props: {
           user={user}
           signOutButton={props.signOutButton}
         />
-        <div className='flex min-w-0 flex-1 flex-col'>
-          <main className='flex-1 overflow-y-auto bg-gradient-to-b from-white to-blue-50 pb-12 pt-20 text-gray-900 dark:from-gray-950 dark:to-blue-950/40 dark:text-white lg:py-8'>
+        <div className='flex min-w-0 flex-1 flex-col text-gray-900 dark:text-white'>
+          <main className='flex-1 overflow-y-auto bg-gradient-to-br from-white to-blue-50/60 pt-14 text-gray-900 dark:bg-gradient-to-b dark:from-gray-950 dark:to-blue-950/40 dark:text-white lg:pt-0'>
             {props.children}
           </main>
           <footer className='shrink-0 border-t border-gray-300 px-4 py-2 text-center text-sm dark:border-gray-800 lg:py-4'>

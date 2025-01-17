@@ -16,6 +16,8 @@ import {
 import { PolicyForm } from '@/components/admin/forms/PolicyForm'
 import type { Policy } from '@/types/policy'
 import { LoadingCard } from '@/components/ui/loading'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ScrollText } from 'lucide-react'
 
 const logger = createLogger({
   module: 'admin',
@@ -77,8 +79,52 @@ export default function AdminPoliciesPage() {
     return <LoadingCard />
   }
 
+  // Calculate policy statistics
+  const totalPolicies = policies.length
+  const totalCompletions = policies.reduce(
+    (acc, policy) => acc + (policy.completions?.length || 0),
+    0
+  )
+  const policiesWithCompletions = policies.filter(
+    policy => policy.completions && policy.completions.length > 0
+  ).length
+  const completionRate =
+    totalPolicies > 0
+      ? Math.round((policiesWithCompletions / totalPolicies) * 100)
+      : 0
+
   return (
-    <div className='container relative mx-auto min-h-screen overflow-hidden px-4 md:px-6 lg:px-10'>
+    <div className='container relative mx-auto min-h-screen overflow-hidden px-4 pt-4 md:px-6 lg:px-10'>
+      {/* Stats Card */}
+      <Card className='mb-8 bg-white/80 shadow-md dark:bg-white/5'>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2'>
+            <ScrollText className='size-5 text-blue-500' />
+            Policy Statistics
+          </CardTitle>
+        </CardHeader>
+        <CardContent className='grid gap-4 sm:grid-cols-4'>
+          <div>
+            <p className='text-sm text-muted-foreground'>Total Policies</p>
+            <p className='mt-1 text-2xl font-bold'>{totalPolicies}</p>
+          </div>
+          <div>
+            <p className='text-sm text-muted-foreground'>Total Completions</p>
+            <p className='mt-1 text-2xl font-bold'>{totalCompletions}</p>
+          </div>
+          <div>
+            <p className='text-sm text-muted-foreground'>
+              Policies with Completions
+            </p>
+            <p className='mt-1 text-2xl font-bold'>{policiesWithCompletions}</p>
+          </div>
+          <div>
+            <p className='text-sm text-muted-foreground'>Completion Rate</p>
+            <p className='mt-1 text-2xl font-bold'>{completionRate}%</p>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className='mb-4 flex items-center justify-between'>
         <div>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>

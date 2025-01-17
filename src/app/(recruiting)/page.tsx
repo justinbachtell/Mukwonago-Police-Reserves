@@ -25,11 +25,9 @@ export const metadata = {
 // Hero section component - No async operations, renders immediately
 function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
-    <div className='relative mx-auto w-full overflow-hidden dark:border-b dark:border-gray-800'>
-      <div className='absolute inset-0 w-full bg-gradient-to-b from-blue-100 to-white dark:from-gray-950 dark:to-blue-950/40' />
-
-      <div className='container relative mx-auto px-4 py-24 sm:py-32'>
-        <div className='mx-auto max-w-4xl text-center'>
+    <div className='relative m-auto h-screen min-h-screen w-full items-center justify-center overflow-hidden border-b border-gray-600 bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-blue-950/40'>
+      <div className='pt-18 container relative m-auto flex h-full items-center justify-center px-4 pb-32 sm:pb-44 sm:pt-24'>
+        <div className='mx-auto max-w-4xl space-y-8 text-center'>
           <h1 className='mb-6 text-5xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl'>
             Join the Mukwonago Police Reserves
           </h1>
@@ -45,9 +43,6 @@ function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
                 Apply Now
                 <ArrowRight className='ml-2 transition-transform group-hover:translate-x-0.5' />
               </Link>
-            </Button>
-            <Button asChild size='default' variant='outline'>
-              <Link href={'/about' as Route}>Learn More</Link>
             </Button>
           </div>
         </div>
@@ -74,7 +69,7 @@ export default async function HomePage() {
     )
 
     return (
-      <div className='min-h-screen'>
+      <div className='min-h-screen w-full bg-gradient-to-b from-white to-blue-50 dark:from-blue-950/60 dark:to-gray-950'>
         <HeroSection isAuthenticated={isAuthenticated} />
 
         <div className='relative'>
@@ -106,7 +101,7 @@ export default async function HomePage() {
           </div>
 
           {/* CTA Section */}
-          <div className='relative'>
+          <div className='relative overflow-hidden'>
             <Suspense fallback={<LoadingCard />}>
               <CTASection isAuthenticated={isAuthenticated} />
             </Suspense>

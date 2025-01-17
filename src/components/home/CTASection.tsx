@@ -29,9 +29,6 @@ export function CTASection({ isAuthenticated }: CTASectionProps) {
                 <ArrowRight className='ml-2 transition-transform group-hover:translate-x-0.5' />
               </Link>
             </Button>
-            <Button asChild size='default' variant='outline'>
-              <Link href={'tel:2623632400' as Route}>Contact Us</Link>
-            </Button>
           </div>
         </div>
       </Card>

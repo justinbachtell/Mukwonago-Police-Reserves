@@ -8,7 +8,7 @@ import { columns, type EquipmentWithUser } from './columns'
 import { createLogger } from '@/lib/debug'
 import { toISOString } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { Plus, Package } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog'
 import { EquipmentForm } from '@/components/admin/forms/equipmentForm'
 import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const logger = createLogger({
   module: 'admin',
@@ -88,8 +89,56 @@ export default function AdminEquipmentPage() {
     fetchEquipment()
   }
 
+  // Calculate equipment statistics
+  const totalEquipment = equipment.length
+  const assignedEquipment = equipment.filter(item => item.assigned_to).length
+  const unassignedEquipment = totalEquipment - assignedEquipment
+  const goodConditionEquipment = equipment.filter(
+    item => item.condition === 'good' || item.condition === 'new'
+  ).length
+  const needsAttentionEquipment = equipment.filter(
+    item =>
+      item.condition === 'fair' ||
+      item.condition === 'poor' ||
+      item.condition === 'damaged/broken'
+  ).length
+
   return (
-    <div className='container relative mx-auto min-h-screen overflow-hidden px-4 md:px-6 lg:px-10'>
+    <div className='container relative mx-auto min-h-screen overflow-hidden px-4 pt-4 md:px-6 lg:px-10'>
+      {/* Stats Card */}
+      <Card className='mb-8 bg-white/80 shadow-md dark:bg-white/5'>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2'>
+            <Package className='size-5 text-orange-500' />
+            Equipment Statistics
+          </CardTitle>
+        </CardHeader>
+        <CardContent className='grid gap-4 sm:grid-cols-5'>
+          <div>
+            <p className='text-sm text-muted-foreground'>Total Equipment</p>
+            <p className='mt-1 text-2xl font-bold'>{totalEquipment}</p>
+          </div>
+          <div>
+            <p className='text-sm text-muted-foreground'>Assigned Equipment</p>
+            <p className='mt-1 text-2xl font-bold'>{assignedEquipment}</p>
+          </div>
+          <div>
+            <p className='text-sm text-muted-foreground'>
+              Unassigned Equipment
+            </p>
+            <p className='mt-1 text-2xl font-bold'>{unassignedEquipment}</p>
+          </div>
+          <div>
+            <p className='text-sm text-muted-foreground'>Good Condition</p>
+            <p className='mt-1 text-2xl font-bold'>{goodConditionEquipment}</p>
+          </div>
+          <div>
+            <p className='text-sm text-muted-foreground'>Needs Attention</p>
+            <p className='mt-1 text-2xl font-bold'>{needsAttentionEquipment}</p>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className='mb-4 flex items-center justify-between'>
         <div>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>

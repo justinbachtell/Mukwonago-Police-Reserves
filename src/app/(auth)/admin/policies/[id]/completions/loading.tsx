@@ -1,46 +1,55 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 export default function PolicyCompletionsLoading() {
   return (
-    <div className='container mx-auto space-y-6 px-4 py-8 md:px-6 lg:px-8'>
-      {/* Header Skeleton */}
-      <div className='mb-4'>
-        <Skeleton className='mb-2 h-8 w-[250px]' />
-        <Skeleton className='h-4 w-[400px]' />
+    <div className='container mx-auto space-y-8 px-4 py-8 md:px-6 lg:px-8'>
+      {/* Header Section */}
+      <div className='mb-6'>
+        <Skeleton className='mb-2 h-9 w-[250px]' />
+        <Skeleton className='h-5 w-[300px]' />
       </div>
 
-      {/* Reset Button Skeleton */}
-      <div className='mb-6 flex items-center justify-end'>
-        <Skeleton className='h-10 w-[150px]' />
-      </div>
-
-      {/* Table Loading State */}
-      <div className='rounded-md border'>
-        {/* Table Header */}
-        <div className='border-b bg-muted/50 p-4'>
+      {/* Completions Table */}
+      <Card>
+        <CardHeader>
           <div className='flex items-center justify-between'>
-            <Skeleton className='h-4 w-[100px]' />
-            <Skeleton className='h-4 w-[120px]' />
-            <Skeleton className='h-4 w-[80px]' />
+            <div className='space-y-2'>
+              <Skeleton className='h-7 w-[200px]' />
+              <Skeleton className='h-5 w-[300px]' />
+            </div>
+            <div className='flex gap-2'>
+              <Skeleton className='size-10' />
+              <Skeleton className='size-10' />
+            </div>
           </div>
-        </div>
-
-        {/* Table Body */}
-        <div className='p-4'>
-          <div className='space-y-4'>
+        </CardHeader>
+        <CardContent className='p-0'>
+          <div className='border-t'>
             {Array.from({ length: 5 }).map((_, i) => (
               <div
-                key={`loading-row-${i}`}
-                className='flex items-center justify-between'
+                key={i}
+                className='flex items-center justify-between border-b p-4 last:border-0'
               >
-                <Skeleton className='h-4 w-[200px]' />
-                <Skeleton className='h-4 w-[120px]' />
-                <Skeleton className='h-8 w-[80px]' />
+                <div className='flex items-center gap-4'>
+                  <Skeleton className='size-10 rounded-full' />
+                  <div className='space-y-1'>
+                    <Skeleton className='h-5 w-[200px]' />
+                    <div className='flex gap-4'>
+                      <Skeleton className='h-4 w-[100px]' />
+                      <Skeleton className='h-4 w-[150px]' />
+                    </div>
+                  </div>
+                </div>
+                <div className='flex gap-2'>
+                  <Skeleton className='size-8' />
+                  <Skeleton className='size-8' />
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
