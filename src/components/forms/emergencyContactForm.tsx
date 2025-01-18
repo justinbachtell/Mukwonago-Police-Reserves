@@ -6,8 +6,7 @@ import type { DBUser } from '@/types/user';
 import type { MutableRefObject } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { FormInput } from '@/components/ui/form-input'
 import {
   Select,
   SelectContent,
@@ -21,6 +20,8 @@ import { toISOString } from '@/lib/utils'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import type { Session } from '@supabase/supabase-js'
+import { rules } from '@/lib/validation'
+import { useToast } from '@/hooks/use-toast'
 
 const logger = createLogger({
   module: 'forms',
@@ -33,32 +34,6 @@ interface EmergencyContactFormProps {
   saveRef: MutableRefObject<(() => Promise<SaveResult>) | null>
 }
 
-function formatPhoneNumber(value: string): string {
-  const cleaned = value.replace(/\D/g, '')
-  const trimmed = cleaned.slice(0, 10)
-
-  if (trimmed.length > 6) {
-    return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3, 6)}-${trimmed.slice(6)}`
-  } else if (trimmed.length > 3) {
-    return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3)}`
-  } else if (trimmed.length > 0) {
-    return `(${trimmed}`
-  }
-  return trimmed
-}
-
-function isValidPhoneNumber(phone: string): boolean {
-  return phone.replace(/\D/g, '').length === 10
-}
-
-function formatState(value: string): string {
-  return value.toUpperCase().slice(0, 2)
-}
-
-function formatZipCode(value: string): string {
-  return value.replace(/\D/g, '').slice(0, 5)
-}
-
 export function EmergencyContactForm({
   currentContact,
   saveRef,
@@ -69,6 +44,7 @@ export function EmergencyContactForm({
   const [isLoading, setIsLoading] = useState(true)
   const [session, setSession] = useState<Session | null>(null)
   const supabase = createClient()
+  const { toast } = useToast()
 
   useEffect(() => {
     const checkSession = async () => {
@@ -131,39 +107,13 @@ export function EmergencyContactForm({
     return changed
   }, [formData, currentContact])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    logger.debug('Field change', { field: name, value }, 'handleChange')
-
-    switch (name) {
-      case 'email':
-        setFormData(prev => ({
-          ...prev,
-          [name]: value || null
-        }))
-        break
-      case 'phone':
-        setFormData(prev => ({
-          ...prev,
-          [name]: formatPhoneNumber(value)
-        }))
-        break
-      case 'state':
-        setFormData(prev => ({
-          ...prev,
-          [name]: formatState(value)
-        }))
-        break
-      case 'zip_code':
-        setFormData(prev => ({
-          ...prev,
-          [name]: formatZipCode(value)
-        }))
-        break
-      default:
-        setFormData(prev => ({ ...prev, [name]: value }))
+  const handleFieldChange =
+    (field: keyof EmergencyContact) => (value: string) => {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value || null
+      }))
     }
-  }
 
   const handleSaveChanges = useCallback(async () => {
     logger.time('save-emergency-contact')
@@ -175,6 +125,11 @@ export function EmergencyContactForm({
           undefined,
           'handleSaveChanges'
         )
+        toast({
+          title: 'Error',
+          description: 'Please wait for the form to load',
+          variant: 'destructive'
+        })
         return { message: 'Loading authentication state', success: false }
       }
 
@@ -184,6 +139,11 @@ export function EmergencyContactForm({
           undefined,
           'handleSaveChanges'
         )
+        toast({
+          title: 'Error',
+          description: 'You must be logged in to save changes',
+          variant: 'destructive'
+        })
         return { message: 'Not authenticated', success: false }
       }
 
@@ -194,12 +154,12 @@ export function EmergencyContactForm({
 
       if (!formData.first_name || !formData.last_name) {
         logger.warn('Missing required fields', undefined, 'handleSaveChanges')
+        toast({
+          title: 'Error',
+          description: 'Please fill in all required fields',
+          variant: 'destructive'
+        })
         return { message: 'Please fill in all required fields', success: false }
-      }
-
-      if (!isValidPhoneNumber(formData.phone)) {
-        logger.warn('Invalid phone number', undefined, 'handleSaveChanges')
-        return { message: 'Please enter a valid phone number', success: false }
       }
 
       logger.info(
@@ -217,6 +177,13 @@ export function EmergencyContactForm({
         { contactId: formData.id },
         'handleSaveChanges'
       )
+
+      toast({
+        title: 'Success',
+        description: 'Emergency contact updated successfully',
+        variant: 'default'
+      })
+
       return { data: updatedContact, success: true }
     } catch (error) {
       logger.error(
@@ -224,11 +191,16 @@ export function EmergencyContactForm({
         logger.errorWithData(error),
         'handleSaveChanges'
       )
+      toast({
+        title: 'Error',
+        description: 'Failed to update emergency contact',
+        variant: 'destructive'
+      })
       return { message: 'Failed to update emergency contact', success: false }
     } finally {
       logger.timeEnd('save-emergency-contact')
     }
-  }, [formData, isLoading, session, hasFormChanged])
+  }, [isLoading, session, hasFormChanged, formData, toast])
 
   useEffect(() => {
     logger.info('[EmergencyContactForm] Updating save ref')
@@ -285,52 +257,52 @@ export function EmergencyContactForm({
     'Other'
   ]
 
-  // Add this new handler for Select components
-  const handleSelectChange =
-    (name: keyof EmergencyContact) => (value: string) => {
-      setFormData(prev => ({ ...prev, [name]: value }))
-    }
-
   try {
     return (
       <>
-        {/* Personal Information */}
         <Card className='flex w-full flex-col p-6 shadow-md xl:max-w-[450px]'>
           <h2 className='mb-6 text-xl font-semibold text-gray-900 dark:text-white'>
             Emergency Contact
           </h2>
           <div className='space-y-4'>
             <div className='flex flex-col gap-4 md:grid md:grid-cols-12'>
-              <div className='flex flex-col space-y-2 md:col-span-4'>
-                <Label htmlFor='first_name'>First Name</Label>
-                <Input
-                  id='first_name'
+              <div className='md:col-span-4'>
+                <FormInput
+                  label='First Name'
                   name='first_name'
                   value={formData.first_name}
-                  onChange={handleChange}
-                  className='w-full'
+                  rules={[
+                    rules.required('First name'),
+                    rules.minLength(2, 'First name'),
+                    rules.name()
+                  ]}
+                  onValueChange={handleFieldChange('first_name')}
+                  placeholder='Enter first name'
+                  required
                 />
               </div>
-              <div className='flex flex-col space-y-2 md:col-span-4'>
-                <Label htmlFor='last_name'>Last Name</Label>
-                <Input
-                  id='last_name'
+              <div className='md:col-span-4'>
+                <FormInput
+                  label='Last Name'
                   name='last_name'
                   value={formData.last_name}
-                  onChange={handleChange}
-                  className='w-full'
+                  rules={[
+                    rules.required('Last name'),
+                    rules.minLength(2, 'Last name'),
+                    rules.name()
+                  ]}
+                  onValueChange={handleFieldChange('last_name')}
+                  placeholder='Enter last name'
+                  required
                 />
               </div>
-              <div className='flex flex-col space-y-2 md:col-span-4'>
-                <Label htmlFor='relationship'>Relationship</Label>
+              <div className='md:col-span-4'>
                 <Select
                   value={formData.relationship}
-                  onValueChange={handleSelectChange('relationship')}
+                  onValueChange={handleFieldChange('relationship')}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder='Select relationship'>
-                      {formData.relationship || 'Select relationship'}
-                    </SelectValue>
+                    <SelectValue placeholder='Select relationship' />
                   </SelectTrigger>
                   <SelectContent>
                     {RELATIONSHIP_TYPES.map(type => (
@@ -344,63 +316,60 @@ export function EmergencyContactForm({
             </div>
 
             <div className='flex flex-col gap-4 md:grid md:grid-cols-12'>
-              <div className='flex flex-col space-y-2 md:col-span-6'>
-                <Label htmlFor='email'>Email</Label>
-                <Input
-                  id='email'
+              <div className='md:col-span-6'>
+                <FormInput
+                  label='Email'
                   name='email'
                   type='email'
                   value={formData.email || ''}
-                  onChange={handleChange}
-                  className='w-full'
+                  rules={[rules.email()]}
+                  onValueChange={handleFieldChange('email')}
+                  placeholder='Enter email address'
                 />
               </div>
-
-              <div className='flex flex-col space-y-2 md:col-span-6'>
-                <Label htmlFor='phone'>Phone Number</Label>
-                <Input
-                  id='phone'
+              <div className='md:col-span-6'>
+                <FormInput
+                  label='Phone Number'
                   name='phone'
                   type='tel'
                   value={formData.phone}
-                  onChange={handleChange}
-                  className='w-full'
-                  placeholder='(123) 456-7890'
-                  maxLength={14}
+                  rules={[rules.required('Phone number'), rules.phone()]}
+                  formatter='phone'
+                  onValueChange={handleFieldChange('phone')}
+                  placeholder='(XXX) XXX-XXXX'
+                  required
                 />
               </div>
             </div>
 
             <div className='flex flex-col gap-4 md:grid md:grid-cols-12'>
-              <div className='flex flex-col space-y-2 md:col-span-6'>
-                <Label htmlFor='street_address'>Street Address</Label>
-                <Input
-                  id='street_address'
+              <div className='md:col-span-6'>
+                <FormInput
+                  label='Street Address'
                   name='street_address'
                   value={formData.street_address || ''}
-                  onChange={handleChange}
-                  className='w-full'
+                  rules={[rules.streetAddress()]}
+                  onValueChange={handleFieldChange('street_address')}
+                  placeholder='Enter street address'
                 />
               </div>
-
-              <div className='flex flex-col gap-2 md:col-span-6'>
-                <Label htmlFor='city'>City</Label>
-                <Input
-                  id='city'
+              <div className='md:col-span-6'>
+                <FormInput
+                  label='City'
                   name='city'
                   value={formData.city || ''}
-                  onChange={handleChange}
-                  className='w-full'
+                  rules={[rules.city()]}
+                  onValueChange={handleFieldChange('city')}
+                  placeholder='Enter city'
                 />
               </div>
             </div>
 
-            <div className='flex flex-col gap-4 md:col-span-6 md:grid md:grid-cols-12'>
-              <div className='flex flex-col gap-2 md:col-span-6'>
-                <Label htmlFor='state'>State</Label>
+            <div className='flex flex-col gap-4 md:grid md:grid-cols-12'>
+              <div className='md:col-span-6'>
                 <Select
                   value={formData.state || ''}
-                  onValueChange={handleSelectChange('state')}
+                  onValueChange={handleFieldChange('state')}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder='Select state' />
@@ -417,16 +386,16 @@ export function EmergencyContactForm({
                   </SelectContent>
                 </Select>
               </div>
-              <div className='flex flex-col gap-2 md:col-span-6'>
-                <Label htmlFor='zip_code'>ZIP Code</Label>
-                <Input
-                  id='zip_code'
+              <div className='md:col-span-6'>
+                <FormInput
+                  label='ZIP Code'
                   name='zip_code'
                   value={formData.zip_code || ''}
-                  onChange={handleChange}
-                  className='w-full'
-                  maxLength={5}
+                  rules={[rules.zipCode()]}
+                  formatter='zipCode'
+                  onValueChange={handleFieldChange('zip_code')}
                   placeholder='12345'
+                  maxLength={5}
                 />
               </div>
             </div>

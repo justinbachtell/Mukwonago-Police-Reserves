@@ -11,9 +11,7 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
 import { createEquipment, updateEquipment } from '@/actions/equipment'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -24,6 +22,9 @@ import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { FormInput } from '@/components/ui/form-input'
+import { FormTextarea } from '@/components/ui/form-textarea'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'admin',
@@ -207,7 +208,13 @@ export function EquipmentForm({
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder='Enter equipment name' />
+                  <FormInput
+                    {...field}
+                    label='Name'
+                    placeholder='Enter equipment name'
+                    rules={[rules.required('Name'), rules.minLength(2, 'Name')]}
+                    onValueChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -221,10 +228,13 @@ export function EquipmentForm({
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea
+                  <FormTextarea
                     {...field}
+                    label='Description'
                     value={field.value || ''}
                     placeholder='Enter equipment description'
+                    rules={[rules.maxLength(500, 'Description')]}
+                    onValueChange={field.onChange}
                   />
                 </FormControl>
                 <FormMessage />
@@ -239,10 +249,13 @@ export function EquipmentForm({
               <FormItem>
                 <FormLabel>Serial Number</FormLabel>
                 <FormControl>
-                  <Input
+                  <FormInput
                     {...field}
+                    label='Serial Number'
                     value={field.value || ''}
                     placeholder='Enter serial number'
+                    rules={[rules.maxLength(50, 'Serial number')]}
+                    onValueChange={field.onChange}
                   />
                 </FormControl>
                 <FormMessage />
@@ -257,12 +270,14 @@ export function EquipmentForm({
               <FormItem>
                 <FormLabel>Purchase Date</FormLabel>
                 <FormControl>
-                  <Input
+                  <FormInput
                     type='date'
+                    label='Purchase Date'
+                    name='purchase_date'
                     value={
                       field.value ? toISOString(field.value).split('T')[0] : ''
                     }
-                    onChange={e => field.onChange(e.target.valueAsDate)}
+                    onValueChange={value => field.onChange(new Date(value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -298,10 +313,13 @@ export function EquipmentForm({
               <FormItem>
                 <FormLabel>Notes</FormLabel>
                 <FormControl>
-                  <Textarea
+                  <FormTextarea
                     {...field}
+                    label='Notes'
                     value={field.value || ''}
                     placeholder='Enter any additional notes'
+                    rules={[rules.notes()]}
+                    onValueChange={field.onChange}
                   />
                 </FormControl>
                 <FormMessage />

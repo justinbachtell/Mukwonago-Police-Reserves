@@ -7,8 +7,7 @@ import type { UniformSizes } from '@/types/uniformSizes';
 import type { DBUser } from '@/types/user';
 import { updateUser } from '@/actions/user';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card'
 import { Form } from '@/components/ui/form'
 import {
   Select,
@@ -29,6 +28,8 @@ import type { Session } from '@supabase/supabase-js'
 import { useForm } from 'react-hook-form'
 import { Label } from '@/components/ui/label'
 import { LoadingCard } from '@/components/ui/loading'
+import { FormInput } from '@/components/ui/form-input'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'forms',
@@ -78,10 +79,6 @@ function formatPhoneNumber(value: string): string {
 
 function isValidPhoneNumber(phone: string): boolean {
   return phone.replace(/\D/g, '').length === 10
-}
-
-function formatState(value: string): string {
-  return value.toUpperCase().slice(0, 2)
 }
 
 function formatZipCode(value: string): string {
@@ -207,40 +204,6 @@ export function ProfileForm({
       formData.driver_license_state !== (user.driver_license_state || '')
     )
   }, [formData, user])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    logger.debug('Form field changed', { field: name, value }, 'handleChange')
-
-    switch (name) {
-      case 'phone':
-        setFormData(prev => ({
-          ...prev,
-          [name]: formatPhoneNumber(value)
-        }))
-        break
-      case 'state':
-        setFormData(prev => ({
-          ...prev,
-          [name]: formatState(value)
-        }))
-        break
-      case 'zip_code':
-        setFormData(prev => ({
-          ...prev,
-          [name]: formatZipCode(value)
-        }))
-        break
-      case 'driver_license_state':
-        setFormData(prev => ({
-          ...prev,
-          [name]: formatState(value)
-        }))
-        break
-      default:
-        setFormData(prev => ({ ...prev, [name]: value }))
-    }
-  }
 
   const handleMainFormSave = async () => {
     logger.info('Saving main form data', undefined, 'handleMainFormSave')
@@ -422,76 +385,81 @@ export function ProfileForm({
               <div className='grid gap-8'>
                 <div className='grid gap-6 sm:grid-cols-2'>
                   <div>
-                    <Label htmlFor='first_name' className='text-sm font-medium'>
-                      First Name
-                    </Label>
-                    <Input
-                      id='first_name'
+                    <FormInput
+                      label='First Name'
                       name='first_name'
                       value={formData.first_name}
-                      onChange={handleChange}
-                      className='mt-2'
+                      rules={[
+                        rules.required('First name'),
+                        rules.minLength(2, 'First name'),
+                        rules.name()
+                      ]}
+                      onValueChange={value =>
+                        setFormData(prev => ({ ...prev, first_name: value }))
+                      }
                     />
                   </div>
                   <div>
-                    <Label htmlFor='last_name' className='text-sm font-medium'>
-                      Last Name
-                    </Label>
-                    <Input
-                      id='last_name'
+                    <FormInput
+                      label='Last Name'
                       name='last_name'
                       value={formData.last_name}
-                      onChange={handleChange}
-                      className='mt-2'
+                      rules={[
+                        rules.required('Last name'),
+                        rules.minLength(2, 'Last name'),
+                        rules.name()
+                      ]}
+                      onValueChange={value =>
+                        setFormData(prev => ({ ...prev, last_name: value }))
+                      }
                     />
                   </div>
                 </div>
 
                 <div className='grid gap-6 sm:grid-cols-2'>
                   <div>
-                    <Label htmlFor='email' className='text-sm font-medium'>
-                      Email
-                    </Label>
-                    <Input
-                      id='email'
+                    <FormInput
+                      label='Email'
                       name='email'
                       type='email'
                       value={session?.user?.email ?? ''}
                       disabled
-                      className='mt-2 bg-muted'
+                      className='bg-muted'
                     />
                   </div>
                   <div>
-                    <Label htmlFor='phone' className='text-sm font-medium'>
-                      Phone Number
-                    </Label>
-                    <Input
-                      id='phone'
+                    <FormInput
+                      label='Phone Number'
                       name='phone'
                       type='tel'
                       value={formData.phone}
-                      onChange={handleChange}
+                      rules={[rules.required('Phone number'), rules.phone()]}
+                      formatter='phone'
+                      onValueChange={value =>
+                        setFormData(prev => ({
+                          ...prev,
+                          phone: formatPhoneNumber(value)
+                        }))
+                      }
                       placeholder='(123) 456-7890'
                       maxLength={14}
-                      className='mt-2'
                     />
                   </div>
                 </div>
 
                 <div className='grid gap-6 sm:grid-cols-2'>
                   <div>
-                    <Label
-                      htmlFor='driver_license'
-                      className='text-sm font-medium'
-                    >
-                      Driver's License Number
-                    </Label>
-                    <Input
-                      id='driver_license'
+                    <FormInput
+                      label="Driver's License Number"
                       name='driver_license'
                       value={formData.driver_license}
-                      onChange={handleChange}
-                      className='mt-2'
+                      rules={[rules.driversLicense()]}
+                      onValueChange={value =>
+                        setFormData(prev => ({
+                          ...prev,
+                          driver_license: value
+                        }))
+                      }
                     />
                   </div>
                   <div>
@@ -510,7 +478,10 @@ export function ProfileForm({
                         }))
                       }}
                     >
-                      <SelectTrigger className='mt-2'>
+                      <SelectTrigger
+                        id='driver_license_state'
+                        aria-label="Driver's license state"
+                      >
                         <SelectValue placeholder='Select state' />
                       </SelectTrigger>
                       <SelectContent>
@@ -540,31 +511,26 @@ export function ProfileForm({
             <div className='p-7'>
               <div className='grid gap-8'>
                 <div>
-                  <Label
-                    htmlFor='street_address'
-                    className='text-sm font-medium'
-                  >
-                    Street Address
-                  </Label>
-                  <Input
-                    id='street_address'
+                  <FormInput
+                    label='Street Address'
                     name='street_address'
                     value={formData.street_address}
-                    onChange={handleChange}
-                    className='mt-2'
+                    rules={[rules.streetAddress()]}
+                    onValueChange={value =>
+                      setFormData(prev => ({ ...prev, street_address: value }))
+                    }
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor='city' className='text-sm font-medium'>
-                    City
-                  </Label>
-                  <Input
-                    id='city'
+                  <FormInput
+                    label='City'
                     name='city'
                     value={formData.city}
-                    onChange={handleChange}
-                    className='mt-2'
+                    rules={[rules.city()]}
+                    onValueChange={value =>
+                      setFormData(prev => ({ ...prev, city: value }))
+                    }
                   />
                 </div>
 
@@ -579,7 +545,7 @@ export function ProfileForm({
                         setFormData(prev => ({ ...prev, state: value }))
                       }}
                     >
-                      <SelectTrigger className='mt-2'>
+                      <SelectTrigger id='state' aria-label='State of residence'>
                         <SelectValue placeholder='Select state' />
                       </SelectTrigger>
                       <SelectContent>
@@ -595,17 +561,20 @@ export function ProfileForm({
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor='zip_code' className='text-sm font-medium'>
-                      ZIP Code
-                    </Label>
-                    <Input
-                      id='zip_code'
+                    <FormInput
+                      label='ZIP Code'
                       name='zip_code'
                       value={formData.zip_code}
-                      onChange={handleChange}
+                      rules={[rules.zipCode()]}
+                      formatter='zipCode'
+                      onValueChange={value =>
+                        setFormData(prev => ({
+                          ...prev,
+                          zip_code: formatZipCode(value)
+                        }))
+                      }
                       maxLength={5}
                       placeholder='12345'
-                      className='mt-2'
                     />
                   </div>
                 </div>

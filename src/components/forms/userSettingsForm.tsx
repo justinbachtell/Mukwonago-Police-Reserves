@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { toast } from '@/hooks/use-toast'
 import type { DBUser } from '@/types/user'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import type { Session } from '@supabase/supabase-js'
 import { LoadingCard } from '@/components/ui/loading'
+import { FormInput } from '@/components/ui/form-input'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'forms',
@@ -56,8 +56,7 @@ export function UserSettingsForm({ user }: UserSettingsFormProps) {
     email: user.email || ''
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
+  const handleChange = (name: keyof FormData, value: string) => {
     logger.debug(
       'Form field changed',
       { field: name, hasValue: !!value },
@@ -250,14 +249,13 @@ export function UserSettingsForm({ user }: UserSettingsFormProps) {
           </h2>
           <div className='space-y-6'>
             <div className='space-y-2'>
-              <Label htmlFor='email'>Email Address</Label>
-              <Input
-                id='email'
+              <FormInput
+                label='Email Address'
                 name='email'
                 type='email'
                 value={formData.email}
-                onChange={handleChange}
-                className='w-full'
+                rules={[rules.required('Email'), rules.email()]}
+                onValueChange={value => handleChange('email', value)}
                 required
               />
             </div>
@@ -266,38 +264,45 @@ export function UserSettingsForm({ user }: UserSettingsFormProps) {
               <h3 className='mb-4 text-lg font-medium'>Change Password</h3>
               <div className='space-y-4'>
                 <div className='space-y-2'>
-                  <Label htmlFor='currentPassword'>Current Password</Label>
-                  <Input
-                    id='currentPassword'
+                  <FormInput
+                    label='Current Password'
                     name='currentPassword'
                     type='password'
                     value={formData.currentPassword}
-                    onChange={handleChange}
-                    className='w-full'
+                    rules={[
+                      rules.required('Current password'),
+                      rules.password()
+                    ]}
+                    onValueChange={value =>
+                      handleChange('currentPassword', value)
+                    }
                   />
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='newPassword'>New Password</Label>
-                  <Input
-                    id='newPassword'
+                  <FormInput
+                    label='New Password'
                     name='newPassword'
                     type='password'
                     value={formData.newPassword}
-                    onChange={handleChange}
-                    className='w-full'
+                    rules={[rules.password()]}
+                    onValueChange={value => handleChange('newPassword', value)}
                   />
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='confirmPassword'>Confirm New Password</Label>
-                  <Input
-                    id='confirmPassword'
+                  <FormInput
+                    label='Confirm New Password'
                     name='confirmPassword'
                     type='password'
                     value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className='w-full'
+                    rules={[
+                      rules.required('Password confirmation'),
+                      rules.passwordMatch(formData.newPassword)
+                    ]}
+                    onValueChange={value =>
+                      handleChange('confirmPassword', value)
+                    }
                   />
                 </div>
               </div>

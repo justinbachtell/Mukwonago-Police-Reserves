@@ -3,21 +3,21 @@
 import type { DBUser } from '@/types/user';
 import { updateUser } from '@/actions/user';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
-import { positionsEnum, rolesEnum } from '@/models/Schema';
-import { useRouter } from 'next/navigation';
+  SelectValue
+} from '@/components/ui/select'
+import { useToast } from '@/hooks/use-toast'
+import { positionsEnum, rolesEnum } from '@/models/Schema'
+import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { createLogger } from '@/lib/debug'
+import { FormInput } from '@/components/ui/form-input'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'forms',
@@ -30,6 +30,7 @@ interface UserEditFormProps {
 }
 
 export function UserEditForm({ user, onSuccess }: UserEditFormProps) {
+  const { toast } = useToast()
   logger.time('user-edit-form-render')
 
   try {
@@ -109,7 +110,7 @@ export function UserEditForm({ user, onSuccess }: UserEditFormProps) {
           'handleSubmit'
         )
         toast({
-          description: "No changes were made to the user\'s information.",
+          description: "No changes were made to the user's information.",
           title: 'No Changes',
           variant: 'default'
         })
@@ -127,7 +128,7 @@ export function UserEditForm({ user, onSuccess }: UserEditFormProps) {
               'handleSubmit'
             )
             toast({
-              description: "The user\'s information has been updated.",
+              description: "The user's information has been updated.",
               title: 'User updated successfully'
             })
             onSuccess?.()
@@ -156,118 +157,104 @@ export function UserEditForm({ user, onSuccess }: UserEditFormProps) {
       <Card className='p-6'>
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div className='grid gap-4 md:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label htmlFor='first_name'>First Name</Label>
-              <Input
-                id='first_name'
-                value={userData.first_name}
-                onChange={e => handleInputChange('first_name', e.target.value)}
-                required
-              />
-            </div>
+            <FormInput
+              label='First Name'
+              name='first_name'
+              value={userData.first_name}
+              rules={[rules.required('First name'), rules.name()]}
+              onValueChange={value => handleInputChange('first_name', value)}
+              required
+            />
+
+            <FormInput
+              label='Last Name'
+              name='last_name'
+              value={userData.last_name}
+              rules={[rules.required('Last name'), rules.name()]}
+              onValueChange={value => handleInputChange('last_name', value)}
+              required
+            />
+
+            <FormInput
+              label='Email'
+              name='email'
+              type='email'
+              value={userData.email}
+              rules={[rules.required('Email'), rules.email()]}
+              onValueChange={value => handleInputChange('email', value)}
+              required
+            />
+
+            <FormInput
+              label='Phone'
+              name='phone'
+              type='tel'
+              value={userData.phone}
+              rules={[rules.phone()]}
+              onValueChange={value => handleInputChange('phone', value)}
+            />
+
+            <FormInput
+              label="Driver's License"
+              name='driver_license'
+              value={userData.driver_license}
+              rules={[rules.driversLicense()]}
+              onValueChange={value =>
+                handleInputChange('driver_license', value)
+              }
+            />
+
+            <FormInput
+              label='Street Address'
+              name='street_address'
+              value={userData.street_address}
+              rules={[rules.streetAddress()]}
+              onValueChange={value =>
+                handleInputChange('street_address', value)
+              }
+            />
+
+            <FormInput
+              label='City'
+              name='city'
+              value={userData.city}
+              rules={[rules.city()]}
+              onValueChange={value => handleInputChange('city', value)}
+            />
+
+            <FormInput
+              label='State'
+              name='state'
+              value={userData.state}
+              rules={[rules.minLength(2, 'State')]}
+              onValueChange={value => handleInputChange('state', value)}
+            />
+
+            <FormInput
+              label='ZIP Code'
+              name='zip_code'
+              value={userData.zip_code}
+              rules={[rules.zipCode()]}
+              onValueChange={value => handleInputChange('zip_code', value)}
+            />
+
+            <FormInput
+              label='Callsign'
+              name='callsign'
+              value={userData.callsign}
+              rules={[rules.minLength(1, 'Callsign')]}
+              onValueChange={value => handleInputChange('callsign', value)}
+            />
+
+            <FormInput
+              label='Radio Number'
+              name='radio_number'
+              value={userData.radio_number}
+              rules={[rules.minLength(1, 'Radio number')]}
+              onValueChange={value => handleInputChange('radio_number', value)}
+            />
 
             <div className='space-y-2'>
-              <Label htmlFor='last_name'>Last Name</Label>
-              <Input
-                id='last_name'
-                value={userData.last_name}
-                onChange={e => handleInputChange('last_name', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
-              <Input
-                id='email'
-                type='email'
-                value={userData.email}
-                onChange={e => handleInputChange('email', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='phone'>Phone</Label>
-              <Input
-                id='phone'
-                type='tel'
-                value={userData.phone}
-                onChange={e => handleInputChange('phone', e.target.value)}
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='driver_license'>Driver's License</Label>
-              <Input
-                id='driver_license'
-                value={userData.driver_license}
-                onChange={e =>
-                  handleInputChange('driver_license', e.target.value)
-                }
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='street_address'>Street Address</Label>
-              <Input
-                id='street_address'
-                value={userData.street_address}
-                onChange={e =>
-                  handleInputChange('street_address', e.target.value)
-                }
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='city'>City</Label>
-              <Input
-                id='city'
-                value={userData.city}
-                onChange={e => handleInputChange('city', e.target.value)}
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='state'>State</Label>
-              <Input
-                id='state'
-                value={userData.state}
-                onChange={e => handleInputChange('state', e.target.value)}
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='zip_code'>ZIP Code</Label>
-              <Input
-                id='zip_code'
-                value={userData.zip_code}
-                onChange={e => handleInputChange('zip_code', e.target.value)}
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='callsign'>Callsign</Label>
-              <Input
-                id='callsign'
-                value={userData.callsign}
-                onChange={e => handleInputChange('callsign', e.target.value)}
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='radio_number'>Radio Number</Label>
-              <Input
-                id='radio_number'
-                value={userData.radio_number}
-                onChange={e =>
-                  handleInputChange('radio_number', e.target.value)
-                }
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='role'>Role</Label>
               <Select
                 value={userData.role}
                 onValueChange={value => handleInputChange('role', value)}
@@ -286,7 +273,6 @@ export function UserEditForm({ user, onSuccess }: UserEditFormProps) {
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='position'>Position</Label>
               <Select
                 value={userData.position}
                 onValueChange={value => handleInputChange('position', value)}

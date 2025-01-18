@@ -8,14 +8,14 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { FormInput } from '@/components/ui/form-input'
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
 import Link from 'next/link'
 import { createClient } from '@/lib/client'
 import { createLogger } from '@/lib/debug'
+import { rules } from '@/lib/validation'
+import { useToast } from '@/hooks/use-toast'
 
 const logger = createLogger({
   module: 'auth',
@@ -25,6 +25,7 @@ const logger = createLogger({
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,7 +54,11 @@ export default function ForgotPasswordForm() {
           },
           'handleSubmit'
         )
-        toast.error(error.message || 'Failed to send reset email')
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to send reset email',
+          variant: 'destructive'
+        })
         return
       }
 
@@ -62,14 +67,22 @@ export default function ForgotPasswordForm() {
         { email },
         'handleSubmit'
       )
-      toast.success('Check your email for the password reset link')
+      toast({
+        title: 'Success',
+        description: 'Check your email for the password reset link',
+        variant: 'default'
+      })
     } catch (error) {
       logger.error(
         'Unexpected error during password reset request',
         logger.errorWithData(error),
         'handleSubmit'
       )
-      toast.error('An unexpected error occurred')
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive'
+      })
     } finally {
       setLoading(false)
       logger.timeEnd(resetLabel)
@@ -86,17 +99,16 @@ export default function ForgotPasswordForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className='grid gap-4'>
-          <div className='grid gap-2'>
-            <Label htmlFor='email'>Email</Label>
-            <Input
-              id='email'
-              type='email'
-              placeholder='name@example.com'
-              required
-              onChange={e => setEmail(e.target.value)}
-              value={email}
-            />
-          </div>
+          <FormInput
+            label='Email'
+            name='email'
+            type='email'
+            placeholder='name@example.com'
+            rules={[rules.required('Email'), rules.email()]}
+            onValueChange={setEmail}
+            value={email}
+            required
+          />
 
           <Button type='submit' className='w-full' disabled={loading}>
             {loading ? <Loader2 className='animate-spin' /> : 'Send Reset Link'}

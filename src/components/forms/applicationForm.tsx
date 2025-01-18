@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FormInput } from '@/components/ui/form-input'
 import {
   Select,
   SelectContent,
@@ -25,6 +26,7 @@ import type { Session } from '@supabase/supabase-js'
 import { updateUser } from '@/actions/user'
 import { STATES } from '@/libs/States'
 import { LoadingCard } from '@/components/ui/loading'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'forms',
@@ -97,6 +99,7 @@ export function ApplicationForm({ user }: Props) {
   const [selectedLicenseState, setSelectedLicenseState] = useState(
     user.driver_license_state || ''
   )
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const supabase = createClient()
 
   logger.time('application-form-render')
@@ -206,6 +209,20 @@ export function ApplicationForm({ user }: Props) {
       }
 
       const formData = new FormData(e.currentTarget)
+      const errors: Record<string, string> = {}
+
+      // Validate state selections
+      if (!selectedState) {
+        errors.state = 'Please select a state'
+      }
+      if (!selectedLicenseState) {
+        errors.driver_license_state = "Please select a driver's license state"
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFormErrors(errors)
+        return
+      }
 
       logger.info(
         'Submitting application',
@@ -362,66 +379,65 @@ export function ApplicationForm({ user }: Props) {
           </h2>
           <div className='grid gap-6'>
             <div className='grid grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='first_name'>First Name</Label>
-                <Input
-                  id='first_name'
-                  name='first_name'
-                  placeholder='Enter your first name'
-                  className='w-full'
-                  defaultValue={user.first_name}
-                  required
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='last_name'>Last Name</Label>
-                <Input
-                  id='last_name'
-                  name='last_name'
-                  placeholder='Enter your last name'
-                  className='w-full'
-                  defaultValue={user.last_name}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
-              <Input
-                id='email'
-                name='email'
-                type='email'
-                placeholder='Enter your email'
-                className='w-full'
-                defaultValue={user.email}
+              <FormInput
+                label='First Name'
+                name='first_name'
+                defaultValue={user.first_name}
+                rules={[
+                  rules.required('First name'),
+                  rules.minLength(2, 'First name'),
+                  rules.name()
+                ]}
+                placeholder='Enter your first name'
+                required
+              />
+              <FormInput
+                label='Last Name'
+                name='last_name'
+                defaultValue={user.last_name}
+                rules={[
+                  rules.required('Last name'),
+                  rules.minLength(2, 'Last name'),
+                  rules.name()
+                ]}
+                placeholder='Enter your last name'
                 required
               />
             </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='phone'>Phone Number</Label>
-              <Input
-                id='phone'
-                name='phone'
-                type='tel'
-                placeholder='Enter your phone number'
-                className='w-full'
-                defaultValue={user.phone || ''}
-                required
-              />
-            </div>
+            <FormInput
+              label='Email'
+              name='email'
+              type='email'
+              defaultValue={user.email}
+              rules={[rules.required('Email'), rules.email()]}
+              placeholder='Enter your email'
+              required
+            />
 
-            <div className='space-y-2'>
-              <Label htmlFor='driver_license'>Driver&apos;s License</Label>
-              <Input
-                id='driver_license'
-                name='driver_license'
-                placeholder="Enter your driver's license number"
-                className='w-full'
-                required
-              />
-            </div>
+            <FormInput
+              label='Phone Number'
+              name='phone'
+              type='tel'
+              defaultValue={user.phone || ''}
+              formatter='phone'
+              rules={[rules.required('Phone number'), rules.phone()]}
+              placeholder='(XXX) XXX-XXXX'
+              required
+            />
+
+            <FormInput
+              label="Driver's License"
+              name='driver_license'
+              defaultValue={user.driver_license || ''}
+              formatter='driversLicense'
+              rules={[
+                rules.required("Driver's license"),
+                rules.driversLicense()
+              ]}
+              placeholder="Enter your driver's license number"
+              required
+            />
 
             <div className='space-y-2'>
               <Label htmlFor='driver_license_state'>
@@ -432,7 +448,11 @@ export function ApplicationForm({ user }: Props) {
                 value={selectedLicenseState}
                 onValueChange={setSelectedLicenseState}
               >
-                <SelectTrigger>
+                <SelectTrigger
+                  className={
+                    formErrors.driver_license_state ? 'border-red-500' : ''
+                  }
+                >
                   <SelectValue placeholder='Select state' />
                 </SelectTrigger>
                 <SelectContent>
@@ -446,6 +466,11 @@ export function ApplicationForm({ user }: Props) {
                   ))}
                 </SelectContent>
               </Select>
+              {formErrors.driver_license_state && (
+                <p className='mt-1 text-xs text-red-500'>
+                  {formErrors.driver_license_state}
+                </p>
+              )}
             </div>
           </div>
         </Card>
@@ -455,30 +480,25 @@ export function ApplicationForm({ user }: Props) {
             Address Information
           </h2>
           <div className='grid gap-6'>
-            <div className='space-y-2'>
-              <Label htmlFor='street_address'>Street Address</Label>
-              <Input
-                id='street_address'
-                name='street_address'
-                placeholder='Enter your street address'
-                className='w-full'
-                defaultValue={user.street_address || ''}
-                required
-              />
-            </div>
+            <FormInput
+              label='Street Address'
+              name='street_address'
+              defaultValue={user.street_address || ''}
+              rules={[rules.required('Street address'), rules.streetAddress()]}
+              placeholder='Enter your street address'
+              required
+            />
 
             <div className='grid grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='city'>City</Label>
-                <Input
-                  id='city'
-                  name='city'
-                  placeholder='Enter your city'
-                  className='w-full'
-                  defaultValue={user.city || ''}
-                  required
-                />
-              </div>
+              <FormInput
+                label='City'
+                name='city'
+                defaultValue={user.city || ''}
+                rules={[rules.required('City'), rules.city()]}
+                placeholder='Enter your city'
+                required
+              />
+
               <div className='space-y-2'>
                 <Label htmlFor='state'>State</Label>
                 <Select
@@ -486,7 +506,9 @@ export function ApplicationForm({ user }: Props) {
                   value={selectedState}
                   onValueChange={setSelectedState}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger
+                    className={formErrors.state ? 'border-red-500' : ''}
+                  >
                     <SelectValue placeholder='Select state' />
                   </SelectTrigger>
                   <SelectContent>
@@ -500,20 +522,23 @@ export function ApplicationForm({ user }: Props) {
                     ))}
                   </SelectContent>
                 </Select>
+                {formErrors.state && (
+                  <p className='mt-1 text-xs text-red-500'>
+                    {formErrors.state}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='zip_code'>ZIP Code</Label>
-              <Input
-                id='zip_code'
-                name='zip_code'
-                placeholder='Enter your ZIP code'
-                className='w-full'
-                defaultValue={user.zip_code || ''}
-                required
-              />
-            </div>
+            <FormInput
+              label='ZIP Code'
+              name='zip_code'
+              defaultValue={user.zip_code || ''}
+              formatter='zipCode'
+              rules={[rules.required('ZIP code'), rules.zipCode()]}
+              placeholder='Enter your ZIP code'
+              required
+            />
           </div>
         </Card>
 

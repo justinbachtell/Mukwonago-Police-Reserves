@@ -12,7 +12,6 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -20,12 +19,14 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { createLogger } from '@/lib/debug'
+import { FormInput } from '@/components/ui/form-input'
+import { FormTextarea } from '@/components/ui/form-textarea'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'admin',
@@ -242,12 +243,15 @@ export function AssignEquipmentForm({
               <FormItem>
                 <FormLabel>Assigned Date</FormLabel>
                 <FormControl>
-                  <Input
+                  <FormInput
                     type='date'
+                    name='assigned_date'
+                    label='Assigned Date'
                     value={
                       field.value ? field.value.toISOString().split('T')[0] : ''
                     }
-                    onChange={e => field.onChange(e.target.valueAsDate)}
+                    onValueChange={value => field.onChange(new Date(value))}
+                    rules={[rules.required('Assigned date')]}
                   />
                 </FormControl>
                 <FormMessage />
@@ -262,10 +266,14 @@ export function AssignEquipmentForm({
               <FormItem>
                 <FormLabel>Notes</FormLabel>
                 <FormControl>
-                  <Textarea
+                  <FormTextarea
                     {...field}
+                    label='Notes'
+                    name='notes'
                     value={field.value || ''}
                     placeholder='Enter any additional notes'
+                    rules={[rules.notes()]}
+                    onValueChange={field.onChange}
                   />
                 </FormControl>
                 <FormMessage />
