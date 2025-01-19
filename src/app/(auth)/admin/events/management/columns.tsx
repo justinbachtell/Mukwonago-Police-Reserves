@@ -17,11 +17,78 @@ import { EventParticipantsDialog } from '@/components/admin/events/EventParticip
 import { toast } from 'sonner'
 import { deleteEvent } from '@/actions/event'
 import { createLogger } from '@/lib/debug'
+import { useState } from 'react'
 
 const logger = createLogger({
   module: 'admin',
   file: 'events/management/columns.tsx'
 })
+
+// Action cell component
+const ActionCell = ({
+  event,
+  onDataChange
+}: {
+  event: Event
+  onDataChange?: () => void
+}) => {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  const handleDelete = async () => {
+    try {
+      logger.info('Deleting event', { eventId: event.id }, 'handleDelete')
+      await deleteEvent(event.id)
+      toast.success('Event deleted successfully')
+      onDataChange?.()
+    } catch (error) {
+      logger.error(
+        'Error deleting event',
+        logger.errorWithData(error),
+        'handleDelete'
+      )
+      toast.error('Failed to delete event')
+    }
+  }
+
+  return (
+    <div className='flex items-center justify-end gap-2'>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='size-8'
+            title='Edit Event'
+          >
+            <Pencil className='size-4' />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Event</DialogTitle>
+          </DialogHeader>
+          <EventForm
+            event={event}
+            onSuccess={() => {
+              setIsEditDialogOpen(false)
+              onDataChange?.()
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Button
+        variant='ghost'
+        size='icon'
+        className='size-8'
+        onClick={handleDelete}
+        title='Delete Event'
+      >
+        <Trash className='size-4' />
+      </Button>
+    </div>
+  )
+}
 
 export const columns: ColumnDef<Event>[] = [
   {
@@ -207,56 +274,6 @@ export const columns: ColumnDef<Event>[] = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => {
-      const event = row.original
-
-      const handleDelete = async () => {
-        try {
-          logger.info('Deleting event', { eventId: event.id }, 'handleDelete')
-          await deleteEvent(event.id)
-          toast.success('Event deleted successfully')
-        } catch (error) {
-          logger.error(
-            'Error deleting event',
-            logger.errorWithData(error),
-            'handleDelete'
-          )
-          toast.error('Failed to delete event')
-        }
-      }
-
-      return (
-        <div className='flex items-center justify-end gap-2'>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant='ghost'
-                size='icon'
-                className='size-8'
-                title='Edit Event'
-              >
-                <Pencil className='size-4' />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Event</DialogTitle>
-              </DialogHeader>
-              <EventForm event={event} />
-            </DialogContent>
-          </Dialog>
-
-          <Button
-            variant='ghost'
-            size='icon'
-            className='size-8'
-            onClick={handleDelete}
-            title='Delete Event'
-          >
-            <Trash className='size-4' />
-          </Button>
-        </div>
-      )
-    }
+    cell: ({ row }) => <ActionCell event={row.original} />
   }
 ]

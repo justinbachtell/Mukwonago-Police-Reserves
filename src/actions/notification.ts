@@ -297,11 +297,12 @@ export async function createApplicationNotification(
 
 export async function createEventNotification(
   eventName: string,
-  eventId: number
+  eventId: number,
+  type: 'event_created' | 'event_updated' = 'event_created'
 ) {
   logger.info(
     'Creating event notification',
-    { eventName, eventId },
+    { eventName, eventId, type },
     'createEventNotification'
   )
   logger.time('create-event-notification')
@@ -330,8 +331,8 @@ export async function createEventNotification(
 
     const result = await createNotificationWithRecipients(
       {
-        type: 'event_created',
-        message: `A new event "${eventName}" has been created`,
+        type,
+        message: eventName,
         url: null
       },
       reserveUsers.map(u => u.id)

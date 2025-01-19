@@ -125,7 +125,6 @@ export function ReturnEquipmentForm({ assignmentId, currentCondition }: ReturnEq
               name='notes'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <FormTextarea
                       {...field}

@@ -480,7 +480,7 @@ export default async function AdminDashboardPage() {
                 href={action.href as Route}
                 className={`group flex w-full items-center justify-between rounded-lg border-0 bg-white/80 p-4 shadow-md transition-all hover:-translate-y-1 hover:shadow-lg ${action.hoverClass} dark:bg-white/5`}
               >
-                <div className='flex items-center gap-3'>
+                <div className='flex w-full items-center justify-center gap-3 md:justify-start'>
                   <action.icon
                     className={`size-5 ${action.iconClass} transition-transform group-hover:scale-110`}
                   />

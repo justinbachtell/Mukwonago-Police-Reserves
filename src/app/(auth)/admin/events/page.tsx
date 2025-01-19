@@ -109,7 +109,7 @@ export default function AdminEventsPage() {
         </CardContent>
       </Card>
 
-      <div className='mb-6 flex items-center justify-between'>
+      <div className='mb-6 flex flex-col items-center justify-between gap-4 md:flex-row'>
         <div>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>
             Event Management
@@ -142,7 +142,7 @@ export default function AdminEventsPage() {
         </Dialog>
       </div>
 
-      <EventsManagementTable data={events} />
+      <EventsManagementTable data={events} onDataChange={fetchEvents} />
     </div>
   )
 }
