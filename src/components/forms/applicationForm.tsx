@@ -202,12 +202,6 @@ export function ApplicationForm({ user }: Props) {
         return
       }
 
-      if (!selectedFile) {
-        logger.warn('No file selected', undefined, 'handleSubmit')
-        toast.error('Please select a resume file')
-        return
-      }
-
       const formData = new FormData(e.currentTarget)
       const errors: Record<string, string> = {}
 
@@ -237,39 +231,37 @@ export function ApplicationForm({ user }: Props) {
 
       startTransition(async () => {
         try {
-          // Upload resume
-          logger.time('resume-upload')
+          // Upload resume if selected
           let resumePath: string | undefined
-          try {
-            resumePath = await uploadResume(
-              selectedFile,
-              formData.get('first_name') as string,
-              formData.get('last_name') as string
-            )
-            logger.timeEnd('resume-upload')
-            logger.info(
-              'Resume uploaded successfully',
-              { path: resumePath },
-              'handleSubmit'
-            )
-          } catch (uploadError) {
-            logger.error(
-              'Resume upload failed',
-              logger.errorWithData(uploadError),
-              'handleSubmit'
-            )
-            throw new Error(
-              uploadError instanceof Error
-                ? uploadError.message
-                : 'Failed to upload resume'
-            )
+          if (selectedFile !== null) {
+            logger.time('resume-upload')
+            try {
+              resumePath = await uploadResume(
+                selectedFile,
+                formData.get('first_name') as string,
+                formData.get('last_name') as string
+              )
+              logger.timeEnd('resume-upload')
+              logger.info(
+                'Resume uploaded successfully',
+                { path: resumePath },
+                'handleSubmit'
+              )
+            } catch (uploadError) {
+              logger.error(
+                'Resume upload failed',
+                logger.errorWithData(uploadError),
+                'handleSubmit'
+              )
+              throw new Error(
+                uploadError instanceof Error
+                  ? uploadError.message
+                  : 'Failed to upload resume'
+              )
+            }
           }
 
-          if (!resumePath) {
-            throw new Error('No resume path returned from upload')
-          }
-
-          // Create application with resume path
+          // Create application with optional resume path
           const result = await createApplication({
             first_name: formData.get('first_name') as string,
             last_name: formData.get('last_name') as string,
@@ -289,7 +281,7 @@ export function ApplicationForm({ user }: Props) {
             availability: formData.get('availability') as Availability,
             position: formData.get('position') as Position,
             user_id: user.id,
-            resume: resumePath
+            ...(resumePath && { resume: resumePath })
           })
 
           if (result?.id) {
@@ -343,8 +335,8 @@ export function ApplicationForm({ user }: Props) {
             extra: {
               context: 'ApplicationForm submission',
               hasFile: true,
-              fileSize: selectedFile.size,
-              fileType: selectedFile.type,
+              fileSize: selectedFile?.size,
+              fileType: selectedFile?.type,
               userId: user.id
             },
             tags: {
@@ -548,7 +540,7 @@ export function ApplicationForm({ user }: Props) {
           </h2>
           <div className='space-y-2'>
             <Label htmlFor='resume'>
-              Resume (PDF, Word, JPEG, or PNG - Max 5MB)
+              Resume (Optional - PDF, Word, JPEG, or PNG - Max 5MB)
             </Label>
             <Input
               id='resume'

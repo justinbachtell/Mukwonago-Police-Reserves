@@ -16,7 +16,7 @@ Developer experience first, extremely flexible code structure and only keep what
 - 🔥 Type checking with [TypeScript](https://www.typescriptlang.org)
 - 💎 Integrated with [Tailwind CSS](https://tailwindcss.com)
 - ✅ Strict Mode for TypeScript and React 19
-- 🔒 Authentication with [Better Auth](https://www.better-auth.com/).
+- 🔒 Authentication with [Supabase Auth](https://supabase.com/docs/guides/auth).
 - 📦 Type-safe ORM with [DrizzleORM](https://orm.drizzle.team/), powered by [Supabase](https://supabase.com/)
 - 💽 Offline and local development database with Supabase
 - ♻️ Type-safe environment variables with T3 Env
@@ -35,7 +35,6 @@ Developer experience first, extremely flexible code structure and only keep what
 - 🚨 Error Monitoring with [Sentry](https://sentry.io/for/nextjs/)
 - ☂️ Code coverage with [Codecov](https://about.codecov.io/codecov-free-trial/)
 - 📝 Logging with Pino.js and Log Management with [Better Stack](https://betterstack.com/)
-- 🖥️ Monitoring as Code with [Checkly](https://www.checklyhq.com/)
 - 🔐 Security and bot protection ([Arcjet](https://launch.arcjet.com/Q6eLbRE))
 - 🎁 Automatic changelog generation with Semantic Release
 - 🔍 Visual testing with Percy (Optional)
@@ -72,13 +71,7 @@ Open http://localhost:3000 with your favorite browser to see your project.
 
 ### Set up authentication
 
-### TODO
-
-```shell
-
-```
-
-Now you have a fully functional authentication system with Next.js, including features such as sign up, sign in, sign out, forgot password, reset password, update profile, update password, update email, delete account, and more.
+Built-in is a fully functional authentication system with Next.js, including features such as sign up, sign in, sign out, forgot password, reset password, update profile, update password, update email, delete account, and more.
 
 ### Set up remote database
 
@@ -152,8 +145,6 @@ The project follows the [Conventional Commits](https://www.conventionalcommits.o
 ```shell
 npm run commit
 ```
-
-One of the benefits of using Conventional Commits is the ability to automatically generate a `CHANGELOG` file. It also allows us to automatically determine the next version number based on the types of commits that are included in a release.
 
 ### Testing
 
@@ -236,11 +227,7 @@ After creating the source, you will be able to view and copy your source token. 
 
 ### Checkly monitoring
 
-The project uses [Checkly](https://www.checklyhq.com) to ensure that your production environment is always up and running. At regular intervals, Checkly runs the tests ending with `*.check.e2e.ts` extension and notifies you if any of the tests fail. Additionally, you have the flexibility to execute tests from multiple locations to ensure that your application is available worldwide.
-
-To use Checkly, you must first create an account on [their website](https://www.checklyhq.com). After creating an account, generate a new API key in the Checkly Dashboard and set the `CHECKLY_API_KEY` environment variable in GitHub Actions. Additionally, you will need to define the `CHECKLY_ACCOUNT_ID`, which can also be found in your Checkly Dashboard under User Settings > General.
-
-To complete the setup, update the `checkly.config.ts` file with your own email address and production URL.
+The project uses [Checkly](https://www.checklyhq.com) to ensure that the production environment is always up and running. At regular intervals, Checkly runs the tests ending with `*.check.e2e.ts` extension and notifies you if any of the tests fail. Additionally, you have the flexibility to execute tests from multiple locations to ensure that your application is available worldwide.
 
 ### Arcjet security and bot protection
 

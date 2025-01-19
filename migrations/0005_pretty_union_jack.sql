@@ -1,1 +1,0 @@
-ALTER TABLE "application" ADD COLUMN "driver_license_state" text NOT NULL;
