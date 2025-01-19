@@ -1,5 +1,5 @@
 {
-  "id": "5cf140fd-50bf-4af3-a9c5-80726bf4a217",
+  "id": "53695ff0-753c-4028-ba30-c5837031c289",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -30,6 +30,12 @@
         },
         "driver_license": {
           "name": "driver_license",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "driver_license_state": {
+          "name": "driver_license_state",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -606,6 +612,26 @@
           "notNull": true,
           "default": "now()"
         },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "min_participants": {
+          "name": "min_participants",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "max_participants": {
+          "name": "max_participants",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 5
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -613,11 +639,151 @@
           "notNull": true,
           "default": "now()"
         },
-        "notes": {
-          "name": "notes",
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_reminder_sent": {
+          "name": "last_reminder_sent",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.notification_recipients": {
+      "name": "notification_recipients",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "notification_id": {
+          "name": "notification_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_read": {
+          "name": "is_read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "notification_recipients_notification_id_notifications_id_fk": {
+          "name": "notification_recipients_notification_id_notifications_id_fk",
+          "tableFrom": "notification_recipients",
+          "tableTo": "notifications",
+          "columnsFrom": [
+            "notification_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "notification_recipients_user_id_user_id_fk": {
+          "name": "notification_recipients_user_id_user_id_fk",
+          "tableFrom": "notification_recipients",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "notification_recipient_user": {
+          "name": "notification_recipient_user",
+          "nullsNotDistinct": false,
+          "columns": [
+            "notification_id",
+            "user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.notifications": {
+      "name": "notifications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "notification_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
@@ -695,6 +861,19 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "last_reminder_sent": {
+          "name": "last_reminder_sent",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -814,7 +993,8 @@
         },
         "training_type": {
           "name": "training_type",
-          "type": "text",
+          "type": "training_type",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -822,7 +1002,7 @@
           "name": "training_instructor",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "training_start_time": {
           "name": "training_start_time",
@@ -838,6 +1018,27 @@
           "notNull": true,
           "default": "now()"
         },
+        "is_locked": {
+          "name": "is_locked",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "min_participants": {
+          "name": "min_participants",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "max_participants": {
+          "name": "max_participants",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -851,6 +1052,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "last_reminder_sent": {
+          "name": "last_reminder_sent",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -1067,7 +1274,7 @@
           "name": "email",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "first_name": {
           "name": "first_name",
@@ -1245,6 +1452,33 @@
         "other"
       ]
     },
+    "public.notification_type": {
+      "name": "notification_type",
+      "schema": "public",
+      "values": [
+        "application_submitted",
+        "application_approved",
+        "application_rejected",
+        "event_created",
+        "event_updated",
+        "event_signup",
+        "event_signup_reminder",
+        "training_created",
+        "training_updated",
+        "training_signup",
+        "training_signup_reminder",
+        "equipment_assigned",
+        "equipment_returned",
+        "equipment_return_reminder",
+        "policy_created",
+        "policy_updated",
+        "policy_reminder",
+        "event_reminder",
+        "training_reminder",
+        "general",
+        "announcement"
+      ]
+    },
     "public.position": {
       "name": "position",
       "schema": "public",
@@ -1253,7 +1487,8 @@
         "officer",
         "reserve",
         "admin",
-        "staff"
+        "staff",
+        "dispatcher"
       ]
     },
     "public.prior_experience": {
@@ -1273,6 +1508,18 @@
         "admin",
         "member",
         "guest"
+      ]
+    },
+    "public.training_type": {
+      "name": "training_type",
+      "schema": "public",
+      "values": [
+        "firearms",
+        "defensive_tactics",
+        "emergency_vehicle_operations",
+        "first_aid",
+        "legal_updates",
+        "other"
       ]
     },
     "public.user_status": {
