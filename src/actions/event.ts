@@ -145,7 +145,11 @@ export async function createEvent(data: NewEvent) {
       return null
     }
 
-    await createEventNotification(newEvent.event_name, newEvent.id)
+    await createEventNotification(
+      `A new event has been created: ${newEvent.event_name}`,
+      newEvent.id,
+      'event_created'
+    )
 
     logger.info(
       'Event created successfully',
@@ -221,8 +225,9 @@ export async function updateEvent(id: number, data: UpdateEvent) {
     }
 
     await createEventNotification(
-      `${updatedEvent.event_name} (Updated)`,
-      updatedEvent.id
+      `An event has been updated: ${updatedEvent.event_name}`,
+      updatedEvent.id,
+      'event_updated'
     )
 
     logger.info(

@@ -37,21 +37,6 @@ const logger = createLogger({
   file: 'TrainingForm.tsx'
 })
 
-const formSchema = z.object({
-  name: z.string().min(1, 'Training name is required'),
-  training_type: z.enum(trainingTypeEnum.enumValues),
-  training_date: z.string().min(1, 'Training date is required'),
-  training_start_time: z.string().min(1, 'Start time is required'),
-  training_end_time: z.string().min(1, 'End time is required'),
-  training_location: z.string().min(1, 'Location is required'),
-  training_instructor: z.string().nullable(),
-  description: z.string().optional(),
-  is_locked: z.boolean().default(false),
-  assigned_users: z.array(z.string()).optional()
-})
-
-type FormValues = z.infer<typeof formSchema>
-
 interface TrainingFormProps {
   training?: Training
   onSuccess?: () => void
@@ -71,6 +56,46 @@ export function TrainingForm({
     { trainingId: training?.id },
     'TrainingForm'
   )
+
+  type FormValues = {
+    name: string
+    training_type: (typeof trainingTypeEnum.enumValues)[number]
+    training_date: string
+    training_start_time: string
+    training_end_time: string
+    training_location: string
+    training_instructor: string | null
+    description?: string
+    is_locked: boolean
+    assigned_users?: string[]
+    min_participants: number
+    max_participants: number
+  }
+
+  const formSchema = z
+    .object({
+      name: z.string().min(1, 'Training name is required'),
+      training_type: z.enum(trainingTypeEnum.enumValues),
+      training_date: z.string().min(1, 'Training date is required'),
+      training_start_time: z.string().min(1, 'Start time is required'),
+      training_end_time: z.string().min(1, 'End time is required'),
+      training_location: z.string().min(1, 'Location is required'),
+      training_instructor: z.string().nullable(),
+      description: z.string().optional(),
+      is_locked: z.boolean().default(false),
+      assigned_users: z.array(z.string()).optional(),
+      min_participants: z
+        .number()
+        .min(1, 'Minimum participants must be at least 1'),
+      max_participants: z
+        .number()
+        .min(1, 'Maximum participants must be at least 1')
+    })
+    .refine(data => data.max_participants >= data.min_participants, {
+      message:
+        'Maximum participants must be greater than or equal to minimum participants',
+      path: ['max_participants']
+    })
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -98,7 +123,9 @@ export function TrainingForm({
       training_instructor: training?.training_instructor || null,
       description: training?.description || '',
       is_locked: training?.is_locked || false,
-      assigned_users: training?.assignments?.map(a => a.user_id) || []
+      assigned_users: training?.assignments?.map(a => a.user_id) || [],
+      min_participants: training?.min_participants || 1,
+      max_participants: training?.max_participants || 10
     }
   })
 
@@ -330,7 +357,11 @@ export function TrainingForm({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value='none'>No instructor</SelectItem>
-                  {/* TODO: Add instructor options */}
+                  {availableUsers.map(user => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.first_name} {user.last_name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -351,6 +382,50 @@ export function TrainingForm({
             </FormItem>
           )}
         />
+
+        <div className='grid grid-cols-2 gap-4'>
+          <FormField
+            control={form.control}
+            name='min_participants'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Minimum Participants</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    min={1}
+                    {...field}
+                    onChange={e =>
+                      field.onChange(Number.parseInt(e.target.value))
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='max_participants'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Maximum Participants</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    min={1}
+                    {...field}
+                    onChange={e =>
+                      field.onChange(Number.parseInt(e.target.value))
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}

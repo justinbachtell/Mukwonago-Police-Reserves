@@ -241,7 +241,6 @@ export function AssignEquipmentForm({
             name='assigned_date'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Assigned Date</FormLabel>
                 <FormControl>
                   <FormInput
                     type='date'
@@ -264,7 +263,6 @@ export function AssignEquipmentForm({
             name='notes'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Notes</FormLabel>
                 <FormControl>
                   <FormTextarea
                     {...field}

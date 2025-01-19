@@ -14,6 +14,8 @@ export interface Training {
   training_start_time: string
   training_end_time: string
   is_locked: boolean
+  min_participants: number
+  max_participants: number
   created_at: string
   updated_at: string
 
@@ -47,4 +49,6 @@ export type RequiredTrainingFields = Pick<
   | 'training_start_time'
   | 'training_end_time'
   | 'is_locked'
+  | 'min_participants'
+  | 'max_participants'
 >

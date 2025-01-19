@@ -14,6 +14,7 @@ const logger = createLogger({
 
 interface EventsManagementTableProps {
   data: Event[]
+  onDataChange?: () => void
 }
 
 export function EventsManagementTable({ data }: EventsManagementTableProps) {

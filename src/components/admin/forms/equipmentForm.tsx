@@ -206,7 +206,6 @@ export function EquipmentForm({
             name='name'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
                 <FormControl>
                   <FormInput
                     {...field}
@@ -226,7 +225,6 @@ export function EquipmentForm({
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
                 <FormControl>
                   <FormTextarea
                     {...field}
@@ -247,7 +245,6 @@ export function EquipmentForm({
             name='serial_number'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Serial Number</FormLabel>
                 <FormControl>
                   <FormInput
                     {...field}
@@ -268,7 +265,6 @@ export function EquipmentForm({
             name='purchase_date'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Purchase Date</FormLabel>
                 <FormControl>
                   <FormInput
                     type='date'
@@ -311,7 +307,6 @@ export function EquipmentForm({
             name='notes'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Notes</FormLabel>
                 <FormControl>
                   <FormTextarea
                     {...field}

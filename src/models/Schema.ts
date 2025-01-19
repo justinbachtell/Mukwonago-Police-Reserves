@@ -277,7 +277,7 @@ export const events = pgTable('events', {
     .notNull(),
   notes: text('notes'),
   min_participants: integer('min_participants').notNull().default(1),
-  max_participants: integer('max_participants').notNull().default(2),
+  max_participants: integer('max_participants').notNull().default(5),
   created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -343,6 +343,8 @@ export const training = pgTable('training', {
     .defaultNow()
     .notNull(),
   is_locked: boolean('is_locked').notNull().default(false),
+  min_participants: integer('min_participants').notNull().default(1),
+  max_participants: integer('max_participants').notNull().default(10),
   created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
     .defaultNow()
     .notNull(),

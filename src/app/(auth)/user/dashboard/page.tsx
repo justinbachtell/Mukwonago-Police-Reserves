@@ -488,7 +488,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className='grid w-full items-center justify-center gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6'>
+          <div className='flex w-full flex-col items-center justify-center gap-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6'>
             {[
               {
                 href: '/user/equipment' as Route,
@@ -515,11 +515,12 @@ export default async function DashboardPage() {
                 iconClass: 'text-purple-500 dark:text-purple-400'
               },
               {
-                title: 'Policies',
-                description: 'View and complete required policies',
+                href: '/user/policies' as Route,
                 icon: ScrollText,
-                href: '/policies' as Route,
-                color: 'text-indigo-500'
+                label: 'View Policies',
+                color: 'red',
+                hoverClass: 'hover:bg-red-50/50 dark:hover:bg-red-900/20',
+                iconClass: 'text-red-500 dark:text-red-400'
               }
             ].map((action, index) => (
               <Link
@@ -527,7 +528,7 @@ export default async function DashboardPage() {
                 href={action.href}
                 className={`group flex w-full items-center justify-between rounded-lg border-0 bg-white/80 p-4 shadow-md transition-all hover:-translate-y-1 hover:shadow-lg ${action.hoverClass} dark:bg-white/5`}
               >
-                <div className='flex items-center gap-3'>
+                <div className='flex w-full items-center justify-center gap-3 md:justify-start'>
                   <action.icon
                     className={`size-5 ${action.iconClass} transition-transform group-hover:scale-110`}
                   />

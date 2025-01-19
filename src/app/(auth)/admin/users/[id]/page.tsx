@@ -76,7 +76,7 @@ export default async function UserProfilePage({ params }: PageProps) {
 
     return (
       <div className='container mx-auto min-h-screen px-4 md:px-6 lg:px-10'>
-        <div className='mb-8 flex items-center justify-between'>
+        <div className='mb-8 flex flex-col items-center justify-between gap-4 md:flex-row'>
           <div>
             <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>
               User Profile

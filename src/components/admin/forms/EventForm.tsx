@@ -3,7 +3,6 @@
 import type { Event, NewEvent, UpdateEvent } from '@/types/event'
 import { eventTypesEnum } from '@/models/Schema'
 import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
 import {
   Form,
   FormControl,
@@ -12,11 +11,7 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover'
+
 import {
   Select,
   SelectContent,
@@ -25,10 +20,9 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { createEvent, updateEvent } from '@/actions/event'
-import { cn, toISOString } from '@/lib/utils'
+import { toISOString } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
-import { CalendarIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -46,17 +40,29 @@ const logger = createLogger({
   file: 'EventForm.tsx'
 })
 
-const formSchema = z.object({
-  event_name: z.string().min(1, 'Event name is required'),
-  event_type: z.enum(eventTypesEnum.enumValues),
-  event_date: z.date({
-    required_error: 'Event date is required'
-  }),
-  event_start_time: z.string().min(1, 'Start time is required'),
-  event_end_time: z.string().min(1, 'End time is required'),
-  event_location: z.string().min(1, 'Location is required'),
-  notes: z.string().nullable()
-})
+const formSchema = z
+  .object({
+    event_name: z.string().min(1, 'Event name is required'),
+    event_type: z.enum(eventTypesEnum.enumValues),
+    event_date: z.date({
+      required_error: 'Event date is required'
+    }),
+    event_start_time: z.string().min(1, 'Start time is required'),
+    event_end_time: z.string().min(1, 'End time is required'),
+    event_location: z.string().min(1, 'Location is required'),
+    notes: z.string().nullable(),
+    min_participants: z
+      .number()
+      .min(1, 'Minimum participants must be at least 1'),
+    max_participants: z
+      .number()
+      .min(1, 'Maximum participants must be at least 1')
+  })
+  .refine(data => data.max_participants >= data.min_participants, {
+    message:
+      'Maximum participants must be greater than or equal to minimum participants',
+    path: ['max_participants']
+  })
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -94,14 +100,24 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
       event_name: event?.event_name || '',
       event_type: event?.event_type || 'community_event',
       event_date: event ? new Date(event.event_date) : new Date(),
-      event_start_time: event?.event_start_time
-        ? format(new Date(event.event_start_time), 'HH:mm')
+      event_start_time: event
+        ? new Date(event.event_start_time).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          })
         : '',
-      event_end_time: event?.event_end_time
-        ? format(new Date(event.event_end_time), 'HH:mm')
+      event_end_time: event
+        ? new Date(event.event_end_time).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          })
         : '',
       event_location: event?.event_location || '',
-      notes: event?.notes || null
+      notes: event?.notes || '',
+      min_participants: event?.min_participants || 1,
+      max_participants: event?.max_participants || 5
     }
   })
 
@@ -214,7 +230,6 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
             name='event_name'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Event Name</FormLabel>
                 <FormControl>
                   <FormInput
                     {...field}
@@ -265,37 +280,19 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
             control={form.control}
             name='event_date'
             render={({ field }) => (
-              <FormItem className='flex flex-col'>
-                <FormLabel>Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant='outline'
-                        className={cn(
-                          'w-full pl-3 text-left font-normal',
-                          !field.value && 'text-muted-foreground'
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, 'PPP')
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className='ml-auto size-4 opacity-50' />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className='w-auto p-0' align='start'>
-                    <Calendar
-                      mode='single'
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={date => date < new Date()}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+              <FormItem>
+                <FormControl>
+                  <FormInput
+                    type='date'
+                    label='Date'
+                    name='event_date'
+                    value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                    rules={[rules.required('Date')]}
+                    onValueChange={value => {
+                      field.onChange(value ? new Date(value) : null)
+                    }}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -307,7 +304,6 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
               name='event_start_time'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Start Time</FormLabel>
                   <FormControl>
                     <FormInput
                       type='time'
@@ -328,7 +324,6 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
               name='event_end_time'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>End Time</FormLabel>
                   <FormControl>
                     <FormInput
                       type='time'
@@ -350,7 +345,6 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
             name='event_location'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Location</FormLabel>
                 <FormControl>
                   <FormInput
                     {...field}
@@ -372,20 +366,61 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
             name='notes'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Notes</FormLabel>
                 <FormControl>
                   <FormTextarea
                     {...field}
                     label='Notes'
                     value={field.value || ''}
-                    rules={[rules.notes()]}
-                    onValueChange={field.onChange}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          <div className='grid grid-cols-2 gap-4'>
+            <FormField
+              control={form.control}
+              name='min_participants'
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FormInput
+                      type='number'
+                      label='Minimum Participants'
+                      min={1}
+                      {...field}
+                      onChange={e =>
+                        field.onChange(Number.parseInt(e.target.value))
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='max_participants'
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FormInput
+                      label='Maximum Participants'
+                      type='number'
+                      min={1}
+                      {...field}
+                      onChange={e =>
+                        field.onChange(Number.parseInt(e.target.value))
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <Button
             type='submit'

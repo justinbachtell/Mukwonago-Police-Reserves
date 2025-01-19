@@ -139,7 +139,7 @@ export default function AdminEquipmentPage() {
         </CardContent>
       </Card>
 
-      <div className='mb-4 flex items-center justify-between'>
+      <div className='mb-4 flex flex-col items-center justify-between gap-4 md:flex-row'>
         <div>
           <h1 className='mb-2 text-3xl font-bold text-gray-900 dark:text-white'>
             Equipment Management
