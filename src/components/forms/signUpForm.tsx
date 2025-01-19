@@ -313,7 +313,11 @@ export default function SignUpForm() {
         provider: 'azure',
         options: {
           redirectTo: redirectURL,
-          scopes: 'email'
+          scopes: 'email openid profile User.Read',
+          queryParams: {
+            response_type: 'code',
+            prompt: 'select_account'
+          }
         }
       })
 
