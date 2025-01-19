@@ -25,7 +25,7 @@ export const metadata = {
 // Hero section component - No async operations, renders immediately
 function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
-    <div className='relative m-auto h-screen min-h-screen w-full items-center justify-center overflow-hidden border-b border-gray-600 bg-gradient-to-b from-blue-50 to-white dark:from-gray-950 dark:to-blue-950/40'>
+    <div className='relative m-auto h-screen min-h-screen w-full items-center justify-center overflow-hidden border-b border-gray-200 bg-gradient-to-b from-blue-50 to-white dark:border-gray-600 dark:from-gray-950 dark:to-blue-950/40'>
       <div className='pt-18 container relative m-auto flex h-full items-center justify-center px-4 pb-32 sm:pb-44 sm:pt-24'>
         <div className='mx-auto max-w-4xl space-y-8 text-center'>
           <h1 className='mb-6 text-5xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-6xl'>
