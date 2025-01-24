@@ -5,41 +5,38 @@ import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { createEquipment, updateEquipment } from '@/actions/equipment'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { toISOString } from '@/lib/utils'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { FormInput } from '@/components/ui/form-input'
-import { FormTextarea } from '@/components/ui/form-textarea'
-import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'admin',
-  file: 'EquipmentForm.tsx'
+  file: 'equipmentForm.tsx'
 })
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  description: z.string().nullable(),
-  serial_number: z.string().nullable(),
-  purchase_date: z.date().nullable(),
+  description: z.string().max(500, 'Description cannot exceed 500 characters'),
+  serial_number: z
+    .string()
+    .max(50, 'Serial number cannot exceed 50 characters'),
+  purchase_date: z.string().nullable(),
   notes: z.string().nullable(),
-  is_obsolete: z.boolean().default(false),
-  is_assigned: z.boolean().default(false),
-  assigned_to: z.string().nullable()
+  obsolete: z.boolean().default(false)
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -122,12 +119,10 @@ export function EquipmentForm({
       description: equipment?.description || '',
       serial_number: equipment?.serial_number || '',
       purchase_date: equipment?.purchase_date
-        ? new Date(equipment.purchase_date)
-        : null,
+        ? new Date(equipment.purchase_date).toISOString().split('T')[0]
+        : '',
       notes: equipment?.notes || '',
-      is_obsolete: equipment?.is_obsolete || false,
-      is_assigned: equipment?.is_assigned || false,
-      assigned_to: equipment?.assigned_to || null
+      obsolete: equipment?.is_obsolete || false
     }
   })
 
@@ -163,14 +158,21 @@ export function EquipmentForm({
         'onSubmit'
       )
 
+      const formData: NewEquipment = {
+        name: values.name,
+        description: values.description || null,
+        serial_number: values.serial_number || null,
+        purchase_date: values.purchase_date
+          ? new Date(values.purchase_date)
+          : null,
+        notes: values.notes || null,
+        is_obsolete: values.obsolete,
+        is_assigned: false // Default to false for new equipment
+      }
+
       const result = equipment
-        ? await updateEquipment({ ...values, id: equipment.id })
-        : await createEquipment({
-            ...values,
-            purchase_date: values.purchase_date
-              ? new Date(values.purchase_date)
-              : null
-          } as NewEquipment)
+        ? await updateEquipment({ ...formData, id: equipment.id })
+        : await createEquipment(formData)
 
       if (result) {
         logger.info(
@@ -206,14 +208,9 @@ export function EquipmentForm({
             name='name'
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <FormInput
-                    {...field}
-                    label='Name'
-                    placeholder='Enter equipment name'
-                    rules={[rules.required('Name'), rules.minLength(2, 'Name')]}
-                    onValueChange={field.onChange}
-                  />
+                  <Input {...field} placeholder='Enter equipment name' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -225,14 +222,11 @@ export function EquipmentForm({
             name='description'
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <FormTextarea
+                  <Textarea
                     {...field}
-                    label='Description'
-                    value={field.value || ''}
                     placeholder='Enter equipment description'
-                    rules={[rules.maxLength(500, 'Description')]}
-                    onValueChange={field.onChange}
                   />
                 </FormControl>
                 <FormMessage />
@@ -245,15 +239,9 @@ export function EquipmentForm({
             name='serial_number'
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Serial Number</FormLabel>
                 <FormControl>
-                  <FormInput
-                    {...field}
-                    label='Serial Number'
-                    value={field.value || ''}
-                    placeholder='Enter serial number'
-                    rules={[rules.maxLength(50, 'Serial number')]}
-                    onValueChange={field.onChange}
-                  />
+                  <Input {...field} placeholder='Enter serial number' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -265,15 +253,14 @@ export function EquipmentForm({
             name='purchase_date'
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Purchase Date</FormLabel>
                 <FormControl>
-                  <FormInput
+                  <Input
                     type='date'
-                    label='Purchase Date'
-                    name='purchase_date'
-                    value={
-                      field.value ? toISOString(field.value).split('T')[0] : ''
+                    value={field.value || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      field.onChange(e.target.value || null)
                     }
-                    onValueChange={value => field.onChange(new Date(value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -283,14 +270,12 @@ export function EquipmentForm({
 
           <FormField
             control={form.control}
-            name='is_obsolete'
+            name='obsolete'
             render={({ field }) => (
               <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
                 <div className='space-y-0.5'>
                   <FormLabel className='text-base'>Obsolete</FormLabel>
-                  <FormDescription>
-                    Mark this equipment as obsolete if it is no longer in use
-                  </FormDescription>
+                  <FormMessage />
                 </div>
                 <FormControl>
                   <Switch
@@ -307,14 +292,12 @@ export function EquipmentForm({
             name='notes'
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Notes</FormLabel>
                 <FormControl>
-                  <FormTextarea
+                  <Textarea
                     {...field}
-                    label='Notes'
                     value={field.value || ''}
-                    placeholder='Enter any additional notes'
-                    rules={[rules.notes()]}
-                    onValueChange={field.onChange}
+                    placeholder='Enter notes'
                   />
                 </FormControl>
                 <FormMessage />

@@ -99,6 +99,7 @@ export function TrainingTableWrapper({
             <TrainingForm
               onSuccess={handleSuccess}
               closeDialog={() => setOpen(false)}
+              availableUsers={availableUsers}
             />
           </DialogContent>
         </Dialog>

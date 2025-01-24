@@ -39,15 +39,24 @@ function PolicyCell({
   onPolicyAcknowledged?: (policyId: number) => void
 }) {
   const { toast } = useToast()
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [fileUrl, setFileUrl] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
+  const getFileType = (url: string) => {
+    const extension = url.split('.').pop()?.toLowerCase()
+    return extension === 'pdf' ? 'pdf' : 'doc'
+  }
+
+  const getWordViewerUrl = (fileUrl: string) => {
+    return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`
+  }
 
   const handlePolicyView = async () => {
     logger.info('Viewing policy', { policyId: policy.id }, 'handlePolicyView')
     try {
       const signedUrl = await getPolicyUrl(policy.policy_url)
-      setPdfUrl(signedUrl)
+      setFileUrl(signedUrl)
       setIsOpen(true)
       logger.info(
         'Policy URL generated',
@@ -147,9 +156,22 @@ function PolicyCell({
               {policy.name} - {policy.policy_number}
             </DialogTitle>
           </DialogHeader>
-          {pdfUrl && (
+          {fileUrl && (
             <div className='overflow-hidden'>
-              <PDFViewer url={pdfUrl} />
+              {getFileType(policy.policy_url) === 'pdf' ? (
+                <PDFViewer url={fileUrl} />
+              ) : (
+                <iframe
+                  src={getWordViewerUrl(fileUrl)}
+                  width='100%'
+                  height='800px'
+                  className='w-full border-0'
+                  title={`${policy.name} - ${policy.policy_number}`}
+                  allowFullScreen
+                  // eslint-disable-next-line react-dom/no-unsafe-iframe-sandbox
+                  sandbox='allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation'
+                />
+              )}
             </div>
           )}
         </DialogContent>
