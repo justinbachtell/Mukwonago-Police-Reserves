@@ -16,6 +16,7 @@ import {
   PenSquare
 } from 'lucide-react'
 import type { Route } from 'next'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 const logger = createLogger({
   module: 'admin',
@@ -175,21 +176,23 @@ export default async function UserProfilePage({ params }: PageProps) {
             </CardHeader>
             <CardContent className='space-y-4'>
               <div>
-                <p className='text-sm text-muted-foreground'>Role</p>
+                <p className='text-sm text-muted-foreground'>Web App Role</p>
                 <Badge variant='secondary' className='mt-1'>
-                  {userToView.role}
+                  {formatEnumValueWithMapping(userToView.role)}
                 </Badge>
               </div>
               <div>
-                <p className='text-sm text-muted-foreground'>Position</p>
+                <p className='text-sm text-muted-foreground'>
+                  Department Position
+                </p>
                 <Badge variant='secondary' className='mt-1'>
-                  {userToView.position}
+                  {formatEnumValueWithMapping(userToView.position)}
                 </Badge>
               </div>
               <div>
-                <p className='text-sm text-muted-foreground'>Status</p>
+                <p className='text-sm text-muted-foreground'>Web App Status</p>
                 <Badge variant='secondary' className='mt-1'>
-                  {userToView.status}
+                  {formatEnumValueWithMapping(userToView.status)}
                 </Badge>
               </div>
             </CardContent>

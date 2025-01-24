@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { EventForm } from '@/components/admin/forms/EventForm'
+import { EventForm } from '@/components/admin/events/EventForm'
 import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 export const columns: ColumnDef<Event>[] = [

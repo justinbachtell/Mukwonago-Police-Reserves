@@ -1,11 +1,28 @@
 import type { DBUser } from './user'
+import type { policyTypeEnum } from '@/models/Schema'
 
-// Main interface representing a policy
+// Database policy type (matches database schema)
+export interface DBPolicy {
+  id: number
+  name: string
+  description: string | null
+  policy_type: string // Database stores as string
+  policy_number: string
+  policy_url: string
+  effective_date: string
+  created_at: string
+  updated_at: string
+  is_active: boolean | null
+  last_reminder_sent: Date | null
+  completions?: PolicyCompletion[]
+}
+
+// Main interface representing a policy in the application
 export interface Policy {
   id: number
   name: string
   description: string | null
-  policy_type: string
+  policy_type: (typeof policyTypeEnum.enumValues)[number] // Enum type
   policy_number: string
   policy_url: string
   effective_date: string

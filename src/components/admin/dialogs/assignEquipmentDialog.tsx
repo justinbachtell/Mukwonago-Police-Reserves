@@ -1,4 +1,4 @@
-import { AssignEquipmentForm } from '@/components/admin/forms/assignEquipmentForm'
+import { AssignEquipmentForm } from '@/components/admin/equipment/assignEquipmentForm'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,

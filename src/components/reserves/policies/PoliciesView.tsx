@@ -4,7 +4,7 @@ import type { Policy } from '@/types/policy'
 import { Button } from '@/components/ui/button'
 import { Grid2X2, Table } from 'lucide-react'
 import { useState, Suspense } from 'react'
-import { PoliciesTable } from '@/components/reserves/policies/PoliciesTable'
+import { PoliciesTable } from '@/components/policies/PoliciesTable'
 import { PoliciesGrid } from '@/components/reserves/policies/PoliciesGrid'
 import { Skeleton } from '@/components/ui/skeleton'
 

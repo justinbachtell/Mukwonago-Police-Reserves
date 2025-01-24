@@ -16,13 +16,17 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { getAssignedEquipment } from '@/actions/assignedEquipment'
+import {
+  getAssignedEquipment,
+  updateAssignedEquipment
+} from '@/actions/assignedEquipment'
 import { createClient } from '@/lib/client'
 import { format } from 'date-fns'
 import type { Session } from '@supabase/supabase-js'
 import { createLogger } from '@/lib/debug'
 import { rules } from '@/lib/validation'
 import { useToast } from '@/hooks/use-toast'
+import { z } from 'zod'
 
 const logger = createLogger({
   module: 'forms',
@@ -34,6 +38,18 @@ interface AssignedEquipmentFormProps {
   saveRef: React.MutableRefObject<(() => Promise<SaveResult>) | null>
 }
 
+const notesSchema = z.object({
+  notes: z
+    .string()
+    .max(500, 'Notes cannot exceed 500 characters')
+    .regex(
+      /^[a-z0-9\s.,!?()'\-"]*$/i,
+      'Notes can only contain letters, numbers, and basic punctuation'
+    )
+    .nullable()
+    .transform((val): string => (val === null ? '' : val))
+}) as z.ZodType<{ notes: string }, z.ZodTypeDef, { notes: string | null }>
+
 export function AssignedEquipmentForm({
   saveRef,
   user
@@ -44,7 +60,7 @@ export function AssignedEquipmentForm({
   const [assignedEquipment, setAssignedEquipment] = useState<
     AssignedEquipment[]
   >([])
-  const [editingNotes, setEditingNotes] = useState<Record<string, string>>({})
+  const [editingNotes, _setEditingNotes] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const { toast } = useToast()
 
@@ -58,11 +74,7 @@ export function AssignedEquipmentForm({
           error
         } = await supabase.auth.getSession()
         if (error) {
-          logger.error(
-            'Failed to get auth session',
-            logger.errorWithData(error),
-            'checkSession'
-          )
+          logger.error('Failed to get auth session', { error }, 'checkSession')
           throw error
         }
         logger.info(
@@ -74,7 +86,10 @@ export function AssignedEquipmentForm({
       } catch (error) {
         logger.error(
           'Session check error',
-          logger.errorWithData(error),
+          {
+            error:
+              error instanceof Error ? error : new Error('Session check failed')
+          },
           'checkSession'
         )
       } finally {
@@ -161,7 +176,12 @@ export function AssignedEquipmentForm({
       } catch (error) {
         logger.error(
           'Failed to load equipment',
-          logger.errorWithData(error),
+          {
+            error:
+              error instanceof Error
+                ? error
+                : new Error('Failed to load equipment')
+          },
           'loadEquipment'
         )
       }
@@ -177,12 +197,57 @@ export function AssignedEquipmentForm({
     }
   }, [user.id, session, isLoading])
 
-  const handleNotesChange = (id: string | number, value: string) => {
-    setEditingNotes(prev => ({
-      ...prev,
-      [id.toString()]: value
-    }))
-    setHasChanges(true)
+  const handleNotesChange = async (equipmentId: number, notes: string) => {
+    const equipment = assignedEquipment.find(e => e.id === equipmentId)
+    if (!equipment) {
+      return
+    }
+
+    try {
+      const validatedData = notesSchema.parse({ notes: notes || null })
+      const notesValue = validatedData.notes
+
+      const updatedEquipment = await updateAssignedEquipment(equipmentId, {
+        notes: notesValue === '' ? undefined : notesValue
+      })
+
+      if (updatedEquipment) {
+        setAssignedEquipment(prev =>
+          prev.map(e =>
+            e.id === equipmentId ? { ...e, notes: notesValue } : e
+          )
+        )
+        setHasChanges(true)
+        toast({
+          title: 'Success',
+          description: 'Notes updated successfully'
+        })
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessage = error.errors[0]?.message || 'Invalid input'
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive'
+        })
+        return
+      }
+
+      logger.error(
+        'Failed to update notes',
+        {
+          error:
+            error instanceof Error ? error : new Error('Failed to update notes')
+        },
+        'handleNotesChange'
+      )
+      toast({
+        title: 'Error',
+        description: 'Failed to update notes',
+        variant: 'destructive'
+      })
+    }
   }
 
   const handleSaveChanges = useCallback(async () => {
@@ -196,6 +261,11 @@ export function AssignedEquipmentForm({
       if (!session?.user) {
         logger.warn('No active session', undefined, 'handleSaveChanges')
         return { message: 'Not authenticated', success: false }
+      }
+
+      if (!user) {
+        logger.warn('No user data available', undefined, 'handleSaveChanges')
+        return { message: 'User data not available', success: false }
       }
 
       if (!hasChanges) {
@@ -219,36 +289,40 @@ export function AssignedEquipmentForm({
 
       // Refresh the equipment list
       const equipment = await getAssignedEquipment(user.id)
-      if (equipment) {
-        setAssignedEquipment(equipment)
+      if (!equipment) {
+        throw new Error('Failed to refresh equipment list')
       }
 
+      setAssignedEquipment(equipment)
       setHasChanges(false)
+
+      const successMessage = 'Changes saved successfully'
       toast({
         title: 'Success',
-        description: 'Changes saved successfully',
-        variant: 'default'
+        description: successMessage
       })
-      return { message: 'Changes saved successfully', success: true }
+      return { message: successMessage, success: true }
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to save changes'
       logger.error(
         'Save changes failed',
-        logger.errorWithData(error),
+        { error: error instanceof Error ? error : new Error(errorMessage) },
         'handleSaveChanges'
       )
       toast({
         title: 'Error',
-        description: 'Failed to save changes',
+        description: errorMessage,
         variant: 'destructive'
       })
-      return { message: 'Failed to save changes', success: false }
+      return { message: errorMessage, success: false }
     }
   }, [
     isLoading,
     session?.user,
     hasChanges,
     editingNotes,
-    user.id,
+    user,
     toast,
     supabase
   ])

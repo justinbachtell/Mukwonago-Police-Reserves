@@ -118,17 +118,51 @@ export const formatters = {
       .slice(0, 15)
   },
   name: (value: string): string => {
-    return value.replace(/[^a-z\s\-']/gi, '').slice(0, 50)
+    // Allow letters, spaces, hyphens, and apostrophes
+    const sanitized = value.replace(/[^a-z\s\-']/gi, '')
+    return sanitized.trim().slice(0, 50)
+  },
+  // Policy-related formatters
+  policyName: (value: string): string => {
+    // Allow letters, numbers, spaces, and basic punctuation
+    const sanitized = value.replace(/[^a-z0-9\s\-.,()]/gi, '')
+    return sanitized.trim().slice(0, 100)
+  },
+  policyType: (value: string): string => {
+    // Allow letters, numbers, and spaces
+    const sanitized = value.replace(/[^a-z0-9\s\-]/gi, '')
+    return sanitized.trim().slice(0, 50)
+  },
+  policyNumber: (value: string): string => {
+    // Allow letters, numbers, hyphens, and dots
+    return value
+      .replace(/[^a-z0-9\-.]/gi, '')
+      .toUpperCase()
+      .slice(0, 20)
   },
   // Equipment-related formatters
   notes: (value: string): string => {
-    return value.replace(/[^a-z0-9\s.,!?()'\-"]/gi, '').slice(0, 500)
+    // Allow normal text input with basic punctuation
+    const sanitized = value.replace(/[^a-z0-9\s.,!?()'\-"]/gi, '')
+    return sanitized.trim().slice(0, 500)
+  },
+  // Address formatters
+  streetAddress: (value: string): string => {
+    const sanitized = value.replace(/[^a-z0-9\s\-.,#]/gi, '')
+    return sanitized.trim().slice(0, 100)
+  },
+  city: (value: string): string => {
+    const sanitized = value.replace(/[^a-z\s\-']/gi, '')
+    return sanitized.trim().slice(0, 50)
   }
 }
 
 // Sanitization function
 export const sanitizeInput = (value: string): string => {
-  return DOMPurify.sanitize(value.trim())
+  // First sanitize with DOMPurify
+  const sanitized = DOMPurify.sanitize(value)
+  // Preserve spaces between words, only trim leading/trailing spaces
+  return sanitized.trim()
 }
 
 // Validation function

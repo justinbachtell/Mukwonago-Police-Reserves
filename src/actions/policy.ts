@@ -4,17 +4,143 @@ import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/server'
 import { db } from '@/libs/DB'
 import { eq, and } from 'drizzle-orm'
-import { policies, policyCompletion } from '@/models/Schema'
+import { policies, policyCompletion, policyTypeEnum } from '@/models/Schema'
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/actions/user'
 import { toISOString } from '@/lib/utils'
-import type { Policy, NewPolicy } from '@/types/policy'
+import type { Policy, DBPolicy, NewPolicy } from '@/types/policy'
 import { createPolicyNotification } from '@/actions/notification'
 
 const logger = createLogger({
-  module: 'policies',
+  module: 'actions',
   file: 'policy.ts'
 })
+
+// Helper function to cast policy_type string to enum value
+function castPolicyType(
+  type: string
+): (typeof policyTypeEnum.enumValues)[number] {
+  if (policyTypeEnum.enumValues.includes(type as any)) {
+    return type as (typeof policyTypeEnum.enumValues)[number]
+  }
+  return 'other' // Default fallback
+}
+
+// Transform database policy to Policy type
+function transformPolicy(dbPolicy: DBPolicy): Policy {
+  const policy: Policy = {
+    id: dbPolicy.id,
+    name: dbPolicy.name,
+    description: dbPolicy.description,
+    policy_type: castPolicyType(dbPolicy.policy_type),
+    policy_number: dbPolicy.policy_number,
+    policy_url: dbPolicy.policy_url,
+    effective_date: dbPolicy.effective_date,
+    created_at: dbPolicy.created_at,
+    updated_at: dbPolicy.updated_at
+  }
+
+  if (dbPolicy.completions) {
+    policy.completions = dbPolicy.completions
+  }
+
+  return policy
+}
+
+export async function uploadPolicyFile(file: File): Promise<string> {
+  logger.info(
+    'Starting policy upload',
+    { fileName: file.name },
+    'uploadPolicyFile'
+  )
+
+  try {
+    const supabase = await createClient()
+    const timestamp = new Date().getTime()
+    const cleanFileName = `policy_${timestamp}${file.name.substring(file.name.lastIndexOf('.'))}` // Preserve original file extension
+
+    logger.info(
+      'Uploading file to Supabase storage',
+      { filePath: cleanFileName, contentType: file.type },
+      'uploadPolicyFile'
+    )
+
+    const { error: uploadError, data } = await supabase.storage
+      .from('policies')
+      .upload(cleanFileName, file, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: file.type
+      })
+
+    if (uploadError) {
+      logger.error(
+        'Policy upload failed',
+        {
+          error: uploadError.message,
+          name: uploadError.name,
+          cause: uploadError.cause
+        },
+        'uploadPolicyFile'
+      )
+      throw new Error(`Upload failed: ${uploadError.message}`)
+    }
+
+    if (!data?.path) {
+      throw new Error('Failed to get uploaded file path')
+    }
+
+    return cleanFileName
+  } catch (error) {
+    logger.error(
+      'Policy upload failed',
+      {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      },
+      'uploadPolicyFile'
+    )
+    throw error
+  }
+}
+
+export async function createPolicyRecord(data: {
+  name: string
+  policy_type: string
+  description: string | null
+  policy_url: string
+  policy_number: string
+  effective_date: string
+}) {
+  try {
+    const [newPolicy] = await db
+      .insert(policies)
+      .values({
+        name: data.name,
+        policy_type: castPolicyType(data.policy_type),
+        description: data.description,
+        policy_url: data.policy_url,
+        policy_number: data.policy_number,
+        effective_date: data.effective_date,
+        created_at: toISOString(new Date()),
+        updated_at: toISOString(new Date())
+      })
+      .returning()
+
+    // Add these lines to ensure the tables refresh
+    revalidatePath('/policies')
+    revalidatePath('/admin/policies')
+
+    return newPolicy
+  } catch (error) {
+    logger.error(
+      'Failed to create policy record',
+      logger.errorWithData(error),
+      'createPolicyRecord'
+    )
+    throw error
+  }
+}
 
 export async function getPolicyById(
   id: number
@@ -72,33 +198,18 @@ export async function getPolicyById(
 }
 
 export async function getPolicyUrl(fileName: string): Promise<string | null> {
-  logger.info('Getting policy URL', { fileName }, 'getPolicyUrl')
-  logger.time(`get-policy-url-${fileName}`)
+  // Remove any leading 'policies/' from the path if it exists
+  const cleanFileName = fileName.replace(/^policies\//, '')
+
+  logger.info('Getting policy URL', { fileName: cleanFileName }, 'getPolicyUrl')
+  logger.time(`get-policy-url-${cleanFileName}`)
 
   try {
     const supabase = await createClient()
-    const {
-      data: { user },
-      error: userError
-    } = await supabase.auth.getUser()
-
-    if (userError) {
-      logger.error(
-        'Failed to get Supabase user',
-        logger.errorWithData(userError),
-        'getPolicyUrl'
-      )
-      return null
-    }
-
-    if (!user) {
-      logger.warn('No active user found', undefined, 'getPolicyUrl')
-      return null
-    }
 
     const { data: urlData, error: urlError } = await supabase.storage
       .from('policies')
-      .createSignedUrl(fileName, 60 * 60)
+      .createSignedUrl(cleanFileName, 60 * 60)
 
     if (urlError || !urlData) {
       logger.error(
@@ -111,10 +222,10 @@ export async function getPolicyUrl(fileName: string): Promise<string | null> {
 
     logger.info(
       'Policy URL generated successfully',
-      { fileName },
+      { fileName: cleanFileName },
       'getPolicyUrl'
     )
-    logger.timeEnd(`get-policy-url-${fileName}`)
+    logger.timeEnd(`get-policy-url-${cleanFileName}`)
     return urlData.signedUrl
   } catch (error) {
     logger.error(
@@ -122,118 +233,8 @@ export async function getPolicyUrl(fileName: string): Promise<string | null> {
       logger.errorWithData(error),
       'getPolicyUrl'
     )
-    logger.timeEnd(`get-policy-url-${fileName}`)
+    logger.timeEnd(`get-policy-url-${cleanFileName}`)
     return null
-  }
-}
-
-export async function uploadPolicy(
-  file: File,
-  policyNumber: string,
-  policyName: string
-): Promise<string> {
-  logger.info(
-    'Starting policy upload',
-    { fileName: file.name, policyNumber, policyName },
-    'uploadPolicy'
-  )
-  logger.time('policy-upload')
-
-  try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-      error: userError
-    } = await supabase.auth.getUser()
-
-    if (userError) {
-      logger.error(
-        'Failed to get Supabase user',
-        logger.errorWithData(userError),
-        'uploadPolicy'
-      )
-      throw new Error('Authentication error. Please try again.')
-    }
-
-    if (!user) {
-      logger.warn('No active user found', undefined, 'uploadPolicy')
-      throw new Error('You must be logged in to upload policies.')
-    }
-
-    // Create a clean folder name based on policy number
-    const folderName = policyNumber.toLowerCase().replace(/[^a-z0-9_]/g, '')
-
-    // Create a clean file name
-    const fileExtension = file.name.split('.').pop()
-    const timestamp = new Date().getTime()
-    const sanitizedName = policyName.toLowerCase().replace(/[^a-z0-9_]/g, '')
-    const cleanFileName = `${folderName}_${sanitizedName}_${timestamp}.${fileExtension}`
-    const filePath = `${folderName}/${cleanFileName}`
-
-    logger.info(
-      'Uploading file to Supabase storage',
-      { filePath, contentType: file.type },
-      'uploadPolicy'
-    )
-
-    // Attempt the upload
-    const { error: uploadError, data } = await supabase.storage
-      .from('policies')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true,
-        contentType: file.type
-      })
-
-    if (uploadError) {
-      logger.error(
-        'Policy upload failed',
-        {
-          error: uploadError,
-          message: uploadError.message,
-          name: uploadError.name
-        },
-        'uploadPolicy'
-      )
-
-      // Check for common error messages
-      if (uploadError.message.includes('permission denied')) {
-        throw new Error('Permission denied. Please check storage permissions.')
-      } else if (uploadError.message.includes('too large')) {
-        throw new Error('File too large. Maximum size is 5MB.')
-      } else if (uploadError.message.includes('bucket not found')) {
-        throw new Error('Storage not configured. Please contact support.')
-      } else {
-        throw new Error(`Upload failed: ${uploadError.message}`)
-      }
-    }
-
-    if (!data?.path) {
-      logger.error(
-        'No file path returned from upload',
-        { data },
-        'uploadPolicy'
-      )
-      throw new Error('Failed to get uploaded file path')
-    }
-
-    const fullPath = `policies/${data.path}`
-    logger.info('Policy upload successful', { fullPath }, 'uploadPolicy')
-    logger.timeEnd('policy-upload')
-    return fullPath
-  } catch (error) {
-    logger.error(
-      'Policy upload failed',
-      logger.errorWithData(error),
-      'uploadPolicy'
-    )
-
-    // Provide more specific error messages
-    if (error instanceof Error) {
-      throw error // Rethrow specific errors
-    } else {
-      throw new TypeError('Failed to upload policy. Please try again.')
-    }
   }
 }
 
@@ -306,38 +307,29 @@ export async function getAllPolicies(): Promise<Policy[]> {
   logger.time('fetch-all-policies')
 
   try {
-    const policyRecords = await db.query.policies.findMany({
+    // Use Drizzle instead of Supabase client
+    const allPolicies = await db.query.policies.findMany({
       with: {
         completions: {
           with: {
             user: true
           }
         }
-      }
+      },
+      orderBy: (policies, { desc }) => [desc(policies.created_at)]
     })
 
     logger.info(
-      'Policies retrieved',
-      {
-        count: policyRecords.length,
-        withCompletions: policyRecords.filter(
-          p => p.completions && p.completions.length > 0
-        ).length
-      },
+      'Policies retrieved successfully',
+      { count: allPolicies.length },
       'getAllPolicies'
     )
     logger.timeEnd('fetch-all-policies')
 
-    return policyRecords.map(policy => ({
-      ...policy,
-      completions: policy.completions || [],
-      effective_date: toISOString(policy.effective_date),
-      created_at: toISOString(policy.created_at),
-      updated_at: toISOString(policy.updated_at)
-    }))
+    return allPolicies.map(transformPolicy)
   } catch (error) {
     logger.error(
-      'Failed to fetch policies',
+      'Failed to get policies',
       logger.errorWithData(error),
       'getAllPolicies'
     )
@@ -421,17 +413,22 @@ export async function getPoliciesWithCompletionStatus() {
       return null
     }
 
-    const allPolicies = await getAllPolicies()
-    const completionStatuses = await Promise.all(
-      allPolicies.map(async policy => {
-        const isCompleted = await getPolicyCompletionStatus(policy.id)
-        return { id: policy.id, isCompleted }
-      })
-    )
+    // Get all policies with their completions
+    const allPolicies = await db.query.policies.findMany({
+      with: {
+        completions: {
+          where: (completions, { eq }) =>
+            eq(completions.user_id, currentUser.id)
+        }
+      },
+      orderBy: (policies, { desc }) => [desc(policies.created_at)]
+    })
 
-    const completedPolicies = completionStatuses.reduce(
-      (acc, { id, isCompleted }) => {
-        acc[id] = isCompleted
+    // Transform policies and create completion status map
+    const policies = allPolicies.map(transformPolicy)
+    const completedPolicies = allPolicies.reduce(
+      (acc, policy) => {
+        acc[policy.id] = policy.completions.length > 0
         return acc
       },
       {} as Record<number, boolean>
@@ -440,14 +437,14 @@ export async function getPoliciesWithCompletionStatus() {
     logger.info(
       'Policies and completion status retrieved',
       {
-        totalPolicies: allPolicies.length,
+        totalPolicies: policies.length,
         completedCount: Object.values(completedPolicies).filter(Boolean).length
       },
       'getPoliciesWithCompletionStatus'
     )
     logger.timeEnd('fetch-policies-completion')
 
-    return { policies: allPolicies, completedPolicies }
+    return { policies, completedPolicies }
   } catch (error) {
     logger.error(
       'Failed to fetch policies with completion status',

@@ -4,8 +4,6 @@ import { createApplication, uploadResume } from '@/actions/application'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { FormInput } from '@/components/ui/form-input'
 import {
   Select,
   SelectContent,
@@ -16,8 +14,6 @@ import {
 import { useRouter } from 'next/navigation'
 import { useTransition, useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import type { positionsEnum } from '@/models/Schema'
-import { availabilityEnum, priorExperienceEnum } from '@/models/Schema'
 import type { DBUser } from '@/types/user'
 import * as Sentry from '@sentry/nextjs'
 import { createLogger } from '@/lib/debug'
@@ -26,16 +22,22 @@ import type { Session } from '@supabase/supabase-js'
 import { updateUser } from '@/actions/user'
 import { STATES } from '@/libs/States'
 import { LoadingCard } from '@/components/ui/loading'
-import { rules } from '@/lib/validation'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form'
 
 const logger = createLogger({
   module: 'forms',
   file: 'applicationForm.tsx'
 })
-
-type PriorExperience = (typeof priorExperienceEnum.enumValues)[number]
-type Availability = (typeof availabilityEnum.enumValues)[number]
-type Position = (typeof positionsEnum.enumValues)[number]
 
 interface Props {
   user: DBUser
@@ -89,6 +91,31 @@ async function checkFileMagicNumbers(file: File): Promise<boolean> {
   )
 }
 
+const formSchema = z.object({
+  first_name: z.string().min(2, 'First name must be at least 2 characters'),
+  last_name: z.string().min(2, 'Last name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  phone: z.string().min(10, 'Phone number must be 10 digits'),
+  driver_license: z.string().min(1, "Driver's license is required"),
+  driver_license_state: z.string().min(2, "Driver's license state is required"),
+  street_address: z
+    .string()
+    .min(5, 'Street address must be at least 5 characters'),
+  city: z.string().min(2, 'City must be at least 2 characters'),
+  state: z.string().min(2, 'State is required'),
+  zip_code: z.string().regex(/^\d{5}$/, 'ZIP code must be 5 digits'),
+  prior_experience: z.enum([
+    'none',
+    'less_than_1_year',
+    '1_to_3_years',
+    'more_than_3_years'
+  ] as const),
+  availability: z.enum(['weekdays', 'weekends', 'both', 'flexible'] as const),
+  position: z.enum(['candidate'] as const) // Only allow 'candidate' for new applications
+})
+
+type FormValues = z.infer<typeof formSchema>
+
 export function ApplicationForm({ user }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -99,8 +126,26 @@ export function ApplicationForm({ user }: Props) {
   const [selectedLicenseState, setSelectedLicenseState] = useState(
     user.driver_license_state || ''
   )
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const supabase = createClient()
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      driver_license: user.driver_license || '',
+      driver_license_state: user.driver_license_state || '',
+      street_address: user.street_address || '',
+      city: user.city || '',
+      state: user.state || '',
+      zip_code: user.zip_code || '',
+      prior_experience: 'none',
+      availability: 'weekdays',
+      position: 'candidate'
+    }
+  })
 
   logger.time('application-form-render')
 
@@ -187,175 +232,126 @@ export function ApplicationForm({ user }: Props) {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    logger.time('form-submission')
-
-    try {
-      if (!session) {
-        logger.warn(
-          'Form submission attempted without auth',
-          undefined,
-          'handleSubmit'
-        )
-        toast.error('You must be logged in to submit an application')
-        return
-      }
-
-      const formData = new FormData(e.currentTarget)
-      const errors: Record<string, string> = {}
-
-      // Validate state selections
-      if (!selectedState) {
-        errors.state = 'Please select a state'
-      }
-      if (!selectedLicenseState) {
-        errors.driver_license_state = "Please select a driver's license state"
-      }
-
-      if (Object.keys(errors).length > 0) {
-        setFormErrors(errors)
-        return
-      }
-
-      logger.info(
-        'Submitting application',
-        {
-          firstName: formData.get('first_name'),
-          lastName: formData.get('last_name'),
-          email: formData.get('email'),
-          position: formData.get('position')
-        },
+  const onSubmit = async (data: FormValues) => {
+    if (!session) {
+      logger.warn(
+        'Form submission attempted without auth',
+        undefined,
         'handleSubmit'
       )
+      toast.error('You must be logged in to submit an application')
+      return
+    }
 
-      startTransition(async () => {
-        try {
-          // Upload resume if selected
-          let resumePath: string | undefined
-          if (selectedFile !== null) {
-            logger.time('resume-upload')
-            try {
-              resumePath = await uploadResume(
-                selectedFile,
-                formData.get('first_name') as string,
-                formData.get('last_name') as string
-              )
-              logger.timeEnd('resume-upload')
-              logger.info(
-                'Resume uploaded successfully',
-                { path: resumePath },
-                'handleSubmit'
-              )
-            } catch (uploadError) {
-              logger.error(
-                'Resume upload failed',
-                logger.errorWithData(uploadError),
-                'handleSubmit'
-              )
-              throw new Error(
-                uploadError instanceof Error
-                  ? uploadError.message
-                  : 'Failed to upload resume'
-              )
-            }
-          }
+    logger.info(
+      'Submitting application',
+      {
+        firstName: data.first_name,
+        lastName: data.last_name,
+        email: data.email,
+        position: data.position
+      },
+      'handleSubmit'
+    )
 
-          // Create application with optional resume path
-          const result = await createApplication({
-            first_name: formData.get('first_name') as string,
-            last_name: formData.get('last_name') as string,
-            email: formData.get('email') as string,
-            phone: formData.get('phone') as string,
-            driver_license: formData.get('driver_license') as string,
-            driver_license_state: formData.get(
-              'driver_license_state'
-            ) as string,
-            street_address: formData.get('street_address') as string,
-            city: formData.get('city') as string,
-            state: formData.get('state') as string,
-            zip_code: formData.get('zip_code') as string,
-            prior_experience: formData.get(
-              'prior_experience'
-            ) as PriorExperience,
-            availability: formData.get('availability') as Availability,
-            position: formData.get('position') as Position,
-            user_id: user.id,
-            ...(resumePath && { resume: resumePath })
-          })
-
-          if (result?.id) {
-            // Update user information with the application data
-            await updateUser(user.id, {
-              first_name: formData.get('first_name') as string,
-              last_name: formData.get('last_name') as string,
-              email: formData.get('email') as string,
-              phone: formData.get('phone') as string,
-              driver_license: formData.get('driver_license') as string,
-              driver_license_state: formData.get(
-                'driver_license_state'
-              ) as string,
-              street_address: formData.get('street_address') as string,
-              city: formData.get('city') as string,
-              state: formData.get('state') as string,
-              zip_code: formData.get('zip_code') as string
-            })
-
+    startTransition(async () => {
+      try {
+        // Upload resume if selected
+        let resumePath: string | undefined
+        if (selectedFile !== null) {
+          logger.time('resume-upload')
+          try {
+            resumePath = await uploadResume(
+              selectedFile,
+              data.first_name,
+              data.last_name
+            )
+            logger.timeEnd('resume-upload')
             logger.info(
-              'User information updated with application data',
-              { userId: user.id },
+              'Resume uploaded successfully',
+              { path: resumePath },
               'handleSubmit'
             )
+          } catch (uploadError) {
+            logger.error(
+              'Resume upload failed',
+              logger.errorWithData(uploadError),
+              'handleSubmit'
+            )
+            throw new Error(
+              uploadError instanceof Error
+                ? uploadError.message
+                : 'Failed to upload resume'
+            )
           }
+        }
+
+        // Create application with optional resume path
+        const result = await createApplication({
+          ...data,
+          user_id: user.id,
+          ...(resumePath && { resume: resumePath })
+        })
+
+        if (result?.id) {
+          // Update user information with the application data
+          await updateUser(user.id, {
+            first_name: data.first_name,
+            last_name: data.last_name,
+            email: data.email,
+            phone: data.phone,
+            driver_license: data.driver_license,
+            driver_license_state: data.driver_license_state,
+            street_address: data.street_address,
+            city: data.city,
+            state: data.state,
+            zip_code: data.zip_code
+          })
 
           logger.info(
-            'Application submitted successfully',
-            { applicationId: result?.id },
+            'User information updated with application data',
+            { userId: user.id },
             'handleSubmit'
           )
-          toast.success('Application submitted successfully')
-          router.refresh()
-        } catch (error) {
-          logger.error(
-            'Error submitting application',
-            {
-              message: error instanceof Error ? error.message : 'Unknown error'
-            },
-            'handleSubmit'
-          )
-
-          if (error instanceof Error) {
-            toast.error(`Failed to submit application: ${error.message}`)
-          } else {
-            toast.error('An unexpected error occurred')
-          }
-
-          // Only send non-binary data to Sentry
-          Sentry.captureException(error, {
-            extra: {
-              context: 'ApplicationForm submission',
-              hasFile: true,
-              fileSize: selectedFile?.size,
-              fileType: selectedFile?.type,
-              userId: user.id
-            },
-            tags: {
-              action: 'application_submission',
-              component: 'ApplicationForm'
-            }
-          })
         }
-      })
-    } catch (error) {
-      logger.error(
-        'Form submission error',
-        { message: error instanceof Error ? error.message : 'Unknown error' },
-        'handleSubmit'
-      )
-      toast.error('Failed to process form submission')
-    } finally {
-      logger.timeEnd('form-submission')
-    }
+
+        logger.info(
+          'Application submitted successfully',
+          { applicationId: result?.id },
+          'handleSubmit'
+        )
+        toast.success('Application submitted successfully')
+        router.refresh()
+      } catch (error) {
+        logger.error(
+          'Error submitting application',
+          {
+            message: error instanceof Error ? error.message : 'Unknown error'
+          },
+          'handleSubmit'
+        )
+
+        if (error instanceof Error) {
+          toast.error(`Failed to submit application: ${error.message}`)
+        } else {
+          toast.error('An unexpected error occurred')
+        }
+
+        Sentry.captureException(error, {
+          extra: {
+            context: 'ApplicationForm submission',
+            hasFile: true,
+            fileSize: selectedFile?.size,
+            fileType: selectedFile?.type,
+            userId: user.id
+          },
+          tags: {
+            action: 'application_submission',
+            component: 'ApplicationForm'
+          }
+        })
+      }
+    })
   }
 
   try {
@@ -364,258 +360,304 @@ export function ApplicationForm({ user }: Props) {
     }
 
     return (
-      <form onSubmit={handleSubmit} className='space-y-8'>
-        <Card className='p-6'>
-          <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
-            Personal Information
-          </h2>
-          <div className='grid gap-6'>
-            <div className='grid grid-cols-2 gap-4'>
-              <FormInput
-                label='First Name'
-                name='first_name'
-                defaultValue={user.first_name}
-                rules={[
-                  rules.required('First name'),
-                  rules.minLength(2, 'First name'),
-                  rules.name()
-                ]}
-                placeholder='Enter your first name'
-                required
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+          <Card className='p-6'>
+            <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
+              Personal Information
+            </h2>
+            <div className='grid gap-6'>
+              <div className='grid grid-cols-2 gap-4'>
+                <FormField
+                  control={form.control}
+                  name='first_name'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder='Enter your first name' />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='last_name'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder='Enter your last name' />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name='email'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type='email'
+                        placeholder='Enter your email'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <FormInput
-                label='Last Name'
-                name='last_name'
-                defaultValue={user.last_name}
-                rules={[
-                  rules.required('Last name'),
-                  rules.minLength(2, 'Last name'),
-                  rules.name()
-                ]}
-                placeholder='Enter your last name'
-                required
+
+              <FormField
+                control={form.control}
+                name='phone'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type='tel'
+                        placeholder='(XXX) XXX-XXXX'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <FormInput
-              label='Email'
-              name='email'
-              type='email'
-              defaultValue={user.email}
-              rules={[rules.required('Email'), rules.email()]}
-              placeholder='Enter your email'
-              required
-            />
-
-            <FormInput
-              label='Phone Number'
-              name='phone'
-              type='tel'
-              defaultValue={user.phone || ''}
-              formatter='phone'
-              rules={[rules.required('Phone number'), rules.phone()]}
-              placeholder='(XXX) XXX-XXXX'
-              required
-            />
-
-            <FormInput
-              label="Driver's License"
-              name='driver_license'
-              defaultValue={user.driver_license || ''}
-              formatter='driversLicense'
-              rules={[
-                rules.required("Driver's license"),
-                rules.driversLicense()
-              ]}
-              placeholder="Enter your driver's license number"
-              required
-            />
-
-            <div className='space-y-2'>
-              <Label htmlFor='driver_license_state'>
-                Driver&apos;s License State
-              </Label>
-              <Select
-                name='driver_license_state'
-                value={selectedLicenseState}
-                onValueChange={setSelectedLicenseState}
-              >
-                <SelectTrigger
-                  className={
-                    formErrors.driver_license_state ? 'border-red-500' : ''
-                  }
-                >
-                  <SelectValue placeholder='Select state' />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATES.map(state => (
-                    <SelectItem
-                      key={state.abbreviation}
-                      value={state.abbreviation}
-                    >
-                      {state.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {formErrors.driver_license_state && (
-                <p className='mt-1 text-xs text-red-500'>
-                  {formErrors.driver_license_state}
-                </p>
-              )}
-            </div>
-          </div>
-        </Card>
-
-        <Card className='p-6'>
-          <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
-            Address Information
-          </h2>
-          <div className='grid gap-6'>
-            <FormInput
-              label='Street Address'
-              name='street_address'
-              defaultValue={user.street_address || ''}
-              rules={[rules.required('Street address'), rules.streetAddress()]}
-              placeholder='Enter your street address'
-              required
-            />
-
-            <div className='grid grid-cols-2 gap-4'>
-              <FormInput
-                label='City'
-                name='city'
-                defaultValue={user.city || ''}
-                rules={[rules.required('City'), rules.city()]}
-                placeholder='Enter your city'
-                required
+              <FormField
+                control={form.control}
+                name='driver_license'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Driver's License</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Enter your driver's license number"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
 
               <div className='space-y-2'>
-                <Label htmlFor='state'>State</Label>
-                <Select
-                  name='state'
-                  value={selectedState}
-                  onValueChange={setSelectedState}
-                >
-                  <SelectTrigger
-                    className={formErrors.state ? 'border-red-500' : ''}
+                <FormLabel htmlFor='driver_license_state'>
+                  Driver&apos;s License State
+                </FormLabel>
+                <FormControl>
+                  <Select
+                    name='driver_license_state'
+                    value={selectedLicenseState}
+                    onValueChange={setSelectedLicenseState}
                   >
-                    <SelectValue placeholder='Select state' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATES.map(state => (
-                      <SelectItem
-                        key={state.abbreviation}
-                        value={state.abbreviation}
-                      >
-                        {state.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {formErrors.state && (
-                  <p className='mt-1 text-xs text-red-500'>
-                    {formErrors.state}
-                  </p>
-                )}
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select state' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATES.map(state => (
+                        <SelectItem
+                          key={state.abbreviation}
+                          value={state.abbreviation}
+                        >
+                          {state.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
               </div>
             </div>
+          </Card>
 
-            <FormInput
-              label='ZIP Code'
-              name='zip_code'
-              defaultValue={user.zip_code || ''}
-              formatter='zipCode'
-              rules={[rules.required('ZIP code'), rules.zipCode()]}
-              placeholder='Enter your ZIP code'
-              required
-            />
-          </div>
-        </Card>
+          <Card className='p-6'>
+            <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
+              Address Information
+            </h2>
+            <div className='grid gap-6'>
+              <FormField
+                control={form.control}
+                name='street_address'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Street Address</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder='Enter your street address'
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <Card className='p-6'>
-          <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
-            Resume Upload
-          </h2>
-          <div className='space-y-2'>
-            <Label htmlFor='resume'>
-              Resume (Optional - PDF, Word, JPEG, or PNG - Max 5MB)
-            </Label>
-            <Input
-              id='resume'
-              name='resume'
-              type='file'
-              accept='.pdf,.doc,.docx,.jpeg,.jpg,.png'
-              onChange={handleFileChange}
-              className='w-full'
-            />
-          </div>
-        </Card>
+              <div className='grid grid-cols-2 gap-4'>
+                <FormField
+                  control={form.control}
+                  name='city'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder='Enter your city' />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        <Card className='p-6'>
-          <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
-            Position Information
-          </h2>
-          <div className='grid gap-6'>
-            <div className='hidden space-y-2'>
-              <Label htmlFor='position'>Position</Label>
-              <Select name='position' defaultValue='candidate' required>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select a position' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='candidate'>Candidate</SelectItem>
-                </SelectContent>
-              </Select>
+                <div className='space-y-2'>
+                  <FormLabel htmlFor='state'>State</FormLabel>
+                  <FormControl>
+                    <Select
+                      name='state'
+                      value={selectedState}
+                      onValueChange={setSelectedState}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select state' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATES.map(state => (
+                          <SelectItem
+                            key={state.abbreviation}
+                            value={state.abbreviation}
+                          >
+                            {state.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+
+              <FormField
+                control={form.control}
+                name='zip_code'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ZIP Code</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder='Enter your ZIP code' />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
+          </Card>
 
+          <Card className='p-6'>
+            <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
+              Resume Upload
+            </h2>
             <div className='space-y-2'>
-              <Label htmlFor='prior_experience'>Prior Experience</Label>
-              <Select name='prior_experience' required>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select your prior experience' />
-                </SelectTrigger>
-                <SelectContent>
-                  {priorExperienceEnum.enumValues.map(value => (
-                    <SelectItem key={value} value={value}>
-                      {value
-                        .replace(/_/g, ' ')
-                        .replace(/\b\w/g, l => l.toUpperCase())}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormLabel htmlFor='resume'>
+                Resume (Optional - PDF, Word, JPEG, or PNG - Max 5MB)
+              </FormLabel>
+              <FormControl>
+                <Input
+                  id='resume'
+                  name='resume'
+                  type='file'
+                  accept='.pdf,.doc,.docx,.jpeg,.jpg,.png'
+                  onChange={handleFileChange}
+                  className='w-full'
+                />
+              </FormControl>
             </div>
+          </Card>
 
-            <div className='space-y-2'>
-              <Label htmlFor='availability'>Availability</Label>
-              <Select name='availability' required>
-                <SelectTrigger>
-                  <SelectValue placeholder='Select your availability' />
-                </SelectTrigger>
-                <SelectContent>
-                  {availabilityEnum.enumValues.map(value => (
-                    <SelectItem key={value} value={value}>
-                      {value.charAt(0).toUpperCase() + value.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <Card className='p-6'>
+            <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
+              Position Information
+            </h2>
+            <div className='grid gap-6'>
+              <div className='hidden space-y-2'>
+                <FormLabel htmlFor='position'>Position</FormLabel>
+                <FormControl>
+                  <Select name='position' value='candidate' required>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select a position' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='candidate'>Candidate</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              </div>
+
+              <div className='space-y-2'>
+                <FormLabel htmlFor='prior_experience'>
+                  Prior Experience
+                </FormLabel>
+                <FormControl>
+                  <Select name='prior_experience' required>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select your prior experience' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[
+                        'none',
+                        'less_than_1_year',
+                        '1_to_3_years',
+                        'more_than_3_years'
+                      ].map(value => (
+                        <SelectItem key={value} value={value}>
+                          {value
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, l => l.toUpperCase())}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              </div>
+
+              <div className='space-y-2'>
+                <FormLabel htmlFor='availability'>Availability</FormLabel>
+                <FormControl>
+                  <Select name='availability' required>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select your availability' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['weekdays', 'weekends', 'both', 'flexible'].map(
+                        value => (
+                          <SelectItem key={value} value={value}>
+                            {value.charAt(0).toUpperCase() + value.slice(1)}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              </div>
             </div>
+          </Card>
+
+          <div className='flex justify-end'>
+            <Button
+              type='submit'
+              className='rounded-lg bg-blue-700 px-8 py-6 text-lg text-white hover:bg-blue-800'
+              disabled={isPending}
+            >
+              {isPending ? 'Submitting...' : 'Submit Application'}
+            </Button>
           </div>
-        </Card>
-
-        <div className='flex justify-end'>
-          <Button
-            type='submit'
-            className='rounded-lg bg-blue-700 px-8 py-6 text-lg text-white hover:bg-blue-800'
-            disabled={isPending}
-          >
-            {isPending ? 'Submitting...' : 'Submit Application'}
-          </Button>
-        </div>
-      </form>
+        </form>
+      </Form>
     )
   } catch (error) {
     logger.error(

@@ -1,6 +1,6 @@
 'use client'
 
-import type { Event, NewEvent, UpdateEvent } from '@/types/event'
+import type { Event, NewEvent } from '@/types/event'
 import { eventTypesEnum } from '@/models/Schema'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,7 +11,8 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form'
-
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -20,49 +21,32 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { createEvent, updateEvent } from '@/actions/event'
-import { toISOString } from '@/lib/utils'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { format } from 'date-fns'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
 import { z } from 'zod'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { useRouter } from 'next/navigation'
-import { FormInput } from '@/components/ui/form-input'
-import { FormTextarea } from '@/components/ui/form-textarea'
-import { rules } from '@/lib/validation'
+import { toISOString } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
 
 const logger = createLogger({
   module: 'admin',
   file: 'EventForm.tsx'
 })
 
-const formSchema = z
-  .object({
-    event_name: z.string().min(1, 'Event name is required'),
-    event_type: z.enum(eventTypesEnum.enumValues),
-    event_date: z.date({
-      required_error: 'Event date is required'
-    }),
-    event_start_time: z.string().min(1, 'Start time is required'),
-    event_end_time: z.string().min(1, 'End time is required'),
-    event_location: z.string().min(1, 'Location is required'),
-    notes: z.string().nullable(),
-    min_participants: z
-      .number()
-      .min(1, 'Minimum participants must be at least 1'),
-    max_participants: z
-      .number()
-      .min(1, 'Maximum participants must be at least 1')
-  })
-  .refine(data => data.max_participants >= data.min_participants, {
-    message:
-      'Maximum participants must be greater than or equal to minimum participants',
-    path: ['max_participants']
-  })
+const formSchema = z.object({
+  event_name: z.string().min(2, 'Event name must be at least 2 characters'),
+  event_date: z.string(),
+  event_start_time: z.string(),
+  event_end_time: z.string(),
+  event_location: z.string().min(2, 'Location must be at least 2 characters'),
+  event_type: z.enum(['school_event', 'community_event', 'fair', 'other']),
+  notes: z.string().nullable(),
+  min_participants: z.number().min(0),
+  max_participants: z.number().min(0)
+})
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -73,11 +57,10 @@ interface EventFormProps {
 }
 
 export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { toast } = useToast()
   const supabase = createClient()
-  const router = useRouter()
 
   logger.time('event-form-render')
 
@@ -98,23 +81,25 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       event_name: event?.event_name || '',
-      event_type: event?.event_type || 'community_event',
-      event_date: event ? new Date(event.event_date) : new Date(),
-      event_start_time: event
-        ? new Date(event.event_start_time).toLocaleTimeString([], {
+      event_date: event?.event_date
+        ? new Date(event.event_date).toISOString().split('T')[0]
+        : '',
+      event_start_time: event?.event_start_time
+        ? new Date(event.event_start_time).toLocaleTimeString('en-US', {
+            hour12: false,
             hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
+            minute: '2-digit'
           })
         : '',
-      event_end_time: event
-        ? new Date(event.event_end_time).toLocaleTimeString([], {
+      event_end_time: event?.event_end_time
+        ? new Date(event.event_end_time).toLocaleTimeString('en-US', {
+            hour12: false,
             hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
+            minute: '2-digit'
           })
         : '',
       event_location: event?.event_location || '',
+      event_type: event?.event_type || 'other',
       notes: event?.notes || '',
       min_participants: event?.min_participants || 1,
       max_participants: event?.max_participants || 5
@@ -122,93 +107,84 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
   })
 
   const onSubmit = async (values: FormValues) => {
-    logger.info(
-      'Submitting event form',
-      { values, isEdit: !!event },
-      'onSubmit'
-    )
-    logger.time('form-submission')
-    setIsSubmitting(true)
+    logger.info('Submitting event form', { values }, 'onSubmit')
+
+    if (!session?.user) {
+      logger.warn(
+        'Form submission attempted without auth',
+        undefined,
+        'onSubmit'
+      )
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to submit the form',
+        variant: 'destructive'
+      })
+      return
+    }
 
     try {
-      if (!session) {
-        logger.warn(
-          'Form submission attempted without auth',
-          undefined,
-          'onSubmit'
-        )
-        toast.error('You must be logged in to submit the form')
-        return
-      }
-
-      // Combine date and time values
+      // Convert string dates to Date objects for the API
       const eventDate = new Date(values.event_date)
-      const [startHours, startMinutes] = values.event_start_time.split(':')
-      const [endHours, endMinutes] = values.event_end_time.split(':')
-
-      const startTime = new Date(eventDate)
-      startTime.setHours(
-        Number.parseInt(startHours || '0'),
-        Number.parseInt(startMinutes || '0')
-      )
-
-      const endTime = new Date(eventDate)
-      endTime.setHours(
-        Number.parseInt(endHours || '0'),
-        Number.parseInt(endMinutes || '0')
-      )
-
-      const eventData = {
-        ...values,
-        event_start_time: startTime,
-        event_end_time: endTime
+      const formData: NewEvent = {
+        event_name: values.event_name,
+        event_type: values.event_type,
+        event_location: values.event_location,
+        event_date: eventDate,
+        event_start_time: new Date(
+          `${values.event_date}T${values.event_start_time}`
+        ),
+        event_end_time: new Date(
+          `${values.event_date}T${values.event_end_time}`
+        ),
+        notes: values.notes,
+        min_participants: values.min_participants,
+        max_participants: values.max_participants
       }
 
-      const result = event
-        ? await updateEvent(event.id, eventData as UpdateEvent)
-        : await createEvent(eventData as NewEvent)
+      const apiResult = event
+        ? await updateEvent(event.id, formData)
+        : await createEvent(formData)
 
-      if (result) {
-        const eventWithStringDates: Event = {
-          ...result,
-          event_date: toISOString(result.event_date),
-          event_start_time: toISOString(result.event_start_time),
-          event_end_time: toISOString(result.event_end_time),
-          created_at: toISOString(result.created_at),
-          updated_at: toISOString(result.updated_at)
+      if (apiResult) {
+        // Convert dates back to strings for the Event type
+        const result: Event = {
+          ...apiResult,
+          event_date: toISOString(apiResult.event_date),
+          event_start_time: toISOString(apiResult.event_start_time),
+          event_end_time: toISOString(apiResult.event_end_time),
+          created_at: toISOString(apiResult.created_at),
+          updated_at: toISOString(apiResult.updated_at)
         }
 
-        logger.info(
-          'Event form submitted successfully',
-          { eventId: result.id },
-          'onSubmit'
-        )
-        toast.success(`Event ${event ? 'updated' : 'created'} successfully`)
-
-        // Call onSuccess if provided
-        onSuccess?.(eventWithStringDates)
-
-        // Close dialog if in one
-        if (closeDialog) {
-          closeDialog()
-        }
-
-        // Reset form
-        form.reset()
-
-        // Refresh the page data
-        router.refresh()
+        toast({
+          title: 'Success',
+          description: event
+            ? 'Event updated successfully'
+            : 'Event created successfully'
+        })
+        onSuccess?.(result)
+        closeDialog?.()
+      } else {
+        toast({
+          title: 'Error',
+          description: event
+            ? 'Failed to update event'
+            : 'Failed to create event',
+          variant: 'destructive'
+        })
       }
     } catch (error) {
       logger.error(
         'Form submission failed',
-        logger.errorWithData(error),
+        { error: error instanceof Error ? error : new Error('Unknown error') },
         'onSubmit'
       )
-      toast.error(`Failed to ${event ? 'update' : 'create'} event`)
-    } finally {
-      setIsSubmitting(false)
-      logger.timeEnd('form-submission')
+      toast({
+        title: 'Error',
+        description: 'An error occurred while saving the event',
+        variant: 'destructive'
+      })
     }
   }
 
@@ -230,16 +206,9 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
             name='event_name'
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Event Name</FormLabel>
                 <FormControl>
-                  <FormInput
-                    {...field}
-                    label='Event Name'
-                    rules={[
-                      rules.required('Event name'),
-                      rules.minLength(2, 'Event name')
-                    ]}
-                    onValueChange={field.onChange}
-                  />
+                  <Input {...field} placeholder='Enter event name' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -281,16 +250,14 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
             name='event_date'
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Event Date</FormLabel>
                 <FormControl>
-                  <FormInput
+                  <Input
                     type='date'
-                    label='Date'
-                    name='event_date'
-                    value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                    rules={[rules.required('Date')]}
-                    onValueChange={value => {
-                      field.onChange(value ? new Date(value) : null)
-                    }}
+                    value={field.value || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      field.onChange(e.target.value)
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -304,14 +271,14 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
               name='event_start_time'
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Start Time</FormLabel>
                   <FormControl>
-                    <FormInput
+                    <Input
                       type='time'
-                      label='Start Time'
-                      name='event_start_time'
-                      value={field.value}
-                      rules={[rules.required('Start time')]}
-                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        field.onChange(e.target.value)
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -324,14 +291,14 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
               name='event_end_time'
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>End Time</FormLabel>
                   <FormControl>
-                    <FormInput
+                    <Input
                       type='time'
-                      label='End Time'
-                      name='event_end_time'
-                      value={field.value}
-                      rules={[rules.required('End time')]}
-                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        field.onChange(e.target.value)
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -345,16 +312,9 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
             name='event_location'
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <FormInput
-                    {...field}
-                    label='Location'
-                    rules={[
-                      rules.required('Location'),
-                      rules.minLength(2, 'Location')
-                    ]}
-                    onValueChange={field.onChange}
-                  />
+                  <Input {...field} placeholder='Enter event location' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -366,11 +326,12 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
             name='notes'
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Notes</FormLabel>
                 <FormControl>
-                  <FormTextarea
+                  <Textarea
                     {...field}
-                    label='Notes'
                     value={field.value || ''}
+                    placeholder='Enter event notes'
                   />
                 </FormControl>
                 <FormMessage />
@@ -384,14 +345,14 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
               name='min_participants'
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Minimum Participants</FormLabel>
                   <FormControl>
-                    <FormInput
+                    <Input
                       type='number'
-                      label='Minimum Participants'
-                      min={1}
+                      min={0}
                       {...field}
-                      onChange={e =>
-                        field.onChange(Number.parseInt(e.target.value))
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        field.onChange(Number.parseInt(e.target.value, 10))
                       }
                     />
                   </FormControl>
@@ -405,14 +366,14 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
               name='max_participants'
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Maximum Participants</FormLabel>
                   <FormControl>
-                    <FormInput
-                      label='Maximum Participants'
+                    <Input
                       type='number'
-                      min={1}
+                      min={0}
                       {...field}
-                      onChange={e =>
-                        field.onChange(Number.parseInt(e.target.value))
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        field.onChange(Number.parseInt(e.target.value, 10))
                       }
                     />
                   </FormControl>
@@ -422,12 +383,8 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
             />
           </div>
 
-          <Button
-            type='submit'
-            className='w-full'
-            disabled={isLoading || isSubmitting}
-          >
-            {isSubmitting
+          <Button type='submit' className='w-full' disabled={isLoading}>
+            {isLoading
               ? 'Submitting...'
               : event
                 ? 'Update Event'

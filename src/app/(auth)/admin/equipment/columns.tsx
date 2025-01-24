@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table'
 import { markAsObsolete } from '@/actions/equipment'
-import { ReturnEquipmentForm } from '@/components/admin/forms/returnEquipmentForm'
+import { ReturnEquipmentForm } from '@/components/admin/equipment/returnEquipmentForm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { AssignEquipmentForm } from '@/components/admin/forms/assignEquipmentForm'
+import { AssignEquipmentForm } from '@/components/admin/equipment/assignEquipmentForm'
 import { getAllUsers } from '@/actions/user'
 import { useState } from 'react'
 import type { DBUser } from '@/types/user'
