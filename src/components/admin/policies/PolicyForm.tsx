@@ -29,6 +29,7 @@ import { createClient } from '@/lib/client'
 import type { Session } from '@supabase/supabase-js'
 import { policyTypeEnum } from '@/models/Schema'
 import { uploadPolicyFile, createPolicyRecord } from '@/actions/policy'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 const logger = createLogger({
   module: 'admin',
@@ -294,13 +295,17 @@ export function PolicyForm({ policy, closeDialog }: PolicyFormProps) {
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder='Select a type' />
+                    <SelectValue placeholder='Select a type'>
+                      {field.value
+                        ? formatEnumValueWithMapping(field.value)
+                        : 'Select a type'}
+                    </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   {policyTypeEnum.enumValues.map(type => (
-                    <SelectItem key={type} value={type} className='capitalize'>
-                      {type.replace(/_/g, ' ')}
+                    <SelectItem key={type} value={type}>
+                      {formatEnumValueWithMapping(type)}
                     </SelectItem>
                   ))}
                 </SelectContent>

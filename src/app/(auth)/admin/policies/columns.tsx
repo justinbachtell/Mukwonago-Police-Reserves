@@ -29,6 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 const logger = createLogger({ module: 'admin', file: 'policies/columns.tsx' })
 
@@ -152,7 +153,7 @@ export const columns: ColumnDef<PolicyWithCounts>[] = [
     ),
     cell: ({ row }: { row: Row<PolicyWithCounts> }) => (
       <Badge variant='outline' className='px-4'>
-        {row.original.policy_type}
+        {formatEnumValueWithMapping(row.original.policy_type)}
       </Badge>
     )
   },
