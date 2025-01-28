@@ -1,5 +1,5 @@
 import { getCurrentUser, getUserById } from '@/actions/user'
-import { UserEditForm } from '@/components/admin/forms/userEditForm'
+import { UserEditForm } from '@/components/admin/users/userEditForm'
 import { createLogger } from '@/lib/debug'
 import { redirect } from 'next/navigation'
 

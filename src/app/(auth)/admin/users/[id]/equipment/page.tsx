@@ -1,7 +1,7 @@
 import { getAssignedEquipment } from '@/actions/assignedEquipment'
 import { getAvailableEquipment } from '@/actions/equipment'
 import { getCurrentUser, getUserById } from '@/actions/user'
-import { AssignEquipmentForm } from '@/components/admin/forms/assignEquipmentForm'
+import { AssignEquipmentForm } from '@/components/admin/equipment/assignEquipmentForm'
 import { UserEquipmentTable } from '@/components/admin/users/UserEquipmentTable'
 import { Card } from '@/components/ui/card'
 import type { Equipment } from '@/types/equipment'

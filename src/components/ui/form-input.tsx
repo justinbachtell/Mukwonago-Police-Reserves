@@ -9,12 +9,21 @@ import { useEffect, useState } from 'react'
 
 const DEFAULT_RULES: ValidationRule[] = []
 
-export interface FormInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string
   name: string
   rules?: ValidationRule[]
-  formatter?: 'phone' | 'zipCode' | 'driversLicense'
+  formatter?:
+    | 'phone'
+    | 'zipCode'
+    | 'driversLicense'
+    | 'policyName'
+    | 'policyNumber'
+    | 'policyType'
+    | 'notes'
+    | 'streetAddress'
+    | 'city'
+    | 'name'
   onValueChange?: (value: string) => void
   error?: string
 }
@@ -48,16 +57,26 @@ export function FormInput({
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newValue = sanitizeInput(e.target.value)
+    let newValue = e.target.value
 
+    // First apply formatter if one is specified
     if (formatter && formatters[formatter]) {
       newValue = formatters[formatter](newValue)
     }
+
+    // Then sanitize the input
+    newValue = sanitizeInput(newValue)
 
     setValue(newValue)
     validate(newValue)
     onValueChange?.(newValue)
   }
+
+  useEffect(() => {
+    if (props.defaultValue) {
+      setValue(props.defaultValue.toString())
+    }
+  }, [props.defaultValue])
 
   const handleBlur = () => {
     setIsDirty(true)

@@ -1,14 +1,20 @@
 'use client';
 
 import type { AssignedEquipment } from '@/types/assignedEquipment';
-import type { EmergencyContact } from '@/types/emergencyContact';
-import type { SaveResult } from '@/types/forms';
-import type { UniformSizes } from '@/types/uniformSizes';
-import type { DBUser } from '@/types/user';
-import { updateUser } from '@/actions/user';
-import { Button } from '@/components/ui/button';
+import type { EmergencyContact } from '@/types/emergencyContact'
+import type { UniformSizes } from '@/types/uniformSizes'
+import type { DBUser } from '@/types/user'
+import { updateUser } from '@/actions/user'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Form } from '@/components/ui/form'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form'
 import {
   Select,
   SelectContent,
@@ -19,17 +25,18 @@ import {
 import { toast } from '@/hooks/use-toast'
 import { STATES } from '@/libs/States'
 import { createClient } from '@/lib/client'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AssignedEquipmentForm } from './assignedEquipmentForm'
 import { EmergencyContactForm } from './emergencyContactForm'
 import { UniformSizesForm } from './uniformSizesForm'
 import { createLogger } from '@/lib/debug'
 import type { Session } from '@supabase/supabase-js'
 import { useForm } from 'react-hook-form'
-import { Label } from '@/components/ui/label'
 import { LoadingCard } from '@/components/ui/loading'
 import { FormInput } from '@/components/ui/form-input'
-import { rules } from '@/lib/validation'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Input } from '@/components/ui/input'
 
 const logger = createLogger({
   module: 'forms',
@@ -58,36 +65,21 @@ interface UpdateUserData {
   status: 'active' | 'inactive' | 'denied'
 }
 
-function formatPhoneNumber(value: string): string {
-  // Remove all non-numeric characters
-  const cleaned = value.replace(/\D/g, '')
+const formSchema = z.object({
+  first_name: z.string().min(2, 'First name must be at least 2 characters'),
+  last_name: z.string().min(2, 'Last name must be at least 2 characters'),
+  phone: z.string().min(10, 'Phone number must be 10 digits'),
+  street_address: z
+    .string()
+    .min(5, 'Street address must be at least 5 characters'),
+  city: z.string().min(2, 'City must be at least 2 characters'),
+  state: z.string().min(2, 'State is required'),
+  zip_code: z.string().regex(/^\d{5}$/, 'ZIP code must be 5 digits'),
+  driver_license: z.string().optional(),
+  driver_license_state: z.string().optional()
+})
 
-  // Limit to 10 digits
-  const trimmed = cleaned.slice(0, 10)
-
-  // Format the number
-  if (trimmed.length > 6) {
-    return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3, 6)}-${trimmed.slice(6)}`
-  } else if (trimmed.length > 3) {
-    return `(${trimmed.slice(0, 3)}) ${trimmed.slice(3)}`
-  } else if (trimmed.length > 0) {
-    return `(${trimmed}`
-  }
-
-  return trimmed
-}
-
-function isValidPhoneNumber(phone: string): boolean {
-  return phone.replace(/\D/g, '').length === 10
-}
-
-function formatZipCode(value: string): string {
-  return value.replace(/\D/g, '').slice(0, 5)
-}
-
-function isValidZipCode(zipCode: string): boolean {
-  return /^\d{5}$/.test(zipCode)
-}
+type FormValues = z.infer<typeof formSchema>
 
 export function ProfileForm({
   user: initialUser,
@@ -99,265 +91,104 @@ export function ProfileForm({
   const [isLoading, setIsLoading] = useState(true)
   const supabase = createClient()
   const [isSaving, setIsSaving] = useState(false)
-  const [user, setUser] = useState(initialUser)
-  const [currentSizes, setCurrentSizes] = useState(initialSizes)
-  const [assignedEquipment, setAssignedEquipment] = useState(currentEquipment)
-  const [formData, setFormData] = useState({
-    city: user.city || '',
-    driver_license: user.driver_license || '',
-    driver_license_state: user.driver_license_state || '',
-    first_name: user.first_name || '',
-    last_name: user.last_name || '',
-    phone: user.phone || '',
-    state: user.state || '',
-    street_address: user.street_address || '',
-    zip_code: user.zip_code || ''
-  })
 
-  const form = useForm({
-    defaultValues: formData
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      first_name: initialUser.first_name || '',
+      last_name: initialUser.last_name || '',
+      phone: initialUser.phone || '',
+      street_address: initialUser.street_address || '',
+      city: initialUser.city || '',
+      state: initialUser.state || '',
+      zip_code: initialUser.zip_code || '',
+      driver_license: initialUser.driver_license || '',
+      driver_license_state: initialUser.driver_license_state || ''
+    }
   })
 
   // Create refs for child form save functions
-  const uniformSizesSaveRef = useRef<(() => Promise<SaveResult>) | null>(null)
-  const emergencyContactSaveRef = useRef<(() => Promise<SaveResult>) | null>(
-    null
-  )
-  const assignedEquipmentSaveRef = useRef<(() => Promise<SaveResult>) | null>(
-    null
-  )
+  const uniformSizesSaveRef = useRef<(() => Promise<any>) | null>(null)
+  const emergencyContactSaveRef = useRef<(() => Promise<any>) | null>(null)
+  const assignedEquipmentSaveRef = useRef<(() => Promise<any>) | null>(null)
 
   // Check session
   useEffect(() => {
     const checkSession = async () => {
-      logger.info('Checking auth session', undefined, 'checkSession')
-      try {
-        const {
-          data: { session },
-          error
-        } = await supabase.auth.getSession()
-        if (error) {
-          logger.error(
-            'Failed to get auth session',
-            logger.errorWithData(error),
-            'checkSession'
-          )
-          throw error
-        }
-        logger.info(
-          'Auth session retrieved',
-          { userId: session?.user?.id },
-          'checkSession'
-        )
-        setSession(session)
-      } catch (error) {
-        logger.error(
-          'Session check error',
-          logger.errorWithData(error),
-          'checkSession'
-        )
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    checkSession()
-
-    logger.info('Setting up auth state change listener', undefined, 'useEffect')
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      logger.info(
-        'Auth state changed',
-        { userId: session?.user?.id },
-        'onAuthStateChange'
-      )
+      const {
+        data: { session }
+      } = await supabase.auth.getSession()
       setSession(session)
       setIsLoading(false)
-    })
-
-    return () => {
-      logger.info('Cleaning up auth state listener', undefined, 'useEffect')
-      subscription.unsubscribe()
     }
+    checkSession()
   }, [supabase.auth])
 
-  const hasFormChanged = useCallback((): boolean => {
-    logger.debug(
-      'Checking form changes',
-      {
-        current: formData,
-        original: user
-      },
-      'hasFormChanged'
-    )
-
-    return (
-      formData.first_name !== (user.first_name || '') ||
-      formData.last_name !== (user.last_name || '') ||
-      formData.phone !== (user.phone || '') ||
-      formData.street_address !== (user.street_address || '') ||
-      formData.city !== (user.city || '') ||
-      formData.state !== (user.state || '') ||
-      formData.zip_code !== (user.zip_code || '') ||
-      formData.driver_license !== (user.driver_license || '') ||
-      formData.driver_license_state !== (user.driver_license_state || '')
-    )
-  }, [formData, user])
-
-  const handleMainFormSave = async () => {
-    logger.info('Saving main form data', undefined, 'handleMainFormSave')
-    try {
-      if (!session?.user) {
-        logger.warn('No active session', undefined, 'handleMainFormSave')
-        return { message: 'Not authenticated', success: false }
-      }
-
-      if (!hasFormChanged()) {
-        logger.info('No changes detected', undefined, 'handleMainFormSave')
-        return { message: 'No changes detected', success: true }
-      }
-
-      if (formData.phone && !isValidPhoneNumber(formData.phone)) {
-        logger.warn(
-          'Invalid phone number',
-          { phone: formData.phone },
-          'handleMainFormSave'
-        )
-        return {
-          message: 'Please enter a complete phone number',
-          success: false
-        }
-      }
-
-      if (formData.zip_code && !isValidZipCode(formData.zip_code)) {
-        logger.warn(
-          'Invalid ZIP code',
-          { zipCode: formData.zip_code },
-          'handleMainFormSave'
-        )
-        return {
-          message: 'Please enter a valid 5-digit ZIP code',
-          success: false
-        }
-      }
-
-      const updateData: UpdateUserData = {
-        ...formData,
-        callsign: user.callsign,
-        radio_number: user.radio_number,
-        status: 'active'
-      }
-
-      logger.info(
-        'Updating user profile',
-        { userId: user.id, data: updateData },
-        'handleMainFormSave'
-      )
-      const updatedUser = await updateUser(user.id, updateData)
-      logger.info(
-        'Profile updated successfully',
-        { userId: user.id },
-        'handleMainFormSave'
-      )
-
-      return { data: updatedUser, success: true }
-    } catch (error) {
-      logger.error(
-        'Failed to update profile',
-        logger.errorWithData(error),
-        'handleMainFormSave'
-      )
-      return { message: 'Failed to update profile', success: false }
-    }
-  }
-
-  const handleSaveAll = async () => {
-    logger.info('Starting save all process', undefined, 'handleSaveAll')
+  const onSubmit = async (values: FormValues) => {
     try {
       setIsSaving(true)
 
-      const results = await Promise.all([
-        handleMainFormSave(),
-        uniformSizesSaveRef.current?.() ??
-          Promise.resolve({ message: 'No changes', success: true }),
-        emergencyContactSaveRef.current?.() ??
-          Promise.resolve({ message: 'No changes', success: true }),
-        assignedEquipmentSaveRef.current?.() ??
-          Promise.resolve({ message: 'No changes', success: true })
-      ])
-
-      const [mainResult, uniformResult, emergencyResult, equipmentResult] =
-        results as SaveResult[]
-
-      logger.info(
-        'All save operations completed',
-        {
-          mainSuccess: mainResult?.success,
-          uniformSuccess: uniformResult?.success,
-          emergencySuccess: emergencyResult?.success,
-          equipmentSuccess: equipmentResult?.success
-        },
-        'handleSaveAll'
-      )
-
-      if (
-        !mainResult?.success ||
-        !uniformResult?.success ||
-        !emergencyResult?.success ||
-        !equipmentResult?.success
-      ) {
-        const errorMessage =
-          mainResult?.message ||
-          uniformResult?.message ||
-          emergencyResult?.message ||
-          equipmentResult?.message ||
-          'An error occurred while saving.'
-
-        logger.error(
-          'Save operation failed',
-          { message: errorMessage },
-          'handleSaveAll'
-        )
+      if (!session?.user) {
         toast({
-          description: errorMessage,
-          title: 'Failed to save changes',
+          description: 'Not authenticated',
+          title: 'Error',
           variant: 'destructive'
         })
         return
       }
 
-      // Update local state with new data
-      if ('data' in mainResult && mainResult.data) {
-        logger.info(
-          'Updating user state',
-          { userId: mainResult.data.id },
-          'handleSaveAll'
-        )
-        setUser(mainResult.data)
-      }
-      if ('data' in uniformResult && uniformResult.data) {
-        logger.info('Updating uniform sizes state', undefined, 'handleSaveAll')
-        setCurrentSizes(uniformResult.data)
-      }
-      if ('data' in equipmentResult && equipmentResult.data) {
-        logger.info('Updating equipment state', undefined, 'handleSaveAll')
-        setAssignedEquipment(equipmentResult.data)
+      const updateData: UpdateUserData = {
+        first_name: values.first_name || '',
+        last_name: values.last_name || '',
+        phone: values.phone || '',
+        street_address: values.street_address || '',
+        city: values.city || '',
+        state: values.state || '',
+        zip_code: values.zip_code || '',
+        driver_license: values.driver_license || '',
+        driver_license_state: values.driver_license_state || '',
+        callsign: initialUser.callsign,
+        radio_number: initialUser.radio_number,
+        status: 'active'
       }
 
-      logger.info('All states updated successfully', undefined, 'handleSaveAll')
-      toast({
-        description: 'Your profile has been updated.',
-        title: 'Changes saved successfully'
-      })
-    } catch (err) {
+      await updateUser(initialUser.id, updateData)
+
+      // Save child forms
+      const [uniformResult, emergencyResult, equipmentResult] =
+        await Promise.all([
+          uniformSizesSaveRef.current?.() ?? Promise.resolve({ success: true }),
+          emergencyContactSaveRef.current?.() ??
+            Promise.resolve({ success: true }),
+          assignedEquipmentSaveRef.current?.() ??
+            Promise.resolve({ success: true })
+        ])
+
+      if (
+        uniformResult?.success &&
+        emergencyResult?.success &&
+        equipmentResult?.success
+      ) {
+        toast({
+          description: 'Your profile has been updated.',
+          title: 'Success'
+        })
+      } else {
+        throw new Error('Failed to save all changes')
+      }
+    } catch (error) {
       logger.error(
-        'Unexpected error during save all',
-        logger.errorWithData(err),
-        'handleSaveAll'
+        'Failed to update profile',
+        {
+          error:
+            error instanceof Error
+              ? error
+              : new Error('Failed to update profile')
+        },
+        'onSubmit'
       )
       toast({
-        description: 'An unexpected error occurred.',
+        description: 'Failed to update profile',
         title: 'Error',
         variant: 'destructive'
       })
@@ -372,7 +203,10 @@ export function ProfileForm({
 
   return (
     <Form {...form}>
-      <form className='mx-auto max-w-5xl space-y-6 py-10'>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className='mx-auto max-w-5xl space-y-6 py-10'
+      >
         <div className='flex flex-row flex-wrap gap-6'>
           {/* Personal Information */}
           <Card className='w-full shadow-sm xl:max-w-[450px]'>
@@ -384,36 +218,33 @@ export function ProfileForm({
             <div className='p-7'>
               <div className='grid gap-8'>
                 <div className='grid gap-6 sm:grid-cols-2'>
-                  <div>
-                    <FormInput
-                      label='First Name'
-                      name='first_name'
-                      value={formData.first_name}
-                      rules={[
-                        rules.required('First name'),
-                        rules.minLength(2, 'First name'),
-                        rules.name()
-                      ]}
-                      onValueChange={value =>
-                        setFormData(prev => ({ ...prev, first_name: value }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <FormInput
-                      label='Last Name'
-                      name='last_name'
-                      value={formData.last_name}
-                      rules={[
-                        rules.required('Last name'),
-                        rules.minLength(2, 'Last name'),
-                        rules.name()
-                      ]}
-                      onValueChange={value =>
-                        setFormData(prev => ({ ...prev, last_name: value }))
-                      }
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name='first_name'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='last_name'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className='grid gap-6 sm:grid-cols-2'>
@@ -427,75 +258,64 @@ export function ProfileForm({
                       className='bg-muted'
                     />
                   </div>
-                  <div>
-                    <FormInput
-                      label='Phone Number'
-                      name='phone'
-                      type='tel'
-                      value={formData.phone}
-                      rules={[rules.required('Phone number'), rules.phone()]}
-                      formatter='phone'
-                      onValueChange={value =>
-                        setFormData(prev => ({
-                          ...prev,
-                          phone: formatPhoneNumber(value)
-                        }))
-                      }
-                      placeholder='(123) 456-7890'
-                      maxLength={14}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name='phone'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder='(123) 456-7890' />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className='grid gap-6 sm:grid-cols-2'>
-                  <div>
-                    <FormInput
-                      label="Driver's License Number"
-                      name='driver_license'
-                      value={formData.driver_license}
-                      rules={[rules.driversLicense()]}
-                      onValueChange={value =>
-                        setFormData(prev => ({
-                          ...prev,
-                          driver_license: value
-                        }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label
-                      htmlFor='driver_license_state'
-                      className='text-sm font-medium'
-                    >
-                      Driver's License State
-                    </Label>
-                    <Select
-                      value={formData.driver_license_state}
-                      onValueChange={value => {
-                        setFormData(prev => ({
-                          ...prev,
-                          driver_license_state: value
-                        }))
-                      }}
-                    >
-                      <SelectTrigger
-                        id='driver_license_state'
-                        aria-label="Driver's license state"
-                      >
-                        <SelectValue placeholder='Select state' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATES.map(state => (
-                          <SelectItem
-                            key={state.abbreviation}
-                            value={state.abbreviation}
-                          >
-                            {state.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name='driver_license'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Driver's License Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='driver_license_state'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Driver's License State</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select state' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATES.map(state => (
+                              <SelectItem
+                                key={state.abbreviation}
+                                value={state.abbreviation}
+                              >
+                                {state.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
             </div>
@@ -510,73 +330,77 @@ export function ProfileForm({
             </div>
             <div className='p-7'>
               <div className='grid gap-8'>
-                <div>
-                  <FormInput
-                    label='Street Address'
-                    name='street_address'
-                    value={formData.street_address}
-                    rules={[rules.streetAddress()]}
-                    onValueChange={value =>
-                      setFormData(prev => ({ ...prev, street_address: value }))
-                    }
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name='street_address'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Street Address</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                <div>
-                  <FormInput
-                    label='City'
-                    name='city'
-                    value={formData.city}
-                    rules={[rules.city()]}
-                    onValueChange={value =>
-                      setFormData(prev => ({ ...prev, city: value }))
-                    }
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name='city'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className='grid gap-6 sm:grid-cols-2'>
-                  <div>
-                    <Label htmlFor='state' className='text-sm font-medium'>
-                      State
-                    </Label>
-                    <Select
-                      value={formData.state}
-                      onValueChange={value => {
-                        setFormData(prev => ({ ...prev, state: value }))
-                      }}
-                    >
-                      <SelectTrigger id='state' aria-label='State of residence'>
-                        <SelectValue placeholder='Select state' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATES.map(state => (
-                          <SelectItem
-                            key={state.abbreviation}
-                            value={state.abbreviation}
-                          >
-                            {state.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <FormInput
-                      label='ZIP Code'
-                      name='zip_code'
-                      value={formData.zip_code}
-                      rules={[rules.zipCode()]}
-                      formatter='zipCode'
-                      onValueChange={value =>
-                        setFormData(prev => ({
-                          ...prev,
-                          zip_code: formatZipCode(value)
-                        }))
-                      }
-                      maxLength={5}
-                      placeholder='12345'
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name='state'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select state' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATES.map(state => (
+                              <SelectItem
+                                key={state.abbreviation}
+                                value={state.abbreviation}
+                              >
+                                {state.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='zip_code'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ZIP Code</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder='12345' maxLength={5} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
             </div>
@@ -584,22 +408,22 @@ export function ProfileForm({
 
           {/* Uniform Sizes */}
           <UniformSizesForm
-            user={user}
-            currentSizes={currentSizes}
+            user={initialUser}
+            currentSizes={initialSizes}
             saveRef={uniformSizesSaveRef}
           />
 
           {/* Emergency Contact */}
           <EmergencyContactForm
-            user={user}
+            user={initialUser}
             currentContact={currentEmergencyContact}
             saveRef={emergencyContactSaveRef}
           />
 
           {/* Equipment */}
-          {assignedEquipment && (
+          {currentEquipment && (
             <AssignedEquipmentForm
-              user={user}
+              user={initialUser}
               saveRef={assignedEquipmentSaveRef}
             />
           )}
@@ -608,9 +432,8 @@ export function ProfileForm({
         {/* Save Button */}
         <div className='mx-auto flex max-w-5xl justify-end'>
           <Button
-            type='button'
+            type='submit'
             size='lg'
-            onClick={handleSaveAll}
             disabled={isSaving || isLoading}
             className='min-w-[150px]'
           >

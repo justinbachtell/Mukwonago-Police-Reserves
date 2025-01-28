@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { EquipmentForm } from '@/components/admin/forms/equipmentForm'
+import { EquipmentForm } from '@/components/admin/equipment/equipmentForm'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 

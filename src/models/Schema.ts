@@ -79,6 +79,22 @@ export const eventTypesEnum = pgEnum('event_type', [
   'other'
 ])
 
+export const policyTypeEnum = pgEnum('policy_type', [
+  'introduction',
+  'rules_and_job_descriptions',
+  'personnel',
+  'arrests_and_enforcement',
+  'use_of_force',
+  'patrol',
+  'administrative',
+  'police_records',
+  'equipment',
+  'investigations',
+  'special_circumstances',
+  'community_and_community_relations',
+  'other'
+])
+
 export const trainingTypeEnum = pgEnum('training_type', [
   'firearms',
   'defensive_tactics',
@@ -385,7 +401,7 @@ export const policies = pgTable('policies', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
-  policy_type: text('policy_type').notNull(),
+  policy_type: policyTypeEnum('policy_type').notNull(),
   policy_number: text('policy_number').notNull(),
   policy_url: text('policy_url').notNull(),
   effective_date: timestamp('effective_date', {

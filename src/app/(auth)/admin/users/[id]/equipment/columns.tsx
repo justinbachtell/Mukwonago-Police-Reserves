@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
-import { ReturnEquipmentForm } from '@/components/admin/forms/returnEquipmentForm'
+import { ReturnEquipmentForm } from '@/components/admin/equipment/returnEquipmentForm'
 import type { AssignedEquipment } from '@/types/assignedEquipment'
 import { Button } from '@/components/ui/button'
 import { ArrowUpDown } from 'lucide-react'

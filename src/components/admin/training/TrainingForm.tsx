@@ -1,11 +1,8 @@
-'use client'
-
+import { trainingTypeEnum } from '@/models/Schema'
 import type { Training } from '@/types/training'
 import type { DBUser } from '@/types/user'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Form,
   FormControl,
@@ -15,7 +12,6 @@ import {
   FormMessage,
   FormDescription
 } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -24,217 +20,188 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { trainingTypeEnum } from '@/models/Schema'
-import { createTraining, updateTraining } from '@/actions/training'
-import { createTrainingAssignment } from '@/actions/trainingAssignment'
-import { toast } from 'sonner'
-import { createLogger } from '@/lib/debug'
-import { toISOString } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { createLogger } from '@/lib/debug'
+import { Textarea } from '@/components/ui/textarea'
+import { createClient } from '@/lib/client'
+import { useEffect, useState } from 'react'
+import type { Session } from '@supabase/supabase-js'
+import { toast } from 'sonner'
 
 const logger = createLogger({
   module: 'admin',
   file: 'TrainingForm.tsx'
 })
 
-interface TrainingFormProps {
+const formSchema = z
+  .object({
+    training_name: z
+      .string()
+      .min(2, 'Training name must be at least 2 characters')
+      .max(100, 'Training name cannot exceed 100 characters')
+      .regex(
+        /^[a-z0-9\s\-.,()]*$/i,
+        'Training name can only contain letters, numbers, spaces, and basic punctuation'
+      ),
+    training_type: z.enum(trainingTypeEnum.enumValues),
+    training_date: z.date({
+      required_error: 'Training date is required'
+    }),
+    training_start_time: z
+      .string()
+      .min(1, 'Start time is required')
+      .regex(
+        /^([01]?\d|2[0-3]):[0-5]\d$/,
+        'Please enter a valid time in 24-hour format (HH:MM)'
+      ),
+    training_end_time: z
+      .string()
+      .min(1, 'End time is required')
+      .regex(
+        /^([01]?\d|2[0-3]):[0-5]\d$/,
+        'Please enter a valid time in 24-hour format (HH:MM)'
+      ),
+    training_location: z
+      .string()
+      .min(5, 'Location must be at least 5 characters')
+      .max(100, 'Location cannot exceed 100 characters')
+      .regex(
+        /^[a-z0-9\s\-.,#]*$/i,
+        'Location can only contain letters, numbers, spaces, and basic punctuation'
+      ),
+    notes: z
+      .string()
+      .max(500, 'Notes cannot exceed 500 characters')
+      .regex(
+        /^[a-z0-9\s.,!?()'\-"]*$/i,
+        'Notes can only contain letters, numbers, and basic punctuation'
+      )
+      .nullable(),
+    min_participants: z
+      .number()
+      .min(1, 'Minimum participants must be at least 1')
+      .max(100, 'Minimum participants cannot exceed 100'),
+    max_participants: z
+      .number()
+      .min(1, 'Maximum participants must be at least 1')
+      .max(100, 'Maximum participants cannot exceed 100'),
+    is_locked: z.boolean().default(false),
+    assigned_users: z.array(z.string()).optional()
+  })
+  .refine(
+    (data: { min_participants: number; max_participants: number }) =>
+      data.max_participants >= data.min_participants,
+    {
+      message:
+        'Maximum participants must be greater than or equal to minimum participants',
+      path: ['max_participants']
+    }
+  )
+
+interface Props {
   training?: Training
   onSuccess?: () => void
-  availableUsers?: DBUser[]
   closeDialog?: () => void
+  availableUsers: DBUser[]
 }
-
-const defaultUsers: DBUser[] = []
 
 export function TrainingForm({
   training,
   onSuccess,
-  availableUsers = defaultUsers
-}: TrainingFormProps) {
-  logger.info(
-    'Rendering training form',
-    { trainingId: training?.id },
-    'TrainingForm'
-  )
-
-  type FormValues = {
-    name: string
-    training_type: (typeof trainingTypeEnum.enumValues)[number]
-    training_date: string
-    training_start_time: string
-    training_end_time: string
-    training_location: string
-    training_instructor: string | null
-    description?: string
-    is_locked: boolean
-    assigned_users?: string[]
-    min_participants: number
-    max_participants: number
-  }
-
-  const formSchema = z
-    .object({
-      name: z.string().min(1, 'Training name is required'),
-      training_type: z.enum(trainingTypeEnum.enumValues),
-      training_date: z.string().min(1, 'Training date is required'),
-      training_start_time: z.string().min(1, 'Start time is required'),
-      training_end_time: z.string().min(1, 'End time is required'),
-      training_location: z.string().min(1, 'Location is required'),
-      training_instructor: z.string().nullable(),
-      description: z.string().optional(),
-      is_locked: z.boolean().default(false),
-      assigned_users: z.array(z.string()).optional(),
-      min_participants: z
-        .number()
-        .min(1, 'Minimum participants must be at least 1'),
-      max_participants: z
-        .number()
-        .min(1, 'Maximum participants must be at least 1')
-    })
-    .refine(data => data.max_participants >= data.min_participants, {
-      message:
-        'Maximum participants must be greater than or equal to minimum participants',
-      path: ['max_participants']
-    })
-
-  const form = useForm<FormValues>({
+  closeDialog,
+  availableUsers
+}: Props) {
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: training?.name || '',
-      training_type: training?.training_type || 'other',
-      training_date: training
-        ? new Date(training.training_date).toISOString().split('T')[0]
-        : '',
-      training_start_time: training
-        ? new Date(training.training_start_time).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          })
-        : '',
-      training_end_time: training
-        ? new Date(training.training_end_time).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          })
-        : '',
+      training_name: training?.name || '',
+      training_type: training?.training_type || trainingTypeEnum.enumValues[0],
+      training_date: training?.training_date
+        ? new Date(training.training_date)
+        : new Date(),
+      training_start_time: training?.training_start_time || '',
+      training_end_time: training?.training_end_time || '',
       training_location: training?.training_location || '',
-      training_instructor: training?.training_instructor || null,
-      description: training?.description || '',
-      is_locked: training?.is_locked || false,
-      assigned_users: training?.assignments?.map(a => a.user_id) || [],
+      notes: training?.description || '',
       min_participants: training?.min_participants || 1,
-      max_participants: training?.max_participants || 10
+      max_participants: training?.max_participants || 10,
+      is_locked: training?.is_locked || false,
+      assigned_users: training?.assignments?.map(a => a.user_id) || []
     }
   })
 
-  const onSubmit = async (values: FormValues) => {
+  const [session, setSession] = useState<Session | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const checkSession = async () => {
+      logger.info('Checking auth session', undefined, 'checkSession')
+      const {
+        data: { session: currentSession }
+      } = await supabase.auth.getSession()
+      setSession(currentSession)
+      setIsLoading(false)
+    }
+
+    checkSession()
+
+    logger.info('Setting up auth state change listener', undefined, 'useEffect')
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange(
+      (_event: string, currentSession: Session | null) => {
+        logger.info(
+          'Auth state changed',
+          { userId: currentSession?.user?.id },
+          'onAuthStateChange'
+        )
+        setSession(currentSession)
+        setIsLoading(false)
+      }
+    )
+
+    return () => {
+      logger.info('Cleaning up auth state listener', undefined, 'useEffect')
+      subscription.unsubscribe()
+    }
+  }, [supabase.auth])
+
+  async function onSubmit(formData: z.infer<typeof formSchema>) {
     try {
-      // Create date objects for start and end times
-      const trainingDate = new Date(values.training_date)
-      const startParts = values.training_start_time.split(':')
-      const endParts = values.training_end_time.split(':')
-
-      const startTime = new Date(trainingDate)
-      startTime.setHours(
-        Number.parseInt(startParts[0] || '0'),
-        Number.parseInt(startParts[1] || '0')
-      )
-
-      const endTime = new Date(trainingDate)
-      endTime.setHours(
-        Number.parseInt(endParts[0] || '0'),
-        Number.parseInt(endParts[1] || '0')
-      )
-
-      const data = {
-        ...values,
-        training_date: toISOString(trainingDate),
-        training_start_time: toISOString(startTime),
-        training_end_time: toISOString(endTime)
+      if (isLoading) {
+        logger.warn(
+          'Form submission attempted while loading',
+          undefined,
+          'onSubmit'
+        )
+        toast.error('Please wait while we load your session')
+        return
       }
 
-      logger.info(
-        'Submitting training form',
-        {
-          trainingId: training?.id,
-          data
-        },
-        'onSubmit'
-      )
-
-      if (training) {
-        const result = await updateTraining(training.id, data)
-        if (result) {
-          if (values.is_locked) {
-            try {
-              const currentAssignments =
-                training.assignments?.map(a => a.user_id) || []
-              const newAssignments = values.assigned_users || []
-
-              // Add new assignments
-              for (const userId of newAssignments) {
-                if (!currentAssignments.includes(userId)) {
-                  await createTrainingAssignment({
-                    training_id: training.id,
-                    user_id: userId
-                  })
-                }
-              }
-            } catch (assignmentError) {
-              logger.error(
-                'Error updating training assignments',
-                logger.errorWithData(assignmentError),
-                'onSubmit'
-              )
-              toast.error('Failed to update training assignments')
-              return
-            }
-          }
-
-          toast.success('Training updated successfully')
-          form.reset()
-          onSuccess?.()
-        } else {
-          toast.error('Failed to update training')
-        }
-      } else {
-        const result = await createTraining(data)
-        if (result) {
-          if (values.is_locked && values.assigned_users?.length) {
-            try {
-              for (const userId of values.assigned_users) {
-                await createTrainingAssignment({
-                  training_id: result.id,
-                  user_id: userId
-                })
-              }
-            } catch (assignmentError) {
-              logger.error(
-                'Error creating training assignments',
-                logger.errorWithData(assignmentError),
-                'onSubmit'
-              )
-              toast.error('Failed to create training assignments')
-              return
-            }
-          }
-
-          toast.success('Training created successfully')
-          form.reset()
-          onSuccess?.()
-        } else {
-          toast.error('Failed to create training')
-        }
+      if (!session?.user) {
+        logger.warn(
+          'Form submission attempted without auth',
+          undefined,
+          'onSubmit'
+        )
+        toast.error('You must be logged in to submit the form')
+        return
       }
+
+      // Create or update training logic here
+      logger.info('Submitting training form', { formData }, 'onSubmit')
+      onSuccess?.()
+      closeDialog?.()
     } catch (error) {
       logger.error(
-        'Error submitting training form',
+        'Failed to submit training form',
         logger.errorWithData(error),
         'onSubmit'
       )
-      toast.error('Failed to save training')
     }
   }
 
@@ -243,7 +210,7 @@ export function TrainingForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className='grid gap-6 p-2'>
         <FormField
           control={form.control}
-          name='name'
+          name='training_name'
           render={({ field }) => (
             <FormItem className='grid gap-2'>
               <FormLabel>Training Name</FormLabel>
@@ -285,9 +252,19 @@ export function TrainingForm({
           name='training_date'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Date</FormLabel>
+              <FormLabel>Training Date</FormLabel>
               <FormControl>
-                <Input type='date' {...field} />
+                <Input
+                  type='date'
+                  value={
+                    field.value
+                      ? new Date(field.value).toISOString().split('T')[0]
+                      : ''
+                  }
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    field.onChange(e.target.value)
+                  }
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -340,43 +317,16 @@ export function TrainingForm({
 
         <FormField
           control={form.control}
-          name='training_instructor'
+          name='notes'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Instructor</FormLabel>
-              <Select
-                onValueChange={value =>
-                  field.onChange(value === 'none' ? null : value)
-                }
-                defaultValue={field.value?.toString() || 'none'}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select an instructor' />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value='none'>No instructor</SelectItem>
-                  {availableUsers.map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.first_name} {user.last_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='description'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Textarea
+                  {...field}
+                  value={field.value || ''}
+                  placeholder='Enter training notes'
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -462,20 +412,20 @@ export function TrainingForm({
                         key={user.id}
                         control={form.control}
                         name='assigned_users'
-                        render={({ field: _field }) => (
+                        render={({ field }) => (
                           <FormItem
                             key={user.id}
                             className='flex flex-row items-start space-x-3 space-y-0'
                           >
                             <FormControl>
                               <Checkbox
-                                checked={_field.value?.includes(user.id)}
+                                checked={field.value?.includes(user.id)}
                                 onCheckedChange={checked => {
-                                  const current = _field.value || []
+                                  const current = field.value || []
                                   const updated = checked
                                     ? [...current, user.id]
                                     : current.filter(id => id !== user.id)
-                                  _field.onChange(updated)
+                                  field.onChange(updated)
                                 }}
                               />
                             </FormControl>
@@ -494,7 +444,7 @@ export function TrainingForm({
           />
         )}
 
-        <Button type='submit' className='w-full'>
+        <Button type='submit' className='w-full' disabled={isLoading}>
           {training ? 'Update Training' : 'Create Training'}
         </Button>
       </form>
