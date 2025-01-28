@@ -21,8 +21,9 @@ import {
 } from '@/components/ui/dialog'
 import { PDFViewer } from '@/components/ui/pdf-viewer'
 import { getPolicyUrl, markPolicyAsAcknowledged } from '@/actions/policy'
-import { toast } from 'sonner'
+import { useToast } from '@/hooks/use-toast'
 import { createLogger } from '@/lib/debug'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 const logger = createLogger({
   module: 'policies',
@@ -80,9 +81,11 @@ function PolicyCard({
   isCompleted,
   onPolicyAcknowledged
 }: PolicyCardProps) {
+  const { toast } = useToast()
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [hasBeenViewed, setHasBeenViewed] = useState(false)
 
   const handlePolicyView = async () => {
     logger.info('Viewing policy', { policyId: policy.id }, 'handlePolicyView')
@@ -90,6 +93,7 @@ function PolicyCard({
       const signedUrl = await getPolicyUrl(policy.policy_url)
       setPdfUrl(signedUrl)
       setIsOpen(true)
+      setHasBeenViewed(true)
       logger.info(
         'Policy URL generated',
         { policyId: policy.id },
@@ -101,12 +105,16 @@ function PolicyCard({
         logger.errorWithData(error),
         'handlePolicyView'
       )
-      toast.error('Failed to load policy')
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load policy'
+      })
     }
   }
 
   const handleMarkAsAcknowledged = async () => {
-    if (isLoading) {
+    if (isLoading || !hasBeenViewed) {
       return
     }
 
@@ -125,14 +133,21 @@ function PolicyCard({
         { policyId: policy.id },
         'handleMarkAsAcknowledged'
       )
-      toast.success('Policy marked as read')
+      toast({
+        title: 'Success',
+        description: 'Policy marked as read'
+      })
     } catch (error) {
       logger.error(
         'Failed to mark policy as read',
         logger.errorWithData(error),
         'handleMarkAsAcknowledged'
       )
-      toast.error('Failed to mark policy as read')
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to mark policy as read'
+      })
     } finally {
       setIsLoading(false)
     }
@@ -148,9 +163,7 @@ function PolicyCard({
             </h3>
             <div className='mt-2 flex flex-wrap gap-2'>
               <Badge variant='outline' className='capitalize'>
-                {policy.policy_type === 'use_of_force'
-                  ? 'Use of Force'
-                  : policy.policy_type.replace('_', ' ')}
+                {formatEnumValueWithMapping(policy.policy_type)}
               </Badge>
               <Badge
                 variant={isCompleted ? 'default' : 'secondary'}
@@ -178,7 +191,7 @@ function PolicyCard({
             {policy.description}
           </p>
         )}
-        <div className='mt-auto flex gap-2 pt-4'>
+        <div className='mt-auto flex flex-col gap-2 pt-4'>
           <Button
             variant='ghost'
             size='sm'
@@ -193,8 +206,13 @@ function PolicyCard({
               variant='ghost'
               size='sm'
               onClick={handleMarkAsAcknowledged}
-              disabled={isLoading}
+              disabled={isLoading || !hasBeenViewed}
               className='flex items-center gap-2'
+              title={
+                !hasBeenViewed
+                  ? 'You must view the policy before acknowledging it'
+                  : ''
+              }
             >
               {isLoading ? (
                 <>

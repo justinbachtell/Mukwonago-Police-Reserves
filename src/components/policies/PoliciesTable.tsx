@@ -17,6 +17,7 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { createLogger } from '@/lib/debug'
 import { DataTable } from '@/components/ui/data-table'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 const logger = createLogger({
   module: 'policies',
@@ -42,6 +43,7 @@ function PolicyCell({
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [hasBeenViewed, setHasBeenViewed] = useState(false)
 
   const getFileType = (url: string) => {
     const extension = url.split('.').pop()?.toLowerCase()
@@ -58,6 +60,7 @@ function PolicyCell({
       const signedUrl = await getPolicyUrl(policy.policy_url)
       setFileUrl(signedUrl)
       setIsOpen(true)
+      setHasBeenViewed(true)
       logger.info(
         'Policy URL generated',
         { policyId: policy.id },
@@ -78,7 +81,7 @@ function PolicyCell({
   }
 
   const handleMarkAsAcknowledged = async () => {
-    if (isLoading) {
+    if (isLoading || !hasBeenViewed) {
       return
     }
 
@@ -133,8 +136,13 @@ function PolicyCell({
           variant='ghost'
           size='sm'
           onClick={handleMarkAsAcknowledged}
-          disabled={isLoading}
+          disabled={isLoading || !hasBeenViewed}
           className='flex items-center gap-2'
+          title={
+            !hasBeenViewed
+              ? 'You must view the policy before acknowledging it'
+              : ''
+          }
         >
           {isLoading ? (
             <>
@@ -259,9 +267,7 @@ export function PoliciesTable({
           const type = row.getValue('policy_type') as string
           return (
             <Badge variant='outline' className='px-4 py-1 capitalize'>
-              {type === 'use_of_force'
-                ? 'Use of Force'
-                : type.replace('_', ' ')}
+              {formatEnumValueWithMapping(type)}
             </Badge>
           )
         }
