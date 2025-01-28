@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
-import { PolicyForm } from '@/components/admin/forms/PolicyForm'
+import { PolicyForm } from '@/components/admin/policies/PolicyForm'
 import type { Policy } from '@/types/policy'
 import { LoadingCard } from '@/components/ui/loading'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

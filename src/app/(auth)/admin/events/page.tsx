@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { EventForm } from '@/components/admin/forms/EventForm'
+import { EventForm } from '@/components/admin/events/EventForm'
 import { Plus, CalendarDays } from 'lucide-react'
 import { toISOString } from '@/lib/utils'
 import { useState, useEffect } from 'react'

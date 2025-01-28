@@ -14,7 +14,7 @@ export interface FormTextareaProps
   label: string
   name: string
   rules?: ValidationRule[]
-  formatter?: keyof typeof formatters
+  formatter?: 'notes' | 'policyName' | 'policyType'
   defaultValue?: string
   error?: string
   onValueChange?: (value: string) => void
@@ -51,16 +51,26 @@ export function FormTextarea({
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    let newValue = sanitizeInput(e.target.value)
+    let newValue = e.target.value
 
+    // First apply formatter if one is specified
     if (formatter && formatters[formatter]) {
       newValue = formatters[formatter](newValue)
     }
+
+    // Then sanitize the input
+    newValue = sanitizeInput(newValue)
 
     setValue(newValue)
     validate(newValue)
     onValueChange?.(newValue)
   }
+
+  useEffect(() => {
+    if (defaultValue) {
+      setValue(defaultValue)
+    }
+  }, [defaultValue])
 
   const handleBlur = () => {
     setIsDirty(true)

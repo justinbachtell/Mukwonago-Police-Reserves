@@ -3,247 +3,325 @@
 import type { Application } from '@/types/application';
 import type { DBUser } from '@/types/user';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { availabilityEnum, positionsEnum, priorExperienceEnum } from '@/models/Schema';
-import { STATES } from '@/libs/States'
+  SelectValue
+} from '@/components/ui/select'
+import { availabilityEnum, priorExperienceEnum } from '@/models/Schema'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form'
+import { Button } from '@/components/ui/button'
+import { format } from 'date-fns'
 
 interface Props {
   user: DBUser
   application: Application
 }
 
-function getStateName(abbreviation: string): string {
-  const state = STATES.find(s => s.abbreviation === abbreviation)
-  return state ? state.name : abbreviation
-}
+const formSchema = z.object({
+  first_name: z.string().min(1),
+  last_name: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().min(10),
+  driver_license: z.string().min(1),
+  driver_license_state: z.string().length(2),
+  street_address: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().length(2),
+  zip_code: z.string().min(5),
+  prior_experience: z.enum(priorExperienceEnum.enumValues),
+  availability: z.enum(availabilityEnum.enumValues),
+  position: z.literal('candidate')
+})
+
+type FormValues = z.infer<typeof formSchema>
 
 export function CompletedApplicationForm({ application, user }: Props) {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      driver_license: user.driver_license || '',
+      driver_license_state: user.driver_license_state || '',
+      street_address: user.street_address || '',
+      city: user.city || '',
+      state: user.state || '',
+      zip_code: user.zip_code || '',
+      prior_experience: application.prior_experience,
+      availability: application.availability,
+      position: 'candidate'
+    }
+  })
+
   return (
-    <form className='space-y-6'>
-      <Card className='p-6'>
-        <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
-          Personal Information
-        </h2>
-        <div className='grid gap-6'>
-          <div className='grid grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='first_name'>First Name</Label>
-              <Input
-                id='first_name'
+    <Form {...form}>
+      <form className='space-y-6'>
+        <Card className='p-6'>
+          <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
+            Personal Information
+          </h2>
+          <div className='grid gap-6'>
+            <div className='grid grid-cols-2 gap-4'>
+              <FormField
+                control={form.control}
                 name='first_name'
-                placeholder='Enter your first name'
-                className='w-full'
-                value={user.first_name}
-                disabled
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='last_name'>Last Name</Label>
-              <Input
-                id='last_name'
+
+              <FormField
+                control={form.control}
                 name='last_name'
-                placeholder='Enter your last name'
-                className='w-full'
-                value={user.last_name}
-                disabled
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-          </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='email'>Email</Label>
-            <Input
-              id='email'
+            <FormField
+              control={form.control}
               name='email'
-              type='email'
-              placeholder='Enter your email'
-              className='w-full'
-              value={user.email}
-              disabled
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} type='email' disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='phone'>Phone Number</Label>
-            <Input
-              id='phone'
+            <FormField
+              control={form.control}
               name='phone'
-              type='tel'
-              placeholder='Enter your phone number'
-              className='w-full'
-              value={user.phone || ''}
-              disabled
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} type='tel' disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='driver_license'>Driver&apos;s License</Label>
-            <Input
-              id='driver_license'
+            <FormField
+              control={form.control}
               name='driver_license'
-              placeholder="Enter your driver's license number"
-              className='w-full'
-              value={user.driver_license || ''}
-              disabled
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Driver's License</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='driver_license_state'>
-              Driver&apos;s License State
-            </Label>
-            <Input
-              id='driver_license_state'
+            <FormField
+              control={form.control}
               name='driver_license_state'
-              placeholder="Enter the state of your driver's license"
-              className='w-full'
-              value={
-                application.driver_license_state
-                  ? getStateName(application.driver_license_state)
-                  : ''
-              }
-              disabled
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Driver's License State</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      <Card className='p-6'>
-        <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
-          Address Information
-        </h2>
-        <div className='grid gap-6'>
-          <div className='space-y-2'>
-            <Label htmlFor='street_address'>Street Address</Label>
-            <Input
-              id='street_address'
+        <Card className='p-6'>
+          <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
+            Address Information
+          </h2>
+          <div className='grid gap-6'>
+            <FormField
+              control={form.control}
               name='street_address'
-              placeholder='Enter your street address'
-              className='w-full'
-              value={user.street_address || ''}
-              disabled
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Street Address</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className='grid grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='city'>City</Label>
-              <Input
-                id='city'
+            <div className='grid grid-cols-3 gap-4'>
+              <FormField
+                control={form.control}
                 name='city'
-                placeholder='Enter your city'
-                className='w-full'
-                value={user.city || ''}
-                disabled
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='state'>State</Label>
-              <Input
-                id='state'
+
+              <FormField
+                control={form.control}
                 name='state'
-                placeholder='Enter your state'
-                className='w-full'
-                value={user.state ? getStateName(user.state) : ''}
-                disabled
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>State</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='zip_code'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ZIP Code</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
           </div>
+        </Card>
 
-          <div className='space-y-2'>
-            <Label htmlFor='zip_code'>ZIP Code</Label>
-            <Input
-              id='zip_code'
-              name='zip_code'
-              placeholder='Enter your ZIP code'
-              className='w-full'
-              value={user.zip_code || ''}
-              disabled
+        <Card className='p-6'>
+          <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
+            Additional Information
+          </h2>
+          <div className='grid gap-6'>
+            <FormField
+              control={form.control}
+              name='prior_experience'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Prior Law Enforcement Experience</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select experience level' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {priorExperienceEnum.enumValues.map(experience => (
+                        <SelectItem key={experience} value={experience}>
+                          {experience
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, l => l.toUpperCase())}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='availability'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Availability</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select availability' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {availabilityEnum.enumValues.map(availability => (
+                        <SelectItem key={availability} value={availability}>
+                          {availability
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, l => l.toUpperCase())}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      <Card className='p-6'>
-        <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
-          Additional Information
-        </h2>
-        <div className='grid gap-6'>
-          <div className='space-y-2'>
-            <Label htmlFor='prior_experience'>
-              Prior Law Enforcement Experience
-            </Label>
-            <Select
-              name='prior_experience'
-              value={application.prior_experience}
-              disabled
-            >
-              <SelectTrigger id='prior_experience'>
-                <SelectValue placeholder='Select experience level' />
-              </SelectTrigger>
-              <SelectContent>
-                {priorExperienceEnum.enumValues.map(experience => (
-                  <SelectItem key={experience} value={experience}>
-                    {experience
-                      .replace(/_/g, ' ')
-                      .replace(/\b\w/g, l => l.toUpperCase())}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='availability'>Availability</Label>
-            <Select
-              name='availability'
-              value={application.availability}
-              disabled
-            >
-              <SelectTrigger id='availability'>
-                <SelectValue placeholder='Select availability' />
-              </SelectTrigger>
-              <SelectContent>
-                {availabilityEnum.enumValues.map(availability => (
-                  <SelectItem key={availability} value={availability}>
-                    {availability
-                      .replace(/_/g, ' ')
-                      .replace(/\b\w/g, l => l.toUpperCase())}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='position'>Desired Position</Label>
-            <Select name='position' value={application.position} disabled>
-              <SelectTrigger id='position'>
-                <SelectValue placeholder='Select position' />
-              </SelectTrigger>
-              <SelectContent>
-                {positionsEnum.enumValues
-                  .filter(position => position !== 'admin')
-                  .map(position => (
-                    <SelectItem key={position} value={position}>
-                      {position
-                        .replace(/_/g, ' ')
-                        .replace(/\b\w/g, l => l.toUpperCase())}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </Card>
-    </form>
+        {application.resume && (
+          <Card className='p-6'>
+            <h2 className='mb-4 text-xl font-semibold text-gray-900 dark:text-white'>
+              Resume
+            </h2>
+            <div className='space-y-2'>
+              <p className='text-sm text-muted-foreground'>
+                Resume submitted on{' '}
+                {format(new Date(application.created_at), 'PPP')}
+              </p>
+              <Button variant='outline' asChild>
+                <a
+                  href={application.resume}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  View Resume
+                </a>
+              </Button>
+            </div>
+          </Card>
+        )}
+      </form>
+    </Form>
   )
 }
