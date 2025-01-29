@@ -280,9 +280,9 @@ export default function SignInForm() {
   }
 
   return (
-    <Card className='w-full max-w-md justify-center shadow-lg dark:bg-gray-950 dark:shadow-2xl dark:shadow-blue-900/20'>
-      <CardHeader className='space-y-3 pb-8'>
-        <CardTitle className='text-center text-2xl font-bold'>
+    <Card className='max-h-[90vh] w-full max-w-md overflow-y-auto shadow-lg dark:bg-gray-950 dark:shadow-2xl dark:shadow-blue-900/20'>
+      <CardHeader className='space-y-2 pb-4'>
+        <CardTitle className='text-center text-xl font-bold'>
           Welcome Back
         </CardTitle>
         <CardDescription className='text-center text-sm'>
@@ -290,8 +290,8 @@ export default function SignInForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className='space-y-6'>
-          <div className='space-y-4'>
+        <form onSubmit={handleSubmit} className='space-y-4'>
+          <div className='space-y-3'>
             <div className='space-y-2'>
               <FormInput
                 label='Email Address'
@@ -338,7 +338,7 @@ export default function SignInForm() {
             </div>
           </div>
 
-          <div className='mx-auto flex w-full items-center justify-center'>
+          <div className='mx-auto my-2 flex w-full items-center justify-center'>
             <HCaptcha
               ref={captcha}
               sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
@@ -348,10 +348,10 @@ export default function SignInForm() {
             />
           </div>
 
-          <div className='space-y-4'>
+          <div className='space-y-3'>
             <Button
               type='submit'
-              className='w-full py-6'
+              className='w-full py-4'
               size='lg'
               disabled={loading}
             >
@@ -379,18 +379,18 @@ export default function SignInForm() {
             <Button
               type='button'
               variant='outline'
-              className='w-full py-6'
+              className='w-full py-4'
               size='lg'
               onClick={() => router.push('/magic-link')}
             >
               Passwordless Magic Link
             </Button>
 
-            <div className='flex flex-col space-y-4'>
+            <div className='flex flex-col space-y-3'>
               <Button
                 type='button'
                 variant='outline'
-                className='w-full py-6'
+                className='w-full py-4'
                 size='lg'
                 onClick={handleGoogleSignIn}
               >
@@ -415,7 +415,7 @@ export default function SignInForm() {
               <Button
                 type='button'
                 variant='outline'
-                className='w-full py-6'
+                className='w-full py-4'
                 size='lg'
                 onClick={handleMicrosoftSignIn}
               >
@@ -435,7 +435,7 @@ export default function SignInForm() {
           </div>
         </form>
       </CardContent>
-      <CardFooter className='flex flex-col space-y-4 border-t p-6'>
+      <CardFooter className='flex flex-col space-y-2 border-t p-4'>
         <p className='text-sm text-muted-foreground'>
           Don't have an account?{' '}
           <Link
