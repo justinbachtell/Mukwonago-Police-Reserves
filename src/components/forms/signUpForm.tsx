@@ -116,7 +116,9 @@ export default function SignUpForm() {
         hasEmail: !!email,
         hasPassword: !!password,
         redirectURL,
-        hasCaptcha: !!captchaToken
+        hasCaptcha: !!captchaToken,
+        firstName,
+        lastName
       })
 
       const { data, error } = await supabase.auth.signUp({
@@ -181,7 +183,7 @@ export default function SignUpForm() {
             ? 'Please check your email to confirm your account'
             : 'Account created successfully'
         })
-        router.push('/sign-in')
+        router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`)
       }
     } catch (error: any) {
       logger.error(
@@ -376,9 +378,9 @@ export default function SignUpForm() {
   }
 
   return (
-    <Card className='w-full max-w-md shadow-lg dark:bg-gray-950 dark:shadow-2xl dark:shadow-blue-900/20'>
-      <CardHeader className='space-y-3 pb-8'>
-        <CardTitle className='text-center text-2xl font-bold'>
+    <Card className='max-h-[90vh] w-full max-w-md overflow-y-auto shadow-lg dark:bg-gray-950 dark:shadow-2xl dark:shadow-blue-900/20'>
+      <CardHeader className='space-y-2 pb-4'>
+        <CardTitle className='text-center text-xl font-bold'>
           Create Account
         </CardTitle>
         <CardDescription className='text-center text-sm'>
@@ -386,8 +388,8 @@ export default function SignUpForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className='space-y-6'>
-          <div className='space-y-4'>
+        <form onSubmit={handleSubmit} className='space-y-4'>
+          <div className='space-y-3'>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
                 <FormInput
@@ -488,7 +490,7 @@ export default function SignUpForm() {
             </div>
           </div>
 
-          <div className='mx-auto flex w-full items-center justify-center'>
+          <div className='mx-auto my-2 flex w-full items-center justify-center'>
             <HCaptcha
               ref={captcha}
               sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!}
@@ -500,7 +502,7 @@ export default function SignUpForm() {
 
           <Button
             type='submit'
-            className='w-full py-6'
+            className='w-full py-4'
             size='lg'
             disabled={loading}
           >
@@ -525,11 +527,11 @@ export default function SignUpForm() {
             </div>
           </div>
 
-          <div className='flex flex-col space-y-4'>
+          <div className='flex flex-col space-y-3'>
             <Button
               type='button'
               variant='outline'
-              className='w-full py-6'
+              className='w-full py-4'
               size='lg'
               onClick={handleGoogleSignIn}
             >
@@ -554,7 +556,7 @@ export default function SignUpForm() {
             <Button
               type='button'
               variant='outline'
-              className='w-full py-6'
+              className='w-full py-4'
               size='lg'
               onClick={handleMicrosoftSignIn}
             >
@@ -573,7 +575,7 @@ export default function SignUpForm() {
           </div>
         </form>
       </CardContent>
-      <CardFooter className='flex flex-col space-y-4 border-t p-6'>
+      <CardFooter className='flex flex-col space-y-2 border-t p-4'>
         <p className='text-sm text-muted-foreground'>
           Already have an account?{' '}
           <Link

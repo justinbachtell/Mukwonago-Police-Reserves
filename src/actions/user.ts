@@ -13,16 +13,6 @@ const logger = createLogger({
   file: 'user.ts'
 })
 
-// Helper function to split full name into first and last name
-function splitFullName(metadata: any): { firstName: string; lastName: string } {
-  const fullName = metadata?.name || metadata?.full_name || ''
-  const nameParts = fullName.split(' ')
-  return {
-    firstName: nameParts[0] || '',
-    lastName: nameParts.slice(1).join(' ') || ''
-  }
-}
-
 export async function getAuthUserFromSupabase() {
   const supabase = await createClient()
   const {
@@ -63,10 +53,7 @@ export async function getCurrentUser() {
     // First try to get the user
     let [dbUser] = await db.select().from(user).where(eq(user.id, authUser.id))
 
-    // Split the full name from metadata only for new users
-    const { firstName, lastName } = splitFullName(authUser.user_metadata)
-
-    // If no user exists, try to create one with error handling for race conditions
+    // If no user exists, create one using the auth user metadata
     if (!dbUser) {
       logger.info(
         'Attempting to create new user in public.user',
@@ -76,13 +63,24 @@ export async function getCurrentUser() {
 
       try {
         const now = toISOString(new Date())
+        // Get first_name and last_name from user_metadata
+        const metadata = authUser.user_metadata
+        const firstName = metadata?.first_name || ''
+        const lastName = metadata?.last_name || ''
+
         // Check if email is from mkpd.org domain
         const isMkpdEmail = authUser.email?.toLowerCase().endsWith('@mkpd.org')
         const defaultRole = isMkpdEmail ? 'member' : 'guest'
 
         logger.info(
-          'Setting user role based on email domain',
-          { email: authUser.email, role: defaultRole },
+          'Creating user with metadata',
+          {
+            email: authUser.email,
+            role: defaultRole,
+            firstName,
+            lastName,
+            metadata
+          },
           'getCurrentUser'
         )
 
@@ -104,7 +102,12 @@ export async function getCurrentUser() {
         if (newUser) {
           logger.info(
             'New user created successfully',
-            { id: newUser.id, role: defaultRole },
+            {
+              id: newUser.id,
+              role: defaultRole,
+              firstName,
+              lastName
+            },
             'getCurrentUser'
           )
           dbUser = newUser

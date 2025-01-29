@@ -9,9 +9,10 @@ const logger = createLogger({
 
 export async function GET(request: Request) {
   try {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
+    const requestUrl = new URL(request.url)
+    const code = requestUrl.searchParams.get('code')
     const state = requestUrl.searchParams.get('state')
+    const type = requestUrl.searchParams.get('type')
     let next = '/user/dashboard'
 
     // Try to parse the state parameter to get the returnTo URL
@@ -67,96 +68,167 @@ export async function GET(request: Request) {
 
     const supabase = await createClient()
 
-    logger.info('Exchanging code for session', { code })
-    const {
-      data: { session },
-      error: exchangeError
-    } = await supabase.auth.exchangeCodeForSession(code)
+    if (type === 'signup') {
+      // Handle email signup confirmation
+      const token_hash = requestUrl.searchParams.get('token_hash')
+      if (token_hash) {
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          type: 'signup',
+          token_hash
+        })
 
-    if (exchangeError) {
-      logger.error('Failed to exchange code for session', {
-        error: exchangeError,
-        message: exchangeError.message,
-        status: exchangeError.status,
-        code
-      })
-      return NextResponse.redirect(
-        new URL('/auth/auth-code-error', requestUrl.origin)
-      )
-    }
-
-    // Get user metadata from the provider
-    if (session?.user) {
-      const metadata = session.user.user_metadata
-      const firstName = metadata?.given_name || metadata?.first_name || ''
-      const lastName = metadata?.family_name || metadata?.last_name || ''
-
-      // Update Supabase user metadata
-      const { data, error: updateError } = await supabase.auth.updateUser({
-        data: {
-          first_name: firstName,
-          last_name: lastName
+        if (verifyError) {
+          logger.error('Failed to verify signup', {
+            error: verifyError,
+            token_hash
+          })
+          return NextResponse.redirect(
+            new URL('/auth/auth-code-error', requestUrl.origin)
+          )
         }
-      })
 
-      if (updateError) {
-        logger.error('Failed to update user metadata', {
-          error: updateError,
-          userId: session.user.id,
-          metadata: session.user.user_metadata,
-          firstName,
-          lastName
-        })
-      } else if (data.user) {
-        logger.info('Successfully updated user metadata', {
-          userId: data.user.id,
-          metadata: data.user.user_metadata,
-          firstName,
-          lastName
-        })
+        // After successful verification, get the user
+        const {
+          data: { user },
+          error: userError
+        } = await supabase.auth.getUser()
 
-        // Update the database
-        try {
-          const { error: dbError } = await supabase
-            .from('user')
-            .update({
-              first_name: firstName,
-              last_name: lastName,
-              updated_at: new Date().toISOString()
+        if (user && !userError) {
+          // Get the metadata that was set during signup
+          const metadata = user.user_metadata
+          const firstName = metadata?.first_name || ''
+          const lastName = metadata?.last_name || ''
+
+          try {
+            // Update the database directly
+            const { error: dbError } = await supabase
+              .from('user')
+              .update({
+                first_name: firstName,
+                last_name: lastName,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', user.id)
+
+            if (dbError) {
+              logger.error('Failed to update user in database after signup', {
+                error: dbError,
+                userId: user.id,
+                firstName,
+                lastName
+              })
+            } else {
+              logger.info(
+                'Successfully updated user in database after signup',
+                {
+                  userId: user.id,
+                  firstName,
+                  lastName
+                }
+              )
+            }
+          } catch (dbError) {
+            logger.error('Error updating user in database after signup', {
+              error: dbError,
+              userId: user.id,
+              firstName,
+              lastName
             })
-            .eq('id', data.user.id)
+          }
+        }
+      }
+    } else if (code) {
+      logger.info('Exchanging code for session', { code })
+      const {
+        data: { session },
+        error: exchangeError
+      } = await supabase.auth.exchangeCodeForSession(code)
 
-          if (dbError) {
-            logger.error('Failed to update user in database', {
+      if (exchangeError) {
+        logger.error('Failed to exchange code for session', {
+          error: exchangeError,
+          message: exchangeError.message,
+          status: exchangeError.status,
+          code
+        })
+        return NextResponse.redirect(
+          new URL('/auth/auth-code-error', requestUrl.origin)
+        )
+      }
+
+      // Get user metadata from the provider
+      if (session?.user) {
+        const metadata = session.user.user_metadata
+        const firstName = metadata?.given_name || metadata?.first_name || ''
+        const lastName = metadata?.family_name || metadata?.last_name || ''
+
+        // Update Supabase user metadata
+        const { data, error: updateError } = await supabase.auth.updateUser({
+          data: {
+            first_name: firstName,
+            last_name: lastName
+          }
+        })
+
+        if (updateError) {
+          logger.error('Failed to update user metadata', {
+            error: updateError,
+            userId: session.user.id,
+            metadata: session.user.user_metadata,
+            firstName,
+            lastName
+          })
+        } else if (data.user) {
+          logger.info('Successfully updated user metadata', {
+            userId: data.user.id,
+            metadata: data.user.user_metadata,
+            firstName,
+            lastName
+          })
+
+          // Update the database
+          try {
+            const { error: dbError } = await supabase
+              .from('user')
+              .update({
+                first_name: firstName,
+                last_name: lastName,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', data.user.id)
+
+            if (dbError) {
+              logger.error('Failed to update user in database', {
+                error: dbError,
+                userId: data.user.id,
+                firstName,
+                lastName
+              })
+            } else {
+              logger.info('Successfully updated user in database', {
+                userId: data.user.id,
+                firstName,
+                lastName
+              })
+            }
+          } catch (dbError) {
+            logger.error('Error updating user in database', {
               error: dbError,
               userId: data.user.id,
               firstName,
               lastName
             })
-          } else {
-            logger.info('Successfully updated user in database', {
-              userId: data.user.id,
-              firstName,
-              lastName
-            })
           }
-        } catch (dbError) {
-          logger.error('Error updating user in database', {
-            error: dbError,
-            userId: data.user.id,
-            firstName,
-            lastName
-          })
         }
       }
-    }
 
-    logger.info('Successfully exchanged code for session', {
-      next,
-      origin: requestUrl.origin,
-      hasUser: !!session?.user,
-      metadata: session?.user?.user_metadata
-    })
+      logger.info('Successfully exchanged code for session', {
+        next,
+        origin: requestUrl.origin,
+        hasUser: !!session?.user,
+        metadata: session?.user?.user_metadata
+      })
+    }
 
     // Redirect to the intended destination
     const redirectUrl = new URL(next, requestUrl.origin)
