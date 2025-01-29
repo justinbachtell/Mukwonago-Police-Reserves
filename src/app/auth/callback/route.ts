@@ -9,8 +9,8 @@ const logger = createLogger({
 
 export async function GET(request: Request) {
   try {
-    const requestUrl = new URL(request.url)
-    const code = requestUrl.searchParams.get('code')
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
     const state = requestUrl.searchParams.get('state')
     let next = '/user/dashboard'
 

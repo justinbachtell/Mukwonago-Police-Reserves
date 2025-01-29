@@ -17,7 +17,6 @@ import Link from 'next/link'
 import { createClient } from '@/lib/client'
 import { createLogger } from '@/lib/debug'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
-import { getRedirectUrl } from '@/lib/redirect'
 import type { Route } from 'next'
 import { FormInput } from '@/components/ui/form-input'
 import { rules } from '@/lib/validation'
@@ -107,38 +106,24 @@ export default function SignUpForm() {
       return
     }
 
-    const timestamp = Date.now()
-    logger.info(
-      'Starting registration submission',
-      { email, firstName, lastName },
-      'handleSubmit'
-    )
-    logger.time(`sign-up-${email}-${timestamp}`)
-
     setLoading(true)
 
     try {
       const supabase = createClient()
+      const redirectURL = `${window.location.origin}/auth/callback?next=/user/dashboard`
 
-      // Log pre-request details
-      logger.info(
-        'Initiating Supabase signup request',
-        {
-          email,
-          hasFirstName: !!firstName,
-          hasLastName: !!lastName,
-          hasCaptchaToken: !!captchaToken,
-          redirectUrl: `${window.location.origin}/auth/callback?next=/user/dashboard`
-        },
-        'handleSubmit'
-      )
+      logger.info('Attempting signup', {
+        hasEmail: !!email,
+        hasPassword: !!password,
+        redirectURL,
+        hasCaptcha: !!captchaToken
+      })
 
-      logger.time(`supabase-auth-call-${timestamp}`)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: getRedirectUrl('/user/dashboard'),
+          emailRedirectTo: redirectURL,
           data: {
             first_name: firstName,
             last_name: lastName
@@ -146,7 +131,6 @@ export default function SignUpForm() {
           captchaToken: captchaToken || undefined
         }
       })
-      logger.timeEnd(`supabase-auth-call-${timestamp}`)
 
       if (error) {
         logger.error(
@@ -156,15 +140,24 @@ export default function SignUpForm() {
             email,
             message: error.message,
             status: error.status,
-            rawError: JSON.stringify(error),
-            errorName: error.name,
-            errorStack: error.stack
+            errorName: error?.name,
+            errorCode: error?.status,
+            details: error?.message
           },
           'handleSubmit'
         )
+
+        let errorMessage = 'Failed to create account'
+        if (error.message === 'Error sending confirmation email') {
+          errorMessage =
+            'Unable to send confirmation email. Please check your Supabase email service configuration.'
+        } else if (error.message?.includes('User already registered')) {
+          errorMessage = 'An account with this email already exists.'
+        }
+
         toast({
           title: 'Error',
-          description: error.message || 'Failed to create account',
+          description: errorMessage,
           variant: 'destructive'
         })
         return
@@ -175,13 +168,18 @@ export default function SignUpForm() {
           'Registration successful',
           {
             userId: data.user.id,
-            email: data.user.email
+            email: data.user.email,
+            confirmationSent: data.user.confirmation_sent_at,
+            userMetadata: data.user.user_metadata
           },
           'handleSubmit'
         )
+
         toast({
           title: 'Success',
-          description: 'Please check your email to confirm your account'
+          description: data.user.confirmation_sent_at
+            ? 'Please check your email to confirm your account'
+            : 'Account created successfully'
         })
         router.push('/sign-in')
       }
@@ -189,28 +187,17 @@ export default function SignUpForm() {
       logger.error(
         'Unexpected error during registration',
         {
-          error: logger.errorWithData(error),
-          errorType: typeof error,
-          errorName: error?.name,
-          errorMessage: error?.message,
-          errorStack: error?.stack,
-          isAxiosError: error?.isAxiosError,
-          responseData: error?.response?.data,
-          responseStatus: error?.response?.status,
-          responseHeaders: error?.response?.headers,
-          requestUrl: error?.config?.url,
-          requestMethod: error?.config?.method
+          error: logger.errorWithData(error)
         },
         'handleSubmit'
       )
       toast({
         title: 'Error',
-        description: 'An unexpected error occurred',
+        description: 'An unexpected error occurred. Please try again later.',
         variant: 'destructive'
       })
     } finally {
       setLoading(false)
-      logger.timeEnd(`sign-up-${email}-${timestamp}`)
       if (captcha.current) {
         captcha.current.resetCaptcha()
       }
@@ -222,10 +209,12 @@ export default function SignUpForm() {
       const supabase = createClient()
       const redirectURL = `${window.location.origin}/auth/callback`
 
-      logger.info('Starting Google OAuth', {
-        redirectURL,
-        origin: window.location.origin
-      })
+      // Create state with return URL
+      const state = btoa(
+        JSON.stringify({
+          returnTo: '/user/dashboard'
+        })
+      )
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -233,7 +222,8 @@ export default function SignUpForm() {
           redirectTo: redirectURL,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent'
+            prompt: 'consent',
+            state
           }
         }
       })
@@ -304,10 +294,12 @@ export default function SignUpForm() {
       const supabase = createClient()
       const redirectURL = `${window.location.origin}/auth/callback`
 
-      logger.info('Starting Microsoft OAuth', {
-        redirectURL,
-        origin: window.location.origin
-      })
+      // Create state with return URL
+      const state = btoa(
+        JSON.stringify({
+          returnTo: '/user/dashboard'
+        })
+      )
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',
@@ -316,7 +308,8 @@ export default function SignUpForm() {
           scopes: 'email openid profile User.Read',
           queryParams: {
             response_type: 'code',
-            prompt: 'select_account'
+            prompt: 'select_account',
+            state
           }
         }
       })
