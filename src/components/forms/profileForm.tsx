@@ -51,21 +51,6 @@ interface ProfileFormProps {
   currentEquipment: AssignedEquipment | null
 }
 
-interface UpdateUserData {
-  first_name: string
-  last_name: string
-  phone: string
-  street_address: string
-  city: string
-  state: string
-  zip_code: string
-  driver_license: string
-  driver_license_state: string
-  callsign: string | null
-  radio_number: string | null
-  status: 'active' | 'inactive' | 'denied'
-}
-
 const formSchema = z.object({
   first_name: z.string().min(2, 'First name must be at least 2 characters'),
   last_name: z.string().min(2, 'Last name must be at least 2 characters'),
@@ -77,7 +62,9 @@ const formSchema = z.object({
   state: z.string().min(2, 'State is required'),
   zip_code: z.string().regex(/^\d{5}$/, 'ZIP code must be 5 digits'),
   driver_license: z.string().optional(),
-  driver_license_state: z.string().optional()
+  driver_license_state: z.string().optional(),
+  callsign: z.string().optional().nullable(),
+  radio_number: z.string().optional().nullable()
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -104,7 +91,9 @@ export function ProfileForm({
       state: initialUser.state || '',
       zip_code: initialUser.zip_code || '',
       driver_license: initialUser.driver_license || '',
-      driver_license_state: initialUser.driver_license_state || ''
+      driver_license_state: initialUser.driver_license_state || '',
+      callsign: initialUser.callsign || '',
+      radio_number: initialUser.radio_number || ''
     }
   })
 
@@ -138,7 +127,9 @@ export function ProfileForm({
         return
       }
 
-      const updateData: UpdateUserData = {
+      const isAdmin = session.user.user_metadata?.role === 'admin'
+
+      const baseUpdateData = {
         first_name: values.first_name || '',
         last_name: values.last_name || '',
         phone: values.phone || '',
@@ -148,12 +139,14 @@ export function ProfileForm({
         zip_code: values.zip_code || '',
         driver_license: values.driver_license || '',
         driver_license_state: values.driver_license_state || '',
-        callsign: initialUser.callsign,
-        radio_number: initialUser.radio_number,
-        status: 'active'
+        status: 'active' as const,
+        callsign: isAdmin ? values.callsign || null : initialUser.callsign,
+        radio_number: isAdmin
+          ? values.radio_number || null
+          : initialUser.radio_number
       }
 
-      await updateUser(initialUser.id, updateData)
+      await updateUser(initialUser.id, baseUpdateData)
 
       // Save child forms
       const [uniformResult, emergencyResult, equipmentResult] =
@@ -319,6 +312,52 @@ export function ProfileForm({
                         </Select>
                         <FormMessage />
                       </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className='grid gap-6 sm:grid-cols-2'>
+                  <FormField
+                    control={form.control}
+                    name='callsign'
+                    render={({ field }) => (
+                      <FormInput
+                        label='Callsign'
+                        name='callsign'
+                        type='text'
+                        value={field.value || ''}
+                        onValueChange={field.onChange}
+                        disabled={
+                          session?.user?.user_metadata?.role !== 'admin'
+                        }
+                        className={
+                          session?.user?.user_metadata?.role !== 'admin'
+                            ? 'bg-muted'
+                            : ''
+                        }
+                      />
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='radio_number'
+                    render={({ field }) => (
+                      <FormInput
+                        label='Radio Number'
+                        name='radio_number'
+                        type='text'
+                        value={field.value || ''}
+                        onValueChange={field.onChange}
+                        disabled={
+                          session?.user?.user_metadata?.role !== 'admin'
+                        }
+                        className={
+                          session?.user?.user_metadata?.role !== 'admin'
+                            ? 'bg-muted'
+                            : ''
+                        }
+                      />
                     )}
                   />
                 </div>

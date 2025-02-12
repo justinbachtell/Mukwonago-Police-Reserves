@@ -21,9 +21,11 @@ import {
 import { updateUser } from '@/actions/user'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import { toast } from '@/hooks/use-toast'
 import { z } from 'zod'
 import { createLogger } from '@/lib/debug'
+import { useState } from 'react'
+import { FormInput } from '@/components/ui/form-input'
 
 const logger = createLogger({
   module: 'admin',
@@ -54,11 +56,7 @@ const formSchema = z.object({
   phone: z
     .string()
     .min(10, 'Phone number must be at least 10 digits')
-    .max(15, 'Phone number cannot exceed 15 digits')
-    .regex(
-      /^[0-9\-+()]*$/,
-      'Phone number can only contain numbers and basic punctuation'
-    ),
+    .max(14, 'Phone number cannot exceed 14 characters'),
   street_address: z
     .string()
     .min(5, 'Street address must be at least 5 characters')
@@ -103,7 +101,25 @@ const formSchema = z.object({
     'admin',
     'staff',
     'dispatcher'
-  ])
+  ]),
+  callsign: z
+    .string()
+    .max(10, 'Callsign cannot exceed 10 characters')
+    .regex(
+      /^[a-z0-9\-]*$/i,
+      'Callsign can only contain letters, numbers, and hyphens'
+    )
+    .optional()
+    .nullable(),
+  radio_number: z
+    .string()
+    .max(10, 'Radio number cannot exceed 10 characters')
+    .regex(
+      /^[a-z0-9\-]*$/i,
+      'Radio number can only contain letters, numbers, and hyphens'
+    )
+    .optional()
+    .nullable()
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -119,6 +135,7 @@ export function UserEditForm({
   onSuccess,
   closeDialog
 }: UserEditFormProps) {
+  const [isSaving, setIsSaving] = useState(false)
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -133,12 +150,16 @@ export function UserEditForm({
       driver_license: user.driver_license || '',
       driver_license_state: user.driver_license_state || '',
       role: user.role || 'guest',
-      position: user.position || 'candidate'
+      position: user.position || 'candidate',
+      callsign: user.callsign || '',
+      radio_number: user.radio_number || ''
     }
   })
 
   const onSubmit = async (data: FormValues) => {
     try {
+      setIsSaving(true)
+
       const updateData: UpdateUser = {
         first_name: data.first_name,
         last_name: data.last_name,
@@ -151,7 +172,9 @@ export function UserEditForm({
         driver_license: data.driver_license,
         driver_license_state: data.driver_license_state,
         role: data.role,
-        position: data.position
+        position: data.position,
+        callsign: data.callsign,
+        radio_number: data.radio_number
       }
 
       const success = await updateUser(user.id, updateData)
@@ -159,18 +182,25 @@ export function UserEditForm({
         throw new Error('Failed to update user')
       }
 
-      toast('User updated successfully')
+      toast({
+        title: 'Success',
+        description: 'User updated successfully'
+      })
       onSuccess?.()
       closeDialog?.()
-      form.reset()
+      form.reset(data)
     } catch (error) {
       logger.error('Failed to update user', {
         error: error instanceof Error ? error.message : 'Unknown error'
       })
-      toast('Failed to update user', {
+      toast({
+        title: 'Error',
         description:
-          error instanceof Error ? error.message : 'An unknown error occurred'
+          error instanceof Error ? error.message : 'An unknown error occurred',
+        variant: 'destructive'
       })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -215,7 +245,7 @@ export function UserEditForm({
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type='email' {...field} />
+                  <Input {...field} type='email' />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -226,13 +256,16 @@ export function UserEditForm({
             control={form.control}
             name='phone'
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                  <Input type='tel' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+              <FormInput
+                label='Phone'
+                name='phone'
+                type='tel'
+                value={field.value}
+                onValueChange={field.onChange}
+                formatter='phone'
+                placeholder='(XXX) XXX-XXXX'
+                required
+              />
             )}
           />
         </div>
@@ -328,6 +361,36 @@ export function UserEditForm({
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <FormField
             control={form.control}
+            name='callsign'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Callsign</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value || ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='radio_number'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Radio Number</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value || ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            control={form.control}
             name='role'
             render={({ field }) => (
               <FormItem>
@@ -382,8 +445,8 @@ export function UserEditForm({
           />
         </div>
 
-        <Button type='submit' disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
+        <Button type='submit' disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
       </form>
     </Form>
