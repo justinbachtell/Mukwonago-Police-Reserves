@@ -266,6 +266,10 @@ export async function deleteEvent(id: number) {
   logger.info('Deleting event', { eventId: id }, 'deleteEvent')
 
   try {
+    // First, delete all event assignments for this event
+    await db.delete(eventAssignments).where(eq(eventAssignments.event_id, id))
+
+    // Then delete the event itself
     const [deletedEvent] = await db
       .delete(events)
       .where(eq(events.id, id))
