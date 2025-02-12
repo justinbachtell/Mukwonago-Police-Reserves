@@ -159,8 +159,19 @@ export async function GET(request: Request) {
       // Get user metadata from the provider
       if (session?.user) {
         const metadata = session.user.user_metadata
-        const firstName = metadata?.given_name || metadata?.first_name || ''
-        const lastName = metadata?.family_name || metadata?.last_name || ''
+        let firstName = metadata?.given_name || metadata?.first_name || ''
+        let lastName = metadata?.family_name || metadata?.last_name || ''
+
+        // If we have a full_name but no first/last name, try to parse it
+        if (!firstName && !lastName && metadata?.full_name) {
+          const nameParts = metadata.full_name.split(' ')
+          if (nameParts.length >= 2) {
+            firstName = nameParts[0]
+            lastName = nameParts.slice(1).join(' ')
+          } else if (nameParts.length === 1) {
+            firstName = nameParts[0]
+          }
+        }
 
         // Update Supabase user metadata
         const { data, error: updateError } = await supabase.auth.updateUser({

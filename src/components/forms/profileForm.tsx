@@ -37,6 +37,7 @@ import { FormInput } from '@/components/ui/form-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input } from '@/components/ui/input'
+import { rules } from '@/lib/validation'
 
 const logger = createLogger({
   module: 'forms',
@@ -222,13 +223,13 @@ export function ProfileForm({
                     control={form.control}
                     name='first_name'
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormInput
+                        label='First Name'
+                        name='first_name'
+                        type='text'
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      />
                     )}
                   />
 
@@ -236,13 +237,13 @@ export function ProfileForm({
                     control={form.control}
                     name='last_name'
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormInput
+                        label='Last Name'
+                        name='last_name'
+                        type='text'
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      />
                     )}
                   />
                 </div>
@@ -262,13 +263,17 @@ export function ProfileForm({
                     control={form.control}
                     name='phone'
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder='(123) 456-7890' />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormInput
+                        label='Phone Number'
+                        name='phone'
+                        type='tel'
+                        value={field.value}
+                        rules={[rules.required('Phone number'), rules.phone()]}
+                        formatter='phone'
+                        onValueChange={field.onChange}
+                        placeholder='(XXX) XXX-XXXX'
+                        required
+                      />
                     )}
                   />
                 </div>
@@ -278,13 +283,13 @@ export function ProfileForm({
                     control={form.control}
                     name='driver_license'
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Driver's License Number</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormInput
+                        label="Driver's License Number"
+                        name='driver_license'
+                        type='text'
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      />
                     )}
                   />
 
@@ -334,13 +339,13 @@ export function ProfileForm({
                   control={form.control}
                   name='street_address'
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Street Address</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormInput
+                      label='Street Address'
+                      name='street_address'
+                      type='text'
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
                   )}
                 />
 
@@ -348,13 +353,13 @@ export function ProfileForm({
                   control={form.control}
                   name='city'
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>City</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormInput
+                      label='City'
+                      name='city'
+                      type='text'
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
                   )}
                 />
 

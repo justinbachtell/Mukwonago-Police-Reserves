@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
 import 'react-pdf/dist/esm/Page/TextLayer.css'
@@ -13,10 +13,21 @@ import {
   ZoomOut
 } from 'lucide-react'
 
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString()
+
 interface PDFViewerProps {
   url: string
   className?: string
 }
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString()
 
 export function PDFViewer({ url }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0)
@@ -25,21 +36,15 @@ export function PDFViewer({ url }: PDFViewerProps) {
   const [scale, setScale] = useState(1.5)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    try {
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-        'pdfjs-dist/build/pdf.worker.min.mjs',
-        import.meta.url
-      ).toString()
-    } catch (err) {
-      console.error('Error setting up PDF worker:', err)
-      setError('Failed to initialize PDF viewer')
-    }
-  }, [])
+  // Memoize PDF options to prevent unnecessary reloads
+  const options = useMemo(
+    () => ({
+      cMapUrl: 'cmaps/',
+      cMapPacked: true,
+      standardFontDataUrl: 'standard_fonts/'
+    }),
+    []
+  )
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages)
@@ -96,15 +101,12 @@ export function PDFViewer({ url }: PDFViewerProps) {
             onLoadError={onDocumentLoadError}
             loading={null}
             className='py-4'
-            options={{
-              cMapUrl: `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/cmaps/`,
-              cMapPacked: true
-            }}
+            options={options}
           >
             <Page
               pageNumber={pageNumber}
-              renderTextLayer
-              renderAnnotationLayer
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
               loading={null}
               scale={scale}
               className='mb-4 shadow-lg'
