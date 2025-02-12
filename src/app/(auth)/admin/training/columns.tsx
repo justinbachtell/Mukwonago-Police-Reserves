@@ -50,7 +50,6 @@ function TrainingActions({
       const result = await deleteTraining(training.id)
       if (result) {
         toast.success('Training deleted successfully')
-        router.refresh()
       } else {
         toast.error('Failed to delete training')
       }
@@ -61,6 +60,8 @@ function TrainingActions({
         'columns'
       )
       toast.error('Failed to delete training')
+    } finally {
+      router.refresh()
     }
   }
 

@@ -3,7 +3,7 @@
 import type { RequiredTrainingFields, UpdateTraining } from '@/types/training'
 import { toISOString } from '@/lib/utils'
 import { db } from '@/libs/DB'
-import { training } from '@/models/Schema'
+import { training, trainingAssignments } from '@/models/Schema'
 import { eq } from 'drizzle-orm'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/server'
@@ -348,6 +348,12 @@ export async function deleteTraining(id: number) {
       return null
     }
 
+    // First, delete all training assignments for this training
+    await db
+      .delete(trainingAssignments)
+      .where(eq(trainingAssignments.training_id, id))
+
+    // Then delete the training itself
     const [deletedTraining] = await db
       .delete(training)
       .where(eq(training.id, id))
