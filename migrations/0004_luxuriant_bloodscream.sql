@@ -1,0 +1,1 @@
+ALTER TABLE "training" ADD COLUMN "custom_instructor" text;

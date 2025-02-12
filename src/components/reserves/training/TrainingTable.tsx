@@ -10,6 +10,7 @@ import { TrainingSignUpButton } from './TrainingSignUpButton'
 import { useState } from 'react'
 import { createLogger } from '@/lib/debug'
 import Link from 'next/link'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 const logger = createLogger({
   module: 'training',
@@ -67,8 +68,8 @@ export function TrainingTable({ data }: TrainingTableProps) {
         cell: ({ row }) => {
           const type = row.getValue('training_type') as string
           return (
-            <Badge variant='outline' className='px-4 py-1 capitalize'>
-              {type.replace('_', ' ')}
+            <Badge variant='secondary' className='font-medium'>
+              {formatEnumValueWithMapping(type)}
             </Badge>
           )
         },
@@ -201,7 +202,7 @@ export function TrainingTable({ data }: TrainingTableProps) {
             <span className='block px-4'>
               {training.instructor
                 ? `${training.instructor.first_name} ${training.instructor.last_name}`
-                : 'TBD'}
+                : training.training_instructor || 'TBD'}
             </span>
           )
         },

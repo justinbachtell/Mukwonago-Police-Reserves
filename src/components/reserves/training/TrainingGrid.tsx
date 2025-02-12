@@ -7,6 +7,7 @@ import { format } from 'date-fns'
 import { CalendarDays, Clock, MapPin } from 'lucide-react'
 import { TrainingSignUpButton } from './TrainingSignUpButton'
 import Link from 'next/link'
+import { formatEnumValueWithMapping } from '@/lib/format-enums'
 
 interface TrainingGridProps {
   data: Training[]
@@ -26,8 +27,8 @@ export function TrainingGrid({ data }: TrainingGridProps) {
                 >
                   {training.name}
                 </Link>
-                <Badge variant='outline' className='mt-2 capitalize'>
-                  {training.training_type.replace('_', ' ')}
+                <Badge variant='secondary' className='mt-2 font-medium'>
+                  {formatEnumValueWithMapping(training.training_type)}
                 </Badge>
               </div>
             </div>

@@ -64,7 +64,7 @@ const enumDisplayMap: Record<string, string> = {
   gear: 'Gear',
   communication: 'Communication',
   safety: 'Safety',
-  other: 'Other', // Used for both equipment category and event types
+  other: 'Other', // Used for both equipment category, event type, and training type
 
   // Completion status
   completed: 'Completed',
@@ -78,11 +78,17 @@ const enumDisplayMap: Record<string, string> = {
   training_event: 'Training Event',
 
   // Training types
-  firearms: 'Firearms',
-  defensive_tactics: 'Defensive Tactics',
+  active_shooter_response: 'Active Shooter Response',
+  defensive_and_arrest_tactics: 'Defensive and Arrest Tactics',
   emergency_vehicle_operations: 'Emergency Vehicle Operations',
+  firearms: 'Firearms',
   first_aid: 'First Aid',
-  legal_updates: 'Legal Updates'
+  legal_updates: 'Legal Updates',
+  patrol_tactics: 'Patrol Tactics',
+  radar_and_lidar: 'Radar and Lidar',
+  taser: 'Taser',
+  traffic_control: 'Traffic Control',
+  use_of_force: 'Use of Force'
 }
 
 /**

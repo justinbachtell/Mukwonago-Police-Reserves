@@ -24,14 +24,13 @@ const logger = createLogger({
   file: 'events/management/columns.tsx'
 })
 
-// Action cell component
-const ActionCell = ({
+function ActionCell({
   event,
   onDataChange
 }: {
   event: Event
   onDataChange?: () => void
-}) => {
+}) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   const handleDelete = async () => {
@@ -51,19 +50,14 @@ const ActionCell = ({
   }
 
   return (
-    <div className='flex items-center justify-end gap-2'>
+    <div className='flex items-center justify-end gap-2 px-4'>
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogTrigger asChild>
-          <Button
-            variant='ghost'
-            size='icon'
-            className='size-8'
-            title='Edit Event'
-          >
+          <Button variant='ghost' size='icon' className='size-8'>
             <Pencil className='size-4' />
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-[600px]'>
           <DialogHeader>
             <DialogTitle>Edit Event</DialogTitle>
           </DialogHeader>
@@ -76,13 +70,11 @@ const ActionCell = ({
           />
         </DialogContent>
       </Dialog>
-
       <Button
         variant='ghost'
         size='icon'
         className='size-8'
         onClick={handleDelete}
-        title='Delete Event'
       >
         <Trash className='size-4' />
       </Button>
@@ -90,7 +82,7 @@ const ActionCell = ({
   )
 }
 
-export const columns: ColumnDef<Event>[] = [
+export const columns = (onDataChange?: () => void): ColumnDef<Event>[] => [
   {
     accessorKey: 'event_name',
     header: ({ column }) => {
@@ -274,6 +266,8 @@ export const columns: ColumnDef<Event>[] = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => <ActionCell event={row.original} />
+    cell: ({ row }) => (
+      <ActionCell event={row.original} onDataChange={onDataChange} />
+    )
   }
 ]

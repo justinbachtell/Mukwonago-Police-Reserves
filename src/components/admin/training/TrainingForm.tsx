@@ -30,6 +30,8 @@ import { createClient } from '@/lib/client'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
+import { createTraining, updateTraining } from '@/actions/training'
 
 const logger = createLogger({
   module: 'admin',
@@ -66,7 +68,7 @@ const formSchema = z
       ),
     training_location: z
       .string()
-      .min(5, 'Location must be at least 5 characters')
+      .min(4, 'Location must be at least 4 characters')
       .max(100, 'Location cannot exceed 100 characters')
       .regex(
         /^[a-z0-9\s\-.,#]*$/i,
@@ -89,7 +91,10 @@ const formSchema = z
       .min(1, 'Maximum participants must be at least 1')
       .max(100, 'Maximum participants cannot exceed 100'),
     is_locked: z.boolean().default(false),
-    assigned_users: z.array(z.string()).optional()
+    assigned_users: z.array(z.string()).optional(),
+    use_custom_instructor: z.boolean().default(false),
+    instructor_id: z.string().optional(),
+    custom_instructor_name: z.string().optional()
   })
   .refine(
     (data: { min_participants: number; max_participants: number }) =>
@@ -98,6 +103,18 @@ const formSchema = z
       message:
         'Maximum participants must be greater than or equal to minimum participants',
       path: ['max_participants']
+    }
+  )
+  .refine(
+    data => {
+      if (data.use_custom_instructor) {
+        return !!data.custom_instructor_name
+      }
+      return !!data.instructor_id
+    },
+    {
+      message: 'Please either select an instructor or enter a custom name',
+      path: ['instructor_id']
     }
   )
 
@@ -114,6 +131,13 @@ export function TrainingForm({
   closeDialog,
   availableUsers
 }: Props) {
+  const [useCustomInstructor, setUseCustomInstructor] = useState(
+    !training?.instructor?.id
+  )
+  const [session, setSession] = useState<Session | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const supabase = createClient()
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -122,20 +146,33 @@ export function TrainingForm({
       training_date: training?.training_date
         ? new Date(training.training_date)
         : new Date(),
-      training_start_time: training?.training_start_time || '',
-      training_end_time: training?.training_end_time || '',
+      training_start_time: training?.training_start_time
+        ? new Date(training.training_start_time).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          })
+        : '',
+      training_end_time: training?.training_end_time
+        ? new Date(training.training_end_time).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          })
+        : '',
       training_location: training?.training_location || '',
       notes: training?.description || '',
       min_participants: training?.min_participants || 1,
       max_participants: training?.max_participants || 10,
       is_locked: training?.is_locked || false,
-      assigned_users: training?.assignments?.map(a => a.user_id) || []
+      assigned_users: training?.assignments?.map(a => a.user_id) || [],
+      use_custom_instructor: !training?.instructor?.id,
+      instructor_id: training?.instructor?.id || '',
+      custom_instructor_name: !training?.instructor?.id
+        ? training?.training_instructor || ''
+        : ''
     }
   })
-
-  const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
     const checkSession = async () => {
@@ -192,16 +229,59 @@ export function TrainingForm({
         return
       }
 
-      // Create or update training logic here
-      logger.info('Submitting training form', { formData }, 'onSubmit')
-      onSuccess?.()
-      closeDialog?.()
+      setIsLoading(true)
+
+      const trainingData = {
+        name: formData.training_name,
+        training_type: formData.training_type,
+        training_date: formData.training_date.toISOString(),
+        training_location: formData.training_location,
+        instructor_id: formData.use_custom_instructor
+          ? null
+          : formData.instructor_id || null,
+        training_instructor: formData.use_custom_instructor
+          ? formData.custom_instructor_name || null
+          : null,
+        training_start_time: new Date(
+          `1970-01-01T${formData.training_start_time}`
+        ).toISOString(),
+        training_end_time: new Date(
+          `1970-01-01T${formData.training_end_time}`
+        ).toISOString(),
+        description: formData.notes || null,
+        is_locked: formData.is_locked,
+        min_participants: formData.min_participants,
+        max_participants: formData.max_participants
+      }
+
+      if (training) {
+        const result = await updateTraining(training.id, trainingData)
+        if (result) {
+          toast.success('Training updated successfully')
+          onSuccess?.()
+          closeDialog?.()
+        } else {
+          toast.error('Failed to update training')
+        }
+      } else {
+        const result = await createTraining(trainingData)
+        if (result) {
+          toast.success('Training created successfully')
+          onSuccess?.()
+          closeDialog?.()
+        } else {
+          toast.error('Failed to create training')
+        }
+      }
     } catch (error) {
       logger.error(
         'Failed to submit training form',
         logger.errorWithData(error),
         'onSubmit'
       )
+      toast.error('An error occurred while saving the training')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -222,6 +302,70 @@ export function TrainingForm({
           )}
         />
 
+        <div className='space-y-4'>
+          <div className='flex items-center space-x-2'>
+            <FormLabel>Instructor</FormLabel>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='p-1 text-xs'
+              onClick={() => {
+                setUseCustomInstructor(!useCustomInstructor)
+                form.setValue('use_custom_instructor', !useCustomInstructor)
+                form.setValue('instructor_id', '')
+                form.setValue('custom_instructor_name', '')
+              }}
+            >
+              {useCustomInstructor ? 'Select User' : 'Enter Manually'}
+            </Button>
+          </div>
+
+          {useCustomInstructor ? (
+            <FormField
+              control={form.control}
+              name='custom_instructor_name'
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input {...field} placeholder='Enter instructor name' />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <FormField
+              control={form.control}
+              name='instructor_id'
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select an instructor' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableUsers.map(user => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.first_name} {user.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
+
         <FormField
           control={form.control}
           name='training_type'
@@ -231,7 +375,11 @@ export function TrainingForm({
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder='Select a type' />
+                    <SelectValue placeholder='Select a type'>
+                      <div className='capitalize'>
+                        {field.value?.replace(/_/g, ' ')}
+                      </div>
+                    </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -257,12 +405,12 @@ export function TrainingForm({
                 <Input
                   type='date'
                   value={
-                    field.value
-                      ? new Date(field.value).toISOString().split('T')[0]
+                    field.value instanceof Date
+                      ? field.value.toISOString().split('T')[0]
                       : ''
                   }
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    field.onChange(e.target.value)
+                    field.onChange(new Date(e.target.value))
                   }
                 />
               </FormControl>
@@ -445,7 +593,14 @@ export function TrainingForm({
         )}
 
         <Button type='submit' className='w-full' disabled={isLoading}>
-          {training ? 'Update Training' : 'Create Training'}
+          {isLoading ? (
+            <>
+              <Loader2 className='mr-2 size-4 animate-spin' />
+              {training ? 'Updating Training...' : 'Creating Training...'}
+            </>
+          ) : (
+            <>{training ? 'Update Training' : 'Create Training'}</>
+          )}
         </Button>
       </form>
     </Form>

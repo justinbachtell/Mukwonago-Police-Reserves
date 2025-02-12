@@ -23,22 +23,42 @@ export function PDFViewer({ url }: PDFViewerProps) {
   const [pageNumber, setPageNumber] = useState<number>(1)
   const [loading, setLoading] = useState(true)
   const [scale, setScale] = useState(1.5)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.min.mjs',
-      import.meta.url
-    ).toString()
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.min.mjs',
+        import.meta.url
+      ).toString()
+    } catch (err) {
+      console.error('Error setting up PDF worker:', err)
+      setError('Failed to initialize PDF viewer')
+    }
   }, [])
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages)
     setLoading(false)
+    setError(null)
   }
 
   function onDocumentLoadError(error: Error) {
     console.error('Error loading PDF:', error)
     setLoading(false)
+    setError('Failed to load PDF file')
+  }
+
+  if (error) {
+    return (
+      <div className='flex h-[calc(90vh-8rem)] items-center justify-center'>
+        <p className='text-destructive'>{error}</p>
+      </div>
+    )
   }
 
   return (
@@ -76,6 +96,10 @@ export function PDFViewer({ url }: PDFViewerProps) {
             onLoadError={onDocumentLoadError}
             loading={null}
             className='py-4'
+            options={{
+              cMapUrl: `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/cmaps/`,
+              cMapPacked: true
+            }}
           >
             <Page
               pageNumber={pageNumber}
