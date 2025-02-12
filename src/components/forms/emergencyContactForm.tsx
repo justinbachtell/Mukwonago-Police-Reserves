@@ -22,6 +22,7 @@ import { createClient } from '@/lib/client'
 import type { Session } from '@supabase/supabase-js'
 import { rules } from '@/lib/validation'
 import { useToast } from '@/hooks/use-toast'
+import { FormLabel } from '@/components/ui/form'
 
 const logger = createLogger({
   module: 'forms',
@@ -168,10 +169,7 @@ export function EmergencyContactForm({
         'handleSaveChanges'
       )
 
-      const updatedContact = await updateEmergencyContact(
-        String(formData.id),
-        formData
-      )
+      const updatedContact = await updateEmergencyContact(dbUser.id, formData)
       logger.info(
         'Changes saved successfully',
         { contactId: formData.id },
@@ -200,7 +198,7 @@ export function EmergencyContactForm({
     } finally {
       logger.timeEnd('save-emergency-contact')
     }
-  }, [isLoading, session, hasFormChanged, formData, toast])
+  }, [isLoading, session, hasFormChanged, formData, toast, dbUser.id])
 
   useEffect(() => {
     logger.info('[EmergencyContactForm] Updating save ref')
@@ -296,12 +294,13 @@ export function EmergencyContactForm({
                   required
                 />
               </div>
-              <div className='md:col-span-4'>
+              <div className='space-y-2 md:col-span-4'>
+                <FormLabel>Relationship</FormLabel>
                 <Select
                   value={formData.relationship}
                   onValueChange={handleFieldChange('relationship')}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className='w-full'>
                     <SelectValue placeholder='Select relationship' />
                   </SelectTrigger>
                   <SelectContent>
@@ -349,6 +348,7 @@ export function EmergencyContactForm({
                   name='street_address'
                   value={formData.street_address || ''}
                   rules={[rules.streetAddress()]}
+                  formatter='streetAddress'
                   onValueChange={handleFieldChange('street_address')}
                   placeholder='Enter street address'
                 />

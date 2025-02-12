@@ -103,6 +103,8 @@ export async function updateEmergencyContact(
       return null
     }
 
+    const now = toISOString(new Date())
+
     // First, set all existing emergency contacts to not current
     logger.info(
       'Deactivating existing contacts',
@@ -114,35 +116,55 @@ export async function updateEmergencyContact(
       .set({ is_current: false })
       .where(eq(emergencyContact.user_id, user_id))
 
-    const now = toISOString(new Date())
-    logger.info(
-      'Creating new contact record',
-      { userId: user_id },
-      'updateEmergencyContact'
-    )
+    // Prepare the contact data
+    const contactData = {
+      city: data.city,
+      email: data.email,
+      first_name: data.first_name,
+      is_current: true,
+      last_name: data.last_name,
+      phone: data.phone,
+      relationship: data.relationship,
+      state: data.state,
+      street_address: data.street_address,
+      updated_at: now,
+      user_id,
+      zip_code: data.zip_code
+    }
 
-    const [updatedEmergencyContact] = await db
-      .insert(emergencyContact)
-      .values({
-        city: data.city,
-        created_at: now,
-        email: data.email,
-        first_name: data.first_name,
-        is_current: true,
-        last_name: data.last_name,
-        phone: data.phone,
-        relationship: data.relationship,
-        state: data.state,
-        street_address: data.street_address,
-        updated_at: now,
-        user_id: data.user_id,
-        zip_code: data.zip_code
-      })
-      .returning()
+    let updatedEmergencyContact
+
+    // If we have an existing contact ID and it's not 0, update it
+    if (data.id && data.id !== 0) {
+      logger.info(
+        'Updating existing contact',
+        { contactId: data.id },
+        'updateEmergencyContact'
+      )
+      ;[updatedEmergencyContact] = await db
+        .update(emergencyContact)
+        .set(contactData)
+        .where(eq(emergencyContact.id, data.id))
+        .returning()
+    } else {
+      // Otherwise, create a new contact
+      logger.info(
+        'Creating new contact record',
+        { userId: user_id },
+        'updateEmergencyContact'
+      )
+      ;;[updatedEmergencyContact] = await db
+        .insert(emergencyContact)
+        .values({
+          ...contactData,
+          created_at: now
+        })
+        .returning()
+    }
 
     if (!updatedEmergencyContact) {
       logger.error(
-        'No contact returned after insert',
+        'No contact returned after operation',
         { userId: user_id },
         'updateEmergencyContact'
       )

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import type { ValidationRule } from '@/lib/validation'
-import { formatters, sanitizeInput, validateInput } from '@/lib/validation'
+import { formatters, validateInput } from '@/lib/validation'
 import { useEffect, useState } from 'react'
 
 const DEFAULT_RULES: ValidationRule[] = []
@@ -26,6 +26,7 @@ export interface FormInputProps extends React.InputHTMLAttributes<HTMLInputEleme
     | 'name'
   onValueChange?: (value: string) => void
   error?: string
+  value?: string
 }
 
 export function FormInput({
@@ -35,11 +36,16 @@ export function FormInput({
   formatter,
   onValueChange,
   error: externalError,
+  value: propValue = '',
   ...props
 }: FormInputProps) {
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(propValue)
   const [error, setError] = useState<string | null>(externalError || null)
   const [isDirty, setIsDirty] = useState(false)
+
+  useEffect(() => {
+    setValue(propValue)
+  }, [propValue])
 
   useEffect(() => {
     if (externalError !== undefined) {
@@ -59,13 +65,13 @@ export function FormInput({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let newValue = e.target.value
 
-    // First apply formatter if one is specified
-    if (formatter && formatters[formatter]) {
+    // Only apply formatters for specific types that need formatting
+    if (
+      formatter &&
+      ['phone', 'zipCode', 'driversLicense'].includes(formatter)
+    ) {
       newValue = formatters[formatter](newValue)
     }
-
-    // Then sanitize the input
-    newValue = sanitizeInput(newValue)
 
     setValue(newValue)
     validate(newValue)

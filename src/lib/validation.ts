@@ -43,11 +43,25 @@ export const rules = {
       'Please enter a valid name (letters, spaces, hyphens and apostrophes only)'
   }),
   streetAddress: (): ValidationRule => ({
-    test: (value: string) => /^[a-z0-9\s\-.,#]{5,100}$/i.test(value),
+    test: (value: string) => {
+      const trimmed = value.trim()
+      return (
+        trimmed.length >= 5 &&
+        trimmed.length <= 100 &&
+        /^[a-z0-9\s\-.,#]+$/i.test(trimmed)
+      )
+    },
     message: 'Please enter a valid street address'
   }),
   city: (): ValidationRule => ({
-    test: (value: string) => /^[a-z\s\-']{2,50}$/i.test(value),
+    test: (value: string) => {
+      const trimmed = value.trim()
+      return (
+        trimmed.length >= 2 &&
+        trimmed.length <= 50 &&
+        /^[a-z\s\-']+$/i.test(trimmed)
+      )
+    },
     message: 'Please enter a valid city name'
   }),
   // Equipment-related validation rules
@@ -148,8 +162,10 @@ export const formatters = {
   },
   // Address formatters
   streetAddress: (value: string): string => {
+    // Allow letters, numbers, spaces, and common address characters
     const sanitized = value.replace(/[^a-z0-9\s\-.,#]/gi, '')
-    return sanitized.trim().slice(0, 100)
+    // Preserve multiple spaces
+    return sanitized.slice(0, 100)
   },
   city: (value: string): string => {
     const sanitized = value.replace(/[^a-z\s\-']/gi, '')
@@ -158,11 +174,18 @@ export const formatters = {
 }
 
 // Sanitization function
-export const sanitizeInput = (value: string): string => {
+export const sanitizeInput = (
+  value: string,
+  preserveSpaces: boolean = false
+): string => {
   // First sanitize with DOMPurify
   const sanitized = DOMPurify.sanitize(value)
-  // Preserve spaces between words, only trim leading/trailing spaces
-  return sanitized.trim()
+  // If preserveSpaces is true, only trim leading/trailing spaces
+  if (preserveSpaces) {
+    return sanitized.trim()
+  }
+  // Otherwise, remove all extra spaces and trim
+  return sanitized.replace(/\s+/g, ' ').trim()
 }
 
 // Validation function
