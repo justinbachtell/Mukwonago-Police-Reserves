@@ -1,0 +1,4 @@
+ALTER TABLE "public"."training" ALTER COLUMN "training_type" SET DATA TYPE text;--> statement-breakpoint
+DROP TYPE "public"."training_type";--> statement-breakpoint
+CREATE TYPE "public"."training_type" AS ENUM('active_shooter_response', 'defensive_and_arrest_tactics', 'emergency_vehicle_operations', 'firearms', 'first_aid', 'legal_updates', 'patrol_tactics', 'radar_and_lidar', 'taser', 'traffic_control', 'use_of_force', 'other');--> statement-breakpoint
+ALTER TABLE "public"."training" ALTER COLUMN "training_type" SET DATA TYPE "public"."training_type" USING "training_type"::"public"."training_type";

@@ -10,7 +10,7 @@ export interface Training {
   training_date: string
   training_location: string
   training_type: (typeof trainingTypeEnum.enumValues)[number]
-  training_instructor: string | null
+  training_instructor: string | null // Can be either user ID or instructor name
   training_start_time: string
   training_end_time: string
   is_locked: boolean

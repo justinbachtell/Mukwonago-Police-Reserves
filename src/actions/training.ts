@@ -47,16 +47,25 @@ export async function getTrainings() {
           }
         },
         instructor: true
-      }
+      },
+      orderBy: (training, { desc }) => [desc(training.training_date)]
     })
+
+    const mappedTrainings = trainings.map(training => ({
+      ...training,
+      instructor: training.instructor || null,
+      training_instructor: training.instructor
+        ? training.training_instructor
+        : training.training_instructor || null
+    }))
 
     logger.info(
       'Trainings retrieved successfully',
-      { count: trainings.length },
+      { count: mappedTrainings.length },
       'getTrainings'
     )
     logger.timeEnd('fetch-all-trainings')
-    return trainings
+    return mappedTrainings
   } catch (error) {
     logger.error(
       'Failed to fetch trainings',
@@ -134,7 +143,8 @@ export async function createTraining(data: RequiredTrainingFields) {
     {
       name: data.name,
       type: data.training_type,
-      date: data.training_date
+      date: data.training_date,
+      instructor: data.training_instructor || 'none'
     },
     'createTraining'
   )
@@ -169,6 +179,7 @@ export async function createTraining(data: RequiredTrainingFields) {
         training_date: toISOString(data.training_date),
         training_start_time: toISOString(data.training_start_time),
         training_end_time: toISOString(data.training_end_time),
+        training_instructor: data.training_instructor,
         created_at: now,
         updated_at: now
       })
@@ -219,7 +230,10 @@ export async function updateTraining(id: number, data: UpdateTraining) {
     'Updating training',
     {
       trainingId: id,
-      updates: data
+      updates: {
+        ...data,
+        instructor: data.training_instructor || 'none'
+      }
     },
     'updateTraining'
   )
@@ -259,6 +273,7 @@ export async function updateTraining(id: number, data: UpdateTraining) {
         training_end_time: data.training_end_time
           ? toISOString(data.training_end_time)
           : undefined,
+        training_instructor: data.training_instructor,
         updated_at: toISOString(new Date())
       })
       .where(eq(training.id, id))

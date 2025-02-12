@@ -96,11 +96,17 @@ export const policyTypeEnum = pgEnum('policy_type', [
 ])
 
 export const trainingTypeEnum = pgEnum('training_type', [
-  'firearms',
-  'defensive_tactics',
+  'active_shooter_response',
+  'defensive_and_arrest_tactics',
   'emergency_vehicle_operations',
+  'firearms',
   'first_aid',
   'legal_updates',
+  'patrol_tactics',
+  'radar_and_lidar',
+  'taser',
+  'traffic_control',
+  'use_of_force',
   'other'
 ])
 
@@ -345,7 +351,8 @@ export const training = pgTable('training', {
     .notNull(),
   training_location: text('training_location').notNull(),
   training_type: trainingTypeEnum('training_type').notNull(),
-  training_instructor: uuid('training_instructor').references(() => user.id),
+  training_instructor: text('training_instructor'),
+  instructor_id: uuid('instructor_id').references(() => user.id),
   training_start_time: timestamp('training_start_time', {
     mode: 'string',
     withTimezone: true
@@ -575,8 +582,9 @@ export const trainingAssignmentRelations = relations(
 export const trainingRelations = relations(training, ({ many, one }) => ({
   assignments: many(trainingAssignments),
   instructor: one(user, {
-    fields: [training.training_instructor],
-    references: [user.id]
+    fields: [training.instructor_id],
+    references: [user.id],
+    relationName: 'instructor'
   })
 }))
 

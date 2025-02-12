@@ -157,11 +157,13 @@ export function createColumns(availableUsers: DBUser[]): ColumnDef<Training>[] {
       accessorKey: 'instructor',
       header: 'Instructor',
       cell: ({ row }) => {
-        const instructor = row.original.instructor
-        return instructor ? (
+        const training = row.original
+        return training.instructor ? (
           <Badge variant='outline'>
-            {instructor.first_name} {instructor.last_name}
+            {training.instructor.first_name} {training.instructor.last_name}
           </Badge>
+        ) : training.training_instructor ? (
+          <Badge variant='outline'>{training.training_instructor}</Badge>
         ) : (
           <Badge variant='outline' className='opacity-50'>
             No instructor

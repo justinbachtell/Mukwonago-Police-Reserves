@@ -14,11 +14,12 @@ import {
 } from '@/components/ui/dialog'
 import { CompletedApplicationForm } from '@/components/forms/completedApplicationForm'
 import { PDFViewer } from '@/components/ui/pdf-viewer'
-import { toast } from 'sonner'
-import { ArrowUpDown, FileIcon, EyeIcon } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { ArrowUpDown, FileIcon, EyeIcon, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { toISOString } from '@/lib/utils'
 import { createLogger } from '@/lib/debug'
+import { ErrorBoundary } from 'react-error-boundary'
 
 const logger = createLogger({
   module: 'admin',
@@ -104,9 +105,12 @@ function ApplicationCell({ application }: { application: Application }) {
 function ResumeCell({ application }: { application: Application }) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
 
   const handleResumeView = async () => {
     try {
+      setIsLoading(true)
       logger.info(
         'Viewing resume',
         { applicationId: application.id },
@@ -119,7 +123,11 @@ function ResumeCell({ application }: { application: Application }) {
           { applicationId: application.id },
           'handleResumeView'
         )
-        toast.error('No resume available')
+        toast({
+          title: 'No Resume Available',
+          description: 'This application does not include a resume.',
+          variant: 'destructive'
+        })
         return
       }
 
@@ -137,41 +145,146 @@ function ResumeCell({ application }: { application: Application }) {
         logger.errorWithData(error),
         'handleResumeView'
       )
-      toast.error('Failed to load resume')
+      toast({
+        title: 'Error Loading Resume',
+        description: 'Failed to load the resume. Please try again later.',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  if (!application.resume) {
+    return (
+      <Button
+        variant='ghost'
+        size='sm'
+        disabled
+        className='text-muted-foreground'
+      >
+        No Resume
+      </Button>
+    )
   }
 
   return (
     <div className='flex flex-col'>
-      {application.resume ? (
-        <>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={handleResumeView}
-            className='flex items-center gap-2'
-          >
-            <FileIcon className='size-4' />
-            View Resume
-          </Button>
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className='max-h-[90vh] w-[90vw] max-w-[90vw] p-0'>
-              <DialogHeader className='border-b px-6 py-4'>
-                <DialogTitle>
-                  Resume - {application.first_name} {application.last_name}
-                </DialogTitle>
-              </DialogHeader>
-              {pdfUrl && (
-                <div className='overflow-hidden'>
-                  <PDFViewer url={pdfUrl} />
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-        </>
-      ) : (
-        <span className='text-muted-foreground'>No resume</span>
-      )}
+      <Button
+        variant='outline'
+        size='sm'
+        onClick={handleResumeView}
+        className='flex items-center gap-2'
+        disabled={isLoading}
+      >
+        <FileIcon className='size-4' />
+        {isLoading ? (
+          <>
+            <Loader2 className='size-4 animate-spin' />
+            Loading...
+          </>
+        ) : (
+          'View Resume'
+        )}
+      </Button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className='max-h-[90vh] w-[90vw] max-w-[90vw] p-0'>
+          <DialogHeader className='border-b px-6 py-4'>
+            <DialogTitle>
+              Resume - {application.first_name} {application.last_name}
+            </DialogTitle>
+          </DialogHeader>
+          {pdfUrl ? (
+            <div className='overflow-hidden'>
+              <ErrorBoundary
+                fallback={
+                  <div className='flex h-[80vh] items-center justify-center text-center'>
+                    <div className='space-y-4'>
+                      <p className='text-destructive'>
+                        Unable to load resume. The file may have been deleted or
+                        is no longer accessible.
+                      </p>
+                      <Button
+                        variant='outline'
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                }
+              >
+                <PDFViewer url={pdfUrl} />
+              </ErrorBoundary>
+            </div>
+          ) : (
+            <div className='flex h-[80vh] items-center justify-center'>
+              <Loader2 className='size-8 animate-spin' />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+function StatusActions({ application }: { application: Application }) {
+  const { toast } = useToast()
+
+  logger.debug(
+    'Rendering actions cell',
+    { applicationId: application.id },
+    'columns'
+  )
+
+  const handleStatusUpdate = async (status: 'approved' | 'rejected') => {
+    try {
+      logger.info(
+        'Updating application status',
+        { id: application.id, newStatus: status },
+        'handleStatusUpdate'
+      )
+
+      await updateApplicationStatus(application.id, status)
+      toast({
+        title: 'Status Updated',
+        description: `Application ${status} successfully.`,
+        variant: status === 'approved' ? 'default' : 'destructive'
+      })
+      window.location.reload()
+    } catch (error) {
+      logger.error(
+        'Status update failed',
+        logger.errorWithData(error),
+        'handleStatusUpdate'
+      )
+      toast({
+        title: 'Update Failed',
+        description: 'Failed to update application status. Please try again.',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  return (
+    <div className='flex gap-2'>
+      <Button
+        variant='outline'
+        size='sm'
+        onClick={() => handleStatusUpdate('approved')}
+        className='h-8 w-20'
+      >
+        Approve
+      </Button>
+      <Button
+        variant='outline'
+        size='sm'
+        onClick={() => handleStatusUpdate('rejected')}
+        className='h-8 w-20 text-destructive'
+      >
+        Reject
+      </Button>
     </div>
   )
 }
@@ -352,22 +465,11 @@ export const columns: ColumnDef<Application>[] = [
     id: 'application'
   },
   {
-    accessorKey: 'resume',
+    id: 'resume',
+    header: 'Resume',
     cell: ({ row }) => {
       const application = row.original
       return <ResumeCell application={application} />
-    },
-    header: ({ column }) => {
-      return (
-        <Button
-          variant='ghost'
-          size='tableColumn'
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Resume
-          <ArrowUpDown className='ml-2 size-4' />
-        </Button>
-      )
     }
   },
   {
@@ -395,54 +497,7 @@ export const columns: ColumnDef<Application>[] = [
   {
     cell: ({ row }) => {
       const application = row.original
-
-      logger.debug(
-        'Rendering actions cell',
-        { applicationId: application.id },
-        'columns'
-      )
-
-      const handleStatusUpdate = async (status: 'approved' | 'rejected') => {
-        try {
-          logger.info(
-            'Updating application status',
-            { id: application.id, newStatus: status },
-            'handleStatusUpdate'
-          )
-
-          await updateApplicationStatus(application.id, status)
-          toast.success(`Application ${status} successfully`)
-          window.location.reload()
-        } catch (error) {
-          logger.error(
-            'Status update failed',
-            logger.errorWithData(error),
-            'handleStatusUpdate'
-          )
-          toast.error('Failed to update application status')
-        }
-      }
-
-      return (
-        <div className='flex gap-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => handleStatusUpdate('approved')}
-            className='h-8 w-20'
-          >
-            Approve
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => handleStatusUpdate('rejected')}
-            className='h-8 w-20 text-destructive'
-          >
-            Reject
-          </Button>
-        </div>
-      )
+      return <StatusActions application={application} />
     },
     id: 'actions'
   }

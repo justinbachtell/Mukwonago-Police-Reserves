@@ -4,8 +4,9 @@ import type { Event } from '@/types/event'
 import type { SortingState } from '@tanstack/react-table'
 import { DataTable } from '@/components/ui/data-table'
 import { columns } from '@/app/(auth)/admin/events/management/columns'
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createLogger } from '@/lib/debug'
+import { Loader2 } from 'lucide-react'
 
 const logger = createLogger({
   module: 'admin',
@@ -17,7 +18,18 @@ interface EventsManagementTableProps {
   onDataChange?: () => void
 }
 
-export function EventsManagementTable({ data }: EventsManagementTableProps) {
+export function EventsManagementTable({
+  data,
+  onDataChange
+}: EventsManagementTableProps) {
+  const [isLoading, setIsLoading] = useState(true)
+  const [sortedData, setSortedData] = useState<Event[]>([])
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'event_date', desc: true }
+  ])
+
+  const tableColumns = useMemo(() => columns(onDataChange), [onDataChange])
+
   logger.info(
     'Rendering events management table',
     { eventCount: data.length },
@@ -25,65 +37,72 @@ export function EventsManagementTable({ data }: EventsManagementTableProps) {
   )
   logger.time('events-management-table-render')
 
-  try {
-    const [sorting, setSorting] = useState<SortingState>([
-      { id: 'event_date', desc: true }
-    ])
+  // Custom sort function
+  const sortEvents = (events: Event[]) => {
+    const now = new Date()
 
-    // Custom sort function
-    const sortEvents = (events: Event[]) => {
-      const now = new Date()
+    // First, separate future and past events
+    const futureEvents = events.filter(
+      event => new Date(event.event_date) >= now
+    )
+    const pastEvents = events.filter(event => new Date(event.event_date) < now)
 
-      // First, separate future and past events
-      const futureEvents = events.filter(
-        event => new Date(event.event_date) >= now
-      )
-      const pastEvents = events.filter(
-        event => new Date(event.event_date) < now
-      )
+    // Sort future events by closest date first
+    const sortedFutureEvents = futureEvents.sort(
+      (a, b) =>
+        new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
+    )
 
-      // Sort future events by closest date first
-      const sortedFutureEvents = futureEvents.sort(
-        (a, b) =>
-          new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
-      )
+    // Sort past events by most recent first
+    const sortedPastEvents = pastEvents.sort(
+      (a, b) =>
+        new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
+    )
 
-      // Sort past events by most recent first
-      const sortedPastEvents = pastEvents.sort(
-        (a, b) =>
-          new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
-      )
+    // Combine the arrays with future events first, then past events
+    return [...sortedFutureEvents, ...sortedPastEvents]
+  }
 
-      // Combine the arrays with future events first, then past events
-      return [...sortedFutureEvents, ...sortedPastEvents]
+  useEffect(() => {
+    const prepareData = async () => {
+      try {
+        const sorted = sortEvents(data)
+        setSortedData(sorted)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    logger.debug(
-      'Sorted events data',
-      {
-        totalEvents: data.length,
-        firstEvent: data[0]?.event_date,
-        lastEvent: data[data.length - 1]?.event_date
-      },
-      'EventsManagementTable'
-    )
+    prepareData()
+  }, [data])
 
+  logger.debug(
+    'Sorted events data',
+    {
+      totalEvents: data.length,
+      firstEvent: data[0]?.event_date,
+      lastEvent: data[data.length - 1]?.event_date
+    },
+    'EventsManagementTable'
+  )
+
+  if (isLoading) {
     return (
-      <DataTable
-        columns={columns}
-        data={sortEvents(data)}
-        sorting={sorting}
-        onSortingChange={setSorting}
-      />
+      <div className='flex h-[500px] items-center justify-center'>
+        <div className='flex flex-col items-center gap-2'>
+          <Loader2 className='size-8 animate-spin' />
+          <p className='text-sm text-muted-foreground'>Loading events...</p>
+        </div>
+      </div>
     )
-  } catch (error) {
-    logger.error(
-      'Error rendering events management table',
-      logger.errorWithData(error),
-      'EventsManagementTable'
-    )
-    throw error
-  } finally {
-    logger.timeEnd('events-management-table-render')
   }
+
+  return (
+    <DataTable
+      columns={tableColumns}
+      data={sortedData}
+      sorting={sorting}
+      onSortingChange={setSorting}
+    />
+  )
 }
