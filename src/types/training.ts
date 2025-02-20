@@ -36,7 +36,9 @@ export type UpdateTraining = Partial<
     Training,
     'id' | 'created_at' | 'updated_at' | 'assignments' | 'instructor'
   >
->
+> & {
+  assigned_users?: string[]
+}
 
 // Required fields when creating new training sessions
 export type RequiredTrainingFields = Pick<
@@ -51,4 +53,6 @@ export type RequiredTrainingFields = Pick<
   | 'is_locked'
   | 'min_participants'
   | 'max_participants'
->
+> & {
+  assigned_users?: string[]
+}

@@ -26,6 +26,7 @@ interface EventParticipantsDialogProps {
 export function EventParticipantsDialog({
   event
 }: EventParticipantsDialogProps) {
+  const [assignments, setAssignments] = useState(event.assignments || [])
   const [selectedAssignment, setSelectedAssignment] = useState<{
     eventId: number
     userId: string
@@ -41,6 +42,10 @@ export function EventParticipantsDialog({
         'handleRemoveParticipant'
       )
       await deleteEventAssignment(eventId, userId)
+      // Update local state
+      setAssignments(prevAssignments =>
+        prevAssignments.filter(a => a.user_id !== userId)
+      )
       toast.success('Participant removed successfully')
     } catch (error) {
       logger.error(
@@ -66,14 +71,30 @@ export function EventParticipantsDialog({
         { assignment: selectedAssignment, data },
         'handleUpdateCompletion'
       )
-      await updateEventAssignmentCompletion(
+      const result = await updateEventAssignmentCompletion(
         selectedAssignment.eventId,
         selectedAssignment.userId,
         {
           completion_status: data.status,
-          completion_notes: data.notes
+          completion_notes: data.notes ?? null
         }
       )
+
+      if (result) {
+        // Update local state with type safety
+        setAssignments(prevAssignments =>
+          prevAssignments.map(assignment =>
+            assignment.user_id === selectedAssignment.userId
+              ? {
+                  ...assignment,
+                  completion_status: data.status,
+                  completion_notes: data.notes ?? null
+                }
+              : assignment
+          )
+        )
+      }
+
       setSelectedAssignment(null)
       toast.success('Status updated successfully')
     } catch (error) {
@@ -86,7 +107,6 @@ export function EventParticipantsDialog({
     }
   }
 
-  const assignments = event.assignments || []
   const isPast = new Date(event.event_end_time) < new Date()
 
   return (

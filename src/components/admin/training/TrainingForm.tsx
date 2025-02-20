@@ -20,7 +20,6 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -32,6 +31,7 @@ import type { Session } from '@supabase/supabase-js'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { createTraining, updateTraining } from '@/actions/training'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 const logger = createLogger({
   module: 'admin',
@@ -49,9 +49,7 @@ const formSchema = z
         'Training name can only contain letters, numbers, spaces, and basic punctuation'
       ),
     training_type: z.enum(trainingTypeEnum.enumValues),
-    training_date: z.date({
-      required_error: 'Training date is required'
-    }),
+    training_date: z.string().min(10, 'Training date is required'),
     training_start_time: z
       .string()
       .min(1, 'Start time is required')
@@ -144,8 +142,8 @@ export function TrainingForm({
       training_name: training?.name || '',
       training_type: training?.training_type || trainingTypeEnum.enumValues[0],
       training_date: training?.training_date
-        ? new Date(training.training_date)
-        : new Date(),
+        ? new Date(training.training_date).toISOString().split('T')[0]
+        : '',
       training_start_time: training?.training_start_time
         ? new Date(training.training_start_time).toLocaleTimeString('en-US', {
             hour: '2-digit',
@@ -210,21 +208,11 @@ export function TrainingForm({
   async function onSubmit(formData: z.infer<typeof formSchema>) {
     try {
       if (isLoading) {
-        logger.warn(
-          'Form submission attempted while loading',
-          undefined,
-          'onSubmit'
-        )
         toast.error('Please wait while we load your session')
         return
       }
 
       if (!session?.user) {
-        logger.warn(
-          'Form submission attempted without auth',
-          undefined,
-          'onSubmit'
-        )
         toast.error('You must be logged in to submit the form')
         return
       }
@@ -234,7 +222,9 @@ export function TrainingForm({
       const trainingData = {
         name: formData.training_name,
         training_type: formData.training_type,
-        training_date: formData.training_date.toISOString(),
+        training_date: new Date(
+          `${formData.training_date}T12:00:00.000Z`
+        ).toISOString(),
         training_location: formData.training_location,
         instructor_id: formData.use_custom_instructor
           ? null
@@ -243,15 +233,16 @@ export function TrainingForm({
           ? formData.custom_instructor_name || null
           : null,
         training_start_time: new Date(
-          `1970-01-01T${formData.training_start_time}`
+          `${formData.training_date}T${formData.training_start_time}`
         ).toISOString(),
         training_end_time: new Date(
-          `1970-01-01T${formData.training_end_time}`
+          `${formData.training_date}T${formData.training_end_time}`
         ).toISOString(),
         description: formData.notes || null,
         is_locked: formData.is_locked,
         min_participants: formData.min_participants,
-        max_participants: formData.max_participants
+        max_participants: formData.max_participants,
+        assigned_users: formData.is_locked ? formData.assigned_users : []
       }
 
       if (training) {
@@ -274,11 +265,6 @@ export function TrainingForm({
         }
       }
     } catch (error) {
-      logger.error(
-        'Failed to submit training form',
-        logger.errorWithData(error),
-        'onSubmit'
-      )
       toast.error('An error occurred while saving the training')
     } finally {
       setIsLoading(false)
@@ -404,14 +390,10 @@ export function TrainingForm({
               <FormControl>
                 <Input
                   type='date'
-                  value={
-                    field.value instanceof Date
-                      ? field.value.toISOString().split('T')[0]
-                      : ''
-                  }
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    field.onChange(new Date(e.target.value))
-                  }
+                  value={field.value || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    field.onChange(e.target.value)
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -427,7 +409,14 @@ export function TrainingForm({
               <FormItem>
                 <FormLabel>Start Time</FormLabel>
                 <FormControl>
-                  <Input type='time' {...field} />
+                  <Input
+                    type='time'
+                    step='60'
+                    value={field.value || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      field.onChange(e.target.value)
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -441,7 +430,14 @@ export function TrainingForm({
               <FormItem>
                 <FormLabel>End Time</FormLabel>
                 <FormControl>
-                  <Input type='time' {...field} />
+                  <Input
+                    type='time'
+                    step='60'
+                    value={field.value || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      field.onChange(e.target.value)
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -550,42 +546,40 @@ export function TrainingForm({
           <FormField
             control={form.control}
             name='assigned_users'
-            render={() => (
+            render={({ field }) => (
               <FormItem>
                 <FormLabel>Assigned Users</FormLabel>
-                <ScrollArea className='h-[200px] rounded-md border p-4'>
-                  <div className='space-y-4'>
-                    {availableUsers.map(user => (
-                      <FormField
-                        key={user.id}
-                        control={form.control}
-                        name='assigned_users'
-                        render={({ field }) => (
-                          <FormItem
-                            key={user.id}
-                            className='flex flex-row items-start space-x-3 space-y-0'
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(user.id)}
-                                onCheckedChange={checked => {
-                                  const current = field.value || []
-                                  const updated = checked
-                                    ? [...current, user.id]
-                                    : current.filter(id => id !== user.id)
-                                  field.onChange(updated)
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className='font-normal'>
-                              {user.first_name} {user.last_name}
-                            </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
+                <FormControl>
+                  <div className='space-y-2'>
+                    <ScrollArea className='h-[200px] rounded-md border p-2'>
+                      {availableUsers.map(user => (
+                        <div
+                          key={user.id}
+                          className='flex items-center space-x-2 p-2'
+                        >
+                          <Checkbox
+                            checked={field.value?.includes(user.id)}
+                            onCheckedChange={checked => {
+                              const newValue = checked
+                                ? [...(field.value || []), user.id]
+                                : field.value?.filter(id => id !== user.id) ||
+                                  []
+                              field.onChange(newValue)
+                            }}
+                          />
+                          <label className='text-sm'>
+                            {user.first_name} {user.last_name}
+                          </label>
+                        </div>
+                      ))}
+                    </ScrollArea>
                   </div>
-                </ScrollArea>
+                </FormControl>
+                <FormDescription>
+                  {form.watch('is_locked')
+                    ? 'Select users to assign to this training'
+                    : 'Enable "Lock Training" to assign specific users'}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

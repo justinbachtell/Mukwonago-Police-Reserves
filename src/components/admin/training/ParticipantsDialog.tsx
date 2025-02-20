@@ -5,13 +5,19 @@ import type { CompletionStatus } from '@/types/trainingAssignment'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { updateTrainingAssignmentStatus } from '@/actions/trainingAssignment'
-import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { createLogger } from '@/lib/debug'
 import { createClient } from '@/lib/client'
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { LoadingDialog } from '@/components/ui/loading'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 
 const logger = createLogger({
   module: 'training',
@@ -25,6 +31,7 @@ interface ParticipantsDialogProps {
 export function ParticipantsDialog({ training }: ParticipantsDialogProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [session, setSession] = useState<Session | null>(null)
+  const [assignments, setAssignments] = useState(training.assignments || [])
   const supabase = createClient()
 
   logger.time('participants-dialog-render')
@@ -80,6 +87,19 @@ export function ParticipantsDialog({ training }: ParticipantsDialogProps) {
       })
 
       if (result) {
+        // Update local state immediately
+        setAssignments(prevAssignments =>
+          prevAssignments.map(assignment =>
+            assignment.user_id === userId
+              ? {
+                  ...assignment,
+                  completion_status: result.completion_status,
+                  completion_notes: result.completion_notes
+                }
+              : assignment
+          )
+        )
+
         logger.info(
           'Status updated successfully',
           { userId, newStatus: result.completion_status },
@@ -104,7 +124,7 @@ export function ParticipantsDialog({ training }: ParticipantsDialogProps) {
       return <LoadingDialog />
     }
 
-    if (!training.assignments?.length) {
+    if (!assignments.length) {
       logger.info(
         'No participants found',
         { trainingId: training.id },
@@ -119,7 +139,7 @@ export function ParticipantsDialog({ training }: ParticipantsDialogProps) {
 
     return (
       <div className='space-y-4 py-4'>
-        {training.assignments.map(assignment => {
+        {assignments.map(assignment => {
           if (!assignment.user) {
             logger.warn(
               'Assignment found without user',
@@ -146,28 +166,29 @@ export function ParticipantsDialog({ training }: ParticipantsDialogProps) {
 
                 <div className='flex items-center gap-2'>
                   <Label htmlFor={`status-${assignment.user_id}`}>Status</Label>
-                  <select
-                    id={`status-${assignment.user_id}`}
-                    className={cn(
-                      'h-9 w-[200px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
-                    )}
-                    value={assignment.completion_status || ''}
-                    onChange={e =>
+                  <Select
+                    value={assignment.completion_status || 'unset'}
+                    onValueChange={value => {
+                      const status =
+                        value === 'unset' ? null : (value as CompletionStatus)
                       handleCompletionStatusChange(
                         assignment.user_id,
-                        e.target.value as CompletionStatus | null,
+                        status,
                         assignment.completion_notes
                       )
-                    }
-                    aria-label={`Completion status for ${assignment.user.first_name} ${assignment.user.last_name}`}
+                    }}
                   >
-                    <option value=''>Select status</option>
-                    <option value='completed'>Completed</option>
-                    <option value='incomplete'>Incomplete</option>
-                    <option value='excused'>Excused</option>
-                    <option value='unexcused'>Unexcused</option>
-                  </select>
+                    <SelectTrigger className='w-[200px]'>
+                      <SelectValue placeholder='Select status' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='unset'>Select status</SelectItem>
+                      <SelectItem value='completed'>Completed</SelectItem>
+                      <SelectItem value='incomplete'>Incomplete</SelectItem>
+                      <SelectItem value='excused'>Excused</SelectItem>
+                      <SelectItem value='unexcused'>Unexcused</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

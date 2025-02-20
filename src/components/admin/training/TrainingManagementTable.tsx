@@ -65,7 +65,10 @@ export function TrainingManagementTable({
     )
 
     // Combine the arrays with future trainings first, then past trainings
-    return [...sortedFutureTrainings, ...sortedPastTrainings]
+    return [...sortedFutureTrainings, ...sortedPastTrainings].map(training => ({
+      ...training,
+      assignments: training.assignments || []
+    }))
   }
 
   useEffect(() => {

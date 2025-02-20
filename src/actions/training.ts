@@ -138,17 +138,7 @@ export async function getTraining(id: number) {
 }
 
 export async function createTraining(data: RequiredTrainingFields) {
-  logger.info(
-    'Creating new training',
-    {
-      name: data.name,
-      type: data.training_type,
-      date: data.training_date,
-      instructor: data.training_instructor || 'none'
-    },
-    'createTraining'
-  )
-  logger.time(`create-training-${data.name}`)
+  logger.info('Creating new training', { name: data.name }, 'createTraining')
 
   try {
     const supabase = await createClient()
@@ -157,87 +147,74 @@ export async function createTraining(data: RequiredTrainingFields) {
       error: userError
     } = await supabase.auth.getUser()
 
-    if (userError) {
-      logger.error(
-        'Failed to get Supabase user',
-        logger.errorWithData(userError),
-        'createTraining'
-      )
-      return null
-    }
-
-    if (!user) {
-      logger.warn('No active user found', undefined, 'createTraining')
+    if (userError || !user) {
+      logger.error('Failed to get Supabase user', undefined, 'createTraining')
       return null
     }
 
     const now = toISOString(new Date())
-    const [newTraining] = await db
-      .insert(training)
-      .values({
-        ...data,
-        training_date: toISOString(data.training_date),
-        training_start_time: toISOString(data.training_start_time),
-        training_end_time: toISOString(data.training_end_time),
-        training_instructor: data.training_instructor,
-        created_at: now,
-        updated_at: now
-      })
-      .returning()
 
-    if (!newTraining) {
-      logger.error(
-        'No training returned after insert',
-        { name: data.name },
-        'createTraining'
-      )
-      return null
+    // Start a transaction to create training and assignments
+    const result = await db.transaction(async tx => {
+      // Create the training first
+      const [newTraining] = await tx
+        .insert(training)
+        .values({
+          ...data,
+          training_date:
+            typeof data.training_date === 'string'
+              ? data.training_date
+              : toISOString(data.training_date),
+          training_start_time:
+            typeof data.training_start_time === 'string'
+              ? data.training_start_time
+              : toISOString(data.training_start_time),
+          training_end_time:
+            typeof data.training_end_time === 'string'
+              ? data.training_end_time
+              : toISOString(data.training_end_time),
+          training_instructor: data.training_instructor,
+          created_at: now,
+          updated_at: now
+        })
+        .returning()
+
+      if (!newTraining) {
+        throw new Error('Failed to create training')
+      }
+
+      // If there are assigned users, create assignments for them
+      if (data.assigned_users?.length) {
+        const assignmentValues = data.assigned_users.map((userId: string) => ({
+          training_id: newTraining.id,
+          user_id: userId,
+          created_at: now,
+          updated_at: now
+        }))
+
+        await tx.insert(trainingAssignments).values(assignmentValues)
+      }
+
+      return newTraining
+    })
+
+    if (result) {
+      await createTrainingNotification(result.name, result.id)
     }
 
-    await createTrainingNotification(newTraining.name, newTraining.id)
-
-    logger.info(
-      'Training created successfully',
-      {
-        id: newTraining.id,
-        name: newTraining.name
-      },
-      'createTraining'
-    )
-    logger.timeEnd(`create-training-${data.name}`)
-
-    return {
-      ...newTraining,
-      created_at: new Date(newTraining.created_at),
-      training_date: new Date(newTraining.training_date),
-      training_end_time: new Date(newTraining.training_end_time),
-      training_start_time: new Date(newTraining.training_start_time),
-      updated_at: new Date(newTraining.updated_at)
-    }
+    return result
   } catch (error) {
     logger.error(
       'Failed to create training',
-      logger.errorWithData(error),
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       'createTraining'
     )
-    logger.timeEnd(`create-training-${data.name}`)
     return null
   }
 }
 
 export async function updateTraining(id: number, data: UpdateTraining) {
-  logger.info(
-    'Updating training',
-    {
-      trainingId: id,
-      updates: {
-        ...data,
-        instructor: data.training_instructor || 'none'
-      }
-    },
-    'updateTraining'
-  )
-  logger.time(`update-training-${id}`)
+  logger.info('Updating training', { trainingId: id }, 'updateTraining')
 
   try {
     const supabase = await createClient()
@@ -246,79 +223,82 @@ export async function updateTraining(id: number, data: UpdateTraining) {
       error: userError
     } = await supabase.auth.getUser()
 
-    if (userError) {
-      logger.error(
-        'Failed to get Supabase user',
-        logger.errorWithData(userError),
-        'updateTraining'
+    if (userError || !user) {
+      logger.error('Failed to get Supabase user', undefined, 'updateTraining')
+      return null
+    }
+
+    // Start a transaction to update training and assignments
+    const result = await db.transaction(async tx => {
+      // Update the training first
+      const [updatedTraining] = await tx
+        .update(training)
+        .set({
+          ...data,
+          training_date:
+            typeof data.training_date === 'string'
+              ? data.training_date
+              : data.training_date
+                ? toISOString(data.training_date)
+                : undefined,
+          training_start_time:
+            typeof data.training_start_time === 'string'
+              ? data.training_start_time
+              : data.training_start_time
+                ? toISOString(data.training_start_time)
+                : undefined,
+          training_end_time:
+            typeof data.training_end_time === 'string'
+              ? data.training_end_time
+              : data.training_end_time
+                ? toISOString(data.training_end_time)
+                : undefined,
+          training_instructor: data.training_instructor,
+          updated_at: toISOString(new Date())
+        })
+        .where(eq(training.id, id))
+        .returning()
+
+      if (!updatedTraining) {
+        throw new Error('Failed to update training')
+      }
+
+      // Delete existing assignments
+      await tx
+        .delete(trainingAssignments)
+        .where(eq(trainingAssignments.training_id, id))
+
+      // If there are assigned users, create new assignments
+      if (data.assigned_users?.length) {
+        const now = toISOString(new Date())
+        const assignmentValues = data.assigned_users.map((userId: string) => ({
+          training_id: id,
+          user_id: userId,
+          created_at: now,
+          updated_at: now
+        }))
+
+        await tx.insert(trainingAssignments).values(assignmentValues)
+      }
+
+      return updatedTraining
+    })
+
+    if (result) {
+      await createTrainingNotification(
+        result.name,
+        result.id,
+        'training_updated'
       )
-      return null
     }
 
-    if (!user) {
-      logger.warn('No active user found', undefined, 'updateTraining')
-      return null
-    }
-
-    const [updatedTraining] = await db
-      .update(training)
-      .set({
-        ...data,
-        training_date: data.training_date
-          ? toISOString(data.training_date)
-          : undefined,
-        training_start_time: data.training_start_time
-          ? toISOString(data.training_start_time)
-          : undefined,
-        training_end_time: data.training_end_time
-          ? toISOString(data.training_end_time)
-          : undefined,
-        training_instructor: data.training_instructor,
-        updated_at: toISOString(new Date())
-      })
-      .where(eq(training.id, id))
-      .returning()
-
-    if (!updatedTraining) {
-      logger.error(
-        'No training returned after update',
-        { trainingId: id },
-        'updateTraining'
-      )
-      return null
-    }
-
-    await createTrainingNotification(
-      updatedTraining.name,
-      updatedTraining.id,
-      'training_updated'
-    )
-
-    logger.info(
-      'Training updated successfully',
-      {
-        id: updatedTraining.id,
-        name: updatedTraining.name
-      },
-      'updateTraining'
-    )
-    logger.timeEnd(`update-training-${id}`)
-
-    return {
-      ...updatedTraining,
-      created_at: new Date(updatedTraining.created_at),
-      training_date: new Date(updatedTraining.training_date),
-      training_end_time: new Date(updatedTraining.training_end_time),
-      training_start_time: new Date(updatedTraining.training_start_time),
-      updated_at: new Date(updatedTraining.updated_at)
-    }
+    return result
   } catch (error) {
     logger.error(
       'Failed to update training',
-      logger.errorWithData(error),
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       'updateTraining'
     )
-    logger.timeEnd(`update-training-${id}`)
     return null
   }
 }
