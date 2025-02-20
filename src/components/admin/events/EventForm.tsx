@@ -38,7 +38,7 @@ const logger = createLogger({
 
 const formSchema = z.object({
   event_name: z.string().min(2, 'Event name must be at least 2 characters'),
-  event_date: z.string(),
+  event_date: z.string().min(10, 'Date is required'),
   event_start_time: z.string(),
   event_end_time: z.string(),
   event_location: z.string().min(2, 'Location must be at least 2 characters'),
@@ -125,7 +125,7 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
 
     try {
       // Convert string dates to Date objects for the API
-      const eventDate = new Date(values.event_date)
+      const eventDate = new Date(`${values.event_date}T12:00:00.000Z`)
       const formData: NewEvent = {
         event_name: values.event_name,
         event_type: values.event_type,
@@ -255,9 +255,9 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
                   <Input
                     type='date'
                     value={field.value || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       field.onChange(e.target.value)
-                    }
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -275,10 +275,11 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
                   <FormControl>
                     <Input
                       type='time'
+                      step='60'
                       value={field.value || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         field.onChange(e.target.value)
-                      }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -295,10 +296,11 @@ export function EventForm({ event, onSuccess, closeDialog }: EventFormProps) {
                   <FormControl>
                     <Input
                       type='time'
+                      step='60'
                       value={field.value || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         field.onChange(e.target.value)
-                      }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

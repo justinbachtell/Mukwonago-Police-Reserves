@@ -125,9 +125,18 @@ export async function createEvent(data: NewEvent) {
         created_at: now,
         event_type:
           data.event_type as (typeof eventTypesEnum.enumValues)[number],
-        event_date: toISOString(data.event_date),
-        event_end_time: toISOString(data.event_end_time),
-        event_start_time: toISOString(data.event_start_time),
+        event_date:
+          typeof data.event_date === 'string'
+            ? data.event_date
+            : toISOString(data.event_date),
+        event_end_time:
+          typeof data.event_end_time === 'string'
+            ? data.event_end_time
+            : toISOString(data.event_end_time),
+        event_start_time:
+          typeof data.event_start_time === 'string'
+            ? data.event_start_time
+            : toISOString(data.event_start_time),
         min_participants: data.min_participants,
         max_participants: data.max_participants,
         updated_at: now
@@ -201,13 +210,24 @@ export async function updateEvent(id: number, data: UpdateEvent) {
         ...data,
         event_type:
           data.event_type as (typeof eventTypesEnum.enumValues)[number],
-        event_date: data.event_date ? toISOString(data.event_date) : undefined,
-        event_end_time: data.event_end_time
-          ? toISOString(data.event_end_time)
-          : undefined,
-        event_start_time: data.event_start_time
-          ? toISOString(data.event_start_time)
-          : undefined,
+        event_date:
+          typeof data.event_date === 'string'
+            ? data.event_date
+            : data.event_date
+              ? toISOString(data.event_date)
+              : undefined,
+        event_end_time:
+          typeof data.event_end_time === 'string'
+            ? data.event_end_time
+            : data.event_end_time
+              ? toISOString(data.event_end_time)
+              : undefined,
+        event_start_time:
+          typeof data.event_start_time === 'string'
+            ? data.event_start_time
+            : data.event_start_time
+              ? toISOString(data.event_start_time)
+              : undefined,
         updated_at: toISOString(new Date()),
         min_participants: data.min_participants,
         max_participants: data.max_participants

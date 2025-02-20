@@ -44,6 +44,8 @@ export function TrainingSignUpButton({ training }: TrainingSignUpButtonProps) {
     !isLocked ||
     (isLocked && training.assignments?.some(a => a.user_id === user.id))
 
+  const isPast = new Date(training.training_date) < new Date()
+
   const handleSignUp = async () => {
     try {
       if (!canSignUp) {
@@ -92,6 +94,19 @@ export function TrainingSignUpButton({ training }: TrainingSignUpButtonProps) {
     }
   }
 
+  if (isPast) {
+    return (
+      <Button
+        variant='ghost'
+        size='sm'
+        className='w-[140px] bg-gray-100 text-gray-500 dark:bg-gray-800'
+        disabled
+      >
+        Training Ended
+      </Button>
+    )
+  }
+
   if (isAssigned) {
     return (
       <Button
@@ -99,6 +114,7 @@ export function TrainingSignUpButton({ training }: TrainingSignUpButtonProps) {
         variant='destructive'
         disabled={!user}
         onClick={handleLeaveTraining}
+        className='w-[140px]'
       >
         Leave Training
       </Button>
@@ -111,6 +127,7 @@ export function TrainingSignUpButton({ training }: TrainingSignUpButtonProps) {
       variant={canSignUp ? 'default' : 'outline'}
       onClick={handleSignUp}
       disabled={!canSignUp}
+      className='w-[140px]'
     >
       {isLocked ? 'Restricted Training' : 'Sign Up'}
     </Button>
